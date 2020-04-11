@@ -4,15 +4,17 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".initGame.InitGameActivity">
+    tools:context=".stats.StatitacsActivity">
 
     <EditText
-        android:id="@+id/editText2"
+        android:id="@+id/editText"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:backgroundTint="#BF2D2D"
         android:ems="10"
         android:inputType="textPersonName"
-        android:text="Init-game-screen"
-        tools:layout_editor_absoluteX="124dp"
-        tools:layout_editor_absoluteY="283dp" />
+        android:text="Statitacs-View"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        tools:layout_editor_absoluteY="268dp" />
 </androidx.constraintlayout.widget.ConstraintLayout>
