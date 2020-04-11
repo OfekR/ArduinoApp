@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "822418965552",
+    "firebase_url": "https://arduino-a5968.firebaseio.com",
+    "project_id": "arduino-a5968",
+    "storage_bucket": "arduino-a5968.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:822418965552:android:453f50d867a28ff15b99f5",
+        "android_client_info": {
+          "package_name": "com.example.arduino"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "822418965552-pqhtn9k9j3cq3ucv6bsf3cjeoebbav53.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB1wl_RNK0sYcOlVPh95RfA3kQcmdoyFEA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "822418965552-pqhtn9k9j3cq3ucv6bsf3cjeoebbav53.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
