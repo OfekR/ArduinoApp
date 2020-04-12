@@ -60,7 +60,6 @@ public class InitGameActivity extends AppCompatActivity {
     }
 
     private void sendData(){
-        if(db.collection("GameSettings").)
         db.collection("GameSettings").add(member);
         Toast.makeText(getApplicationContext(), "insert data",Toast.LENGTH_LONG ).show();
             }
