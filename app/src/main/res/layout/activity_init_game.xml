@@ -46,20 +46,113 @@
             android:textAlignment="gravity"
             android:textColor="#FFF" />
 
-
-
-
     </LinearLayout>
 
+
+    <LinearLayout
+        android:id="@+id/linearLayout3"
+        android:layout_width="360dp"
+        android:layout_height="73dp"
+        android:layout_marginTop="304dp"
+        android:orientation="horizontal"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.49"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+
+
+
+        <TextView
+            android:id="@+id/txtNumberShot"
+            android:layout_width="116dp"
+            android:layout_height="51dp"
+            android:background="@color/cardview_dark_background"
+            android:text="\n NumberShots: "
+            android:textAlignment="gravity"
+            android:textColor="#FFF" />
+
+        <SeekBar
+            android:id="@+id/seekBar2"
+            style="@style/Widget.AppCompat.SeekBar.Discrete"
+            android:layout_width="180dp"
+            android:layout_height="50dp"
+            android:background="@color/cardview_dark_background"
+            android:max="500"
+            android:progress="3"
+            tools:layout_editor_absoluteX="95dp"
+            tools:layout_editor_absoluteY="323dp" />
+
+        <TextView
+            android:id="@+id/txtShots"
+            android:layout_width="31dp"
+            android:layout_height="52dp"
+            android:background="@color/cardview_dark_background"
+            android:text="\n0 "
+            android:textAlignment="gravity"
+            android:textColor="#FFF"
+            tools:layout_editor_absoluteX="279dp"
+            tools:layout_editor_absoluteY="309dp" />
+    </LinearLayout>
+
+
+    <LinearLayout
+        android:id="@+id/linearLayout4"
+        android:layout_width="360dp"
+        android:layout_height="73dp"
+        android:layout_marginTop="400dp"
+        android:orientation="horizontal"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.49"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+
+        <TextView
+            android:id="@+id/txtType"
+            android:layout_width="116dp"
+            android:layout_height="51dp"
+            android:background="@color/cardview_dark_background"
+            android:text="\n Type: "
+            android:textAlignment="gravity"
+            android:textColor="#FFF" />
+
+
+        <SeekBar
+            android:id="@+id/seekBar3"
+            style="@style/Widget.AppCompat.SeekBar.Discrete"
+            android:layout_width="147dp"
+            android:layout_height="50dp"
+            android:background="@color/cardview_dark_background"
+            android:max="2"
+            android:progress="3"
+            tools:layout_editor_absoluteX="95dp"
+            tools:layout_editor_absoluteY="323dp" />
+
+        <TextView
+            android:id="@+id/txtLevel"
+            android:layout_width="62dp"
+            android:layout_height="52dp"
+            android:background="@color/cardview_dark_background"
+            android:text="\nEasy "
+            android:textAlignment="gravity"
+            android:textColor="#FFF"
+            tools:layout_editor_absoluteX="279dp"
+            tools:layout_editor_absoluteY="309dp" />
+
+    </LinearLayout>
 
     <Button
         android:id="@+id/sendData"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="488dp"
-        android:text="Send Data "
+        android:layout_marginTop="508dp"
+        android:background="@color/cardview_dark_background"
+        android:text="Start-Game"
+        android:textColor="#2196F3"
+        android:textSize="24sp"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.451"
+        app:layout_constraintHorizontal_bias="0.425"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
 

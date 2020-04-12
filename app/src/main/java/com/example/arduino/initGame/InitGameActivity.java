@@ -3,38 +3,68 @@ package com.example.arduino.initGame;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.SeekBar;
+import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.firestore.FirebaseFirestore;
 
 import com.example.arduino.R;
 
-import java.util.HashMap;
-import java.util.Map;
-
 public class InitGameActivity extends AppCompatActivity {
     private TextView textView;
-    private SeekBar seekBar;
-    private DatabaseReference reff;
+    private TextView textLevel;
+    private TextView txtShots;
+    private SeekBar seekBarTime;
+    private SeekBar seekBarShots;
+    private SeekBar seekBarLevel;
     private FirebaseFirestore db;
     private Member member;
     private Button sendDt;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_init_game);
         member = new Member();
         db = FirebaseFirestore.getInstance();
-        textView =(TextView) findViewById(R.id.txtMin);
-        seekBar = (SeekBar) findViewById(R.id.seekBar);
+
+
         sendDt = (Button) findViewById(R.id.sendData);
-        seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+        textView =(TextView) findViewById(R.id.txtMin);
+        textLevel =(TextView) findViewById(R.id.txtLevel);
+        txtShots = (TextView) findViewById(R.id.txtShots);
+        seekBarTime = (SeekBar) findViewById(R.id.seekBar);
+        seekBarShots = (SeekBar) findViewById(R.id.seekBar2);
+        seekBarLevel = (SeekBar) findViewById(R.id.seekBar3);
+
+
+
+        seekBarShots.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener(){
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                txtShots.setText("" + String.valueOf(progress));
+                member.setNumberShot(String.valueOf(progress));
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+
+            }
+        });
+        seekBarTime.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
                 textView.setText("" + String.valueOf(progress) + " Min");
@@ -51,6 +81,27 @@ public class InitGameActivity extends AppCompatActivity {
 
             }
         });
+        seekBarLevel.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                if(progress == 0)  textLevel.setText("Level -" + String.valueOf(progress) + " Easy");
+                if(progress == 1)  textLevel.setText("Level - " + String.valueOf(progress) + " Hard");
+                if(progress == 2)  textLevel.setText("Level - " + String.valueOf(progress) + " Hell");
+                member.setGameType(String.valueOf(progress));
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+
+            }
+        });
+
+
         sendDt.setOnClickListener(new View.OnClickListener(){
             @Override
             public  void onClick(View v){
@@ -62,7 +113,7 @@ public class InitGameActivity extends AppCompatActivity {
     private void sendData(){
         db.collection("GameSettings").add(member);
         Toast.makeText(getApplicationContext(), "insert data",Toast.LENGTH_LONG ).show();
-            }
+    }
 
 
 

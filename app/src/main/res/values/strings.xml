@@ -12,4 +12,10 @@
     <string name="button">Button</string>
     <string name="log_out">Log-Out</string>
     <string name="imagetank">imageTank</string>
+    <string name="send_data">Send Data</string>
+    <string-array name="setting_level">
+        <item>Regular</item>
+        <item>Hard</item>
+        <item>Hell</item>
+    </string-array>
 </resources>
