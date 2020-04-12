@@ -4,15 +4,66 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@drawable/tank_login"
     tools:context=".initGame.InitGameActivity">
 
-    <EditText
-        android:id="@+id/editText2"
+
+    <LinearLayout
+        android:id="@+id/linearLayout2"
+        android:layout_width="321dp"
+        android:layout_height="88dp"
+        android:layout_marginTop="208dp"
+        android:orientation="horizontal"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.261"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <TextView
+            android:id="@+id/txtDuration"
+            android:layout_width="wrap_content"
+            android:layout_height="51dp"
+            android:background="@color/cardview_dark_background"
+            android:text="\nDuration: "
+            android:textAlignment="gravity"
+            android:textColor="#FFF" />
+
+        <SeekBar
+            android:id="@+id/seekBar"
+            style="@style/Widget.AppCompat.SeekBar.Discrete"
+            android:layout_width="200dp"
+            android:layout_height="50dp"
+            android:background="@color/cardview_dark_background"
+            android:max="10"
+            android:progress="3" />
+
+        <TextView
+            android:id="@+id/txtMin"
+            android:layout_width="66dp"
+            android:layout_height="51dp"
+            android:background="@color/cardview_dark_background"
+            android:text="\n1 min "
+            android:textAlignment="gravity"
+            android:textColor="#FFF" />
+
+
+
+
+    </LinearLayout>
+
+
+    <Button
+        android:id="@+id/sendData"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:ems="10"
-        android:inputType="textPersonName"
-        android:text="Init-game-screen"
-        tools:layout_editor_absoluteX="124dp"
-        tools:layout_editor_absoluteY="283dp" />
+        android:layout_marginTop="488dp"
+        android:text="Send Data "
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.451"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+    </Button>
+
+
 </androidx.constraintlayout.widget.ConstraintLayout>

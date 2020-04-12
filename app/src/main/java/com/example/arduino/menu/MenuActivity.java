@@ -4,6 +4,7 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import com.example.arduino.R;
 import com.example.arduino.initGame.InitGameActivity;
+import com.example.arduino.loby.LobyActivity;
 import com.example.arduino.stats.StatitacsActivity;
 import com.example.arduino.ui.login.LoginActivity;
 import com.google.firebase.auth.FirebaseAuth;
@@ -51,7 +52,7 @@ public class MenuActivity extends AppCompatActivity {
         joinBtn.setOnClickListener(new View.OnClickListener(){
             @Override
             public  void onClick(View v){
-
+                changeScreen(LobyActivity.class);
             }
         });
 
