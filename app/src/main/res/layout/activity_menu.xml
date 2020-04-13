@@ -4,14 +4,13 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".menu.MenuActivity"
-    android:background="@drawable/tank_login"
-    >
+    android:background="@color/colorPrimary"
+    tools:context=".menu.MenuActivity">
 
     <LinearLayout
-        android:id="@+id/linearLayout"
-        android:layout_width="347dp"
-        android:layout_height="278dp"
+        android:id="@+id/linearLayout5"
+        android:layout_width="370dp"
+        android:layout_height="574dp"
         android:orientation="vertical"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
@@ -19,93 +18,114 @@
         app:layout_constraintTop_toTopOf="parent">
 
         <LinearLayout
-            android:id="@+id/linearLayout1"
-            android:layout_width="344dp"
-            android:layout_height="139dp"
-            android:layout_marginStart="1dp"
-            android:layout_marginEnd="1dp"
-            android:orientation="horizontal"
+            android:layout_width="match_parent"
+            android:layout_height="302dp"
+            android:orientation="vertical">
 
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent">
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="178dp"
+                android:orientation="horizontal">
 
-            <Button
-                android:id="@+id/start_btn"
-                android:layout_width="173dp"
-                android:layout_height="138dp"
-                android:background="@drawable/buttonshape"
-                android:shadowColor="#A8A8A8"
-                android:shadowDx="0"
-                android:shadowDy="0"
-                android:shadowRadius="5"
-                android:text="Start Game"
-                android:textColor="#FFFFFF"
-                android:textSize="30sp" />
+                <ImageView
+                    android:id="@+id/imageView2"
+                    android:layout_width="162dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="16dp"
+                    android:layout_marginLeft="16dp"
+                    android:layout_marginRight="16dp"
+                    android:layout_marginBottom="16dp"
+                    android:layout_weight="1"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:srcCompat="@drawable/swords2" />
 
-            <Button
-                android:id="@+id/join_btn"
+                <ImageView
+                    android:id="@+id/imageView3"
+                    android:layout_width="162dp"
+                    android:layout_marginStart="16dp"
+                    android:layout_marginLeft="16dp"
+                    android:layout_marginRight="16dp"
+                    android:layout_marginBottom="16dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:srcCompat="@drawable/shell" />
+            </LinearLayout>
 
-                android:layout_width="173dp"
-                android:layout_height="138dp"
-                android:background="@drawable/buttonshape"
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:orientation="horizontal">
 
-                android:shadowColor="#A8A8A8"
-                android:shadowDx="0"
-                android:shadowDy="0"
-                android:shadowRadius="5"
-                android:text="Join \nGame"
-                android:textColor="#FFFFFF"
-                android:textSize="30sp" />
+                <Button
+                    android:id="@+id/start_btn"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Strat-Game" />
 
-
+                <Button
+                    android:id="@+id/join_btn"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Join-Game" />
+            </LinearLayout>
         </LinearLayout>
 
         <LinearLayout
-            android:id="@+id/linearLayout3"
-            android:layout_width="344dp"
-            android:layout_height="139dp"
-            android:layout_marginStart="1dp"
-            android:layout_marginEnd="1dp"
-            android:orientation="horizontal"
+            android:layout_width="match_parent"
+            android:layout_height="302dp"
+            android:orientation="vertical">
 
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent">
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="178dp"
+                android:orientation="horizontal">
 
-            <Button
-                android:id="@+id/Stat_btn"
+                <ImageView
+                    android:id="@+id/imageView"
+                    android:layout_width="162dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="16dp"
+                    android:layout_marginLeft="16dp"
+                    android:layout_marginRight="16dp"
+                    android:layout_marginBottom="16dp"
+                    android:layout_weight="1"
+                    app:srcCompat="@drawable/stats" />
 
-                android:layout_width="177dp"
-                android:layout_height="138dp"
-                android:background="@drawable/buttonshape"
+                <ImageView
+                    android:id="@+id/imageView4"
+                    android:layout_width="162dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="16dp"
+                    android:layout_marginLeft="16dp"
+                    android:layout_marginRight="16dp"
+                    android:layout_marginBottom="16dp"
+                    android:layout_weight="1"
+                    app:srcCompat="@drawable/door" />
+            </LinearLayout>
 
-                android:shadowColor="#A8A8A8"
-                android:shadowDx="0"
-                android:shadowDy="0"
-                android:shadowRadius="5"
-                android:text="Statistics"
-                android:textColor="#FFFFFF"
-                android:textSize="30sp" />
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:orientation="horizontal">
 
-            <Button
-                android:id="@+id/logout_btn"
+                <Button
+                    android:id="@+id/Stat_btn"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Statistics"
+                    app:layout_constraintBottom_toBottomOf="parent" />
 
-                android:layout_width="173dp"
-                android:layout_height="138dp"
-                android:background="@drawable/buttonshape"
-
-                android:shadowColor="#A8A8A8"
-                android:shadowDx="0"
-                android:shadowDy="0"
-                android:shadowRadius="5"
-                android:text="@string/log_out"
-                android:textColor="#FFFFFF"
-                android:textSize="30sp" />
-
-
+                <Button
+                    android:id="@+id/logout_btn"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Log-Out" />
+            </LinearLayout>
         </LinearLayout>
     </LinearLayout>
 

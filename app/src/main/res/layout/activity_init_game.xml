@@ -4,159 +4,145 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/tank_login"
+    android:background="@color/colorPrimary"
     tools:context=".initGame.InitGameActivity">
-
-
-    <LinearLayout
-        android:id="@+id/linearLayout2"
-        android:layout_width="321dp"
-        android:layout_height="88dp"
-        android:layout_marginTop="208dp"
-        android:orientation="horizontal"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.261"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent">
-
-        <TextView
-            android:id="@+id/txtDuration"
-            android:layout_width="wrap_content"
-            android:layout_height="51dp"
-            android:background="@color/cardview_dark_background"
-            android:text="\nDuration: "
-            android:textAlignment="gravity"
-            android:textColor="#FFF" />
-
-        <SeekBar
-            android:id="@+id/seekBar"
-            style="@style/Widget.AppCompat.SeekBar.Discrete"
-            android:layout_width="200dp"
-            android:layout_height="50dp"
-            android:background="@color/cardview_dark_background"
-            android:max="10"
-            android:progress="3" />
-
-        <TextView
-            android:id="@+id/txtMin"
-            android:layout_width="66dp"
-            android:layout_height="51dp"
-            android:background="@color/cardview_dark_background"
-            android:text="\n1 min "
-            android:textAlignment="gravity"
-            android:textColor="#FFF" />
-
-    </LinearLayout>
-
 
     <LinearLayout
         android:id="@+id/linearLayout3"
-        android:layout_width="360dp"
-        android:layout_height="73dp"
-        android:layout_marginTop="304dp"
-        android:orientation="horizontal"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_marginStart="1dp"
+        android:layout_marginTop="1dp"
+        android:layout_marginEnd="1dp"
+        android:layout_marginBottom="1dp"
+        android:orientation="vertical"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.49"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
 
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="146dp"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/textView5"
+                android:layout_width="70dp"
+                android:layout_height="match_parent"
+                android:textColor="#7DEAFF"
+                android:layout_weight="1"
+                android:gravity="center"
+                android:textSize="18sp"
+                android:text="Ammunition" />
+
+            <SeekBar
+                android:id="@+id/seekBar2"
+                style="@style/Widget.AppCompat.SeekBar.Discrete"
+                android:layout_width="222dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:max="99"
+                android:progress="3" />
+
+            <TextView
+                android:id="@+id/txtShots"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:layout_marginEnd="16dp"
+                android:textColor="#7DEAFF"
+                android:layout_marginRight="16dp"
+                android:layout_weight="1"
+                android:textSize="18sp"
+                android:gravity="center"
+                android:text="0"
+
+                app:layout_constraintEnd_toEndOf="parent" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="126dp"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/textView7"
+                android:layout_width="50dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:gravity="center"
+                android:textColor="#7DEAFF"
+                android:text="Type"
+                android:textSize="18sp"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <SeekBar
+                android:id="@+id/seekBar3"
+                style="@style/Widget.AppCompat.SeekBar.Discrete"
+                android:layout_width="222dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:max="2"
+                android:progress="3" />
+
+            <TextView
+                android:id="@+id/txtLevel"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:textColor="#7DEAFF"
+                android:textSize="18sp"
+                android:gravity="center"
+                android:text="Easy" />
+        </LinearLayout>
 
 
 
-        <TextView
-            android:id="@+id/txtNumberShot"
-            android:layout_width="116dp"
-            android:layout_height="51dp"
-            android:background="@color/cardview_dark_background"
-            android:text="\n NumberShots: "
-            android:textAlignment="gravity"
-            android:textColor="#FFF" />
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="140dp"
+            android:orientation="horizontal">
 
-        <SeekBar
-            android:id="@+id/seekBar2"
-            style="@style/Widget.AppCompat.SeekBar.Discrete"
-            android:layout_width="180dp"
-            android:layout_height="50dp"
-            android:background="@color/cardview_dark_background"
-            android:max="500"
-            android:progress="3"
-            tools:layout_editor_absoluteX="95dp"
-            tools:layout_editor_absoluteY="323dp" />
+            <TextView
+                android:id="@+id/textView"
+                android:layout_width="50dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:gravity="center"
+                android:textColor="#7DEAFF"
+                android:textSize="18sp"
+                android:text="Durations" />
 
-        <TextView
-            android:id="@+id/txtShots"
-            android:layout_width="31dp"
-            android:layout_height="52dp"
-            android:background="@color/cardview_dark_background"
-            android:text="\n0 "
-            android:textAlignment="gravity"
-            android:textColor="#FFF"
-            tools:layout_editor_absoluteX="279dp"
-            tools:layout_editor_absoluteY="309dp" />
+            <SeekBar
+                android:id="@+id/seekBar"
+                style="@style/Widget.AppCompat.SeekBar.Discrete"
+                android:layout_width="222dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:max="9"
+                android:progress="3" />
+
+            <TextView
+                android:id="@+id/txtMin"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:textSize="18sp"
+                android:textColor="#7DEAFF"
+                android:gravity="center"
+                android:text="1min" />
+
+        </LinearLayout>
+
+        <Button
+            android:id="@+id/sendData"
+            android:layout_width="match_parent"
+            android:layout_height="181dp"
+            android:background="#49484A"
+            android:textColor="#FFFFFB"
+            android:text="START-GAME"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent" />
     </LinearLayout>
-
-
-    <LinearLayout
-        android:id="@+id/linearLayout4"
-        android:layout_width="360dp"
-        android:layout_height="73dp"
-        android:layout_marginTop="400dp"
-        android:orientation="horizontal"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.49"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent">
-
-
-        <TextView
-            android:id="@+id/txtType"
-            android:layout_width="116dp"
-            android:layout_height="51dp"
-            android:background="@color/cardview_dark_background"
-            android:text="\n Type: "
-            android:textAlignment="gravity"
-            android:textColor="#FFF" />
-
-
-        <SeekBar
-            android:id="@+id/seekBar3"
-            style="@style/Widget.AppCompat.SeekBar.Discrete"
-            android:layout_width="147dp"
-            android:layout_height="50dp"
-            android:background="@color/cardview_dark_background"
-            android:max="2"
-            android:progress="3"
-            tools:layout_editor_absoluteX="95dp"
-            tools:layout_editor_absoluteY="323dp" />
-
-        <TextView
-            android:id="@+id/txtLevel"
-            android:layout_width="62dp"
-            android:layout_height="52dp"
-            android:background="@color/cardview_dark_background"
-            android:text="\nEasy "
-            android:textAlignment="gravity"
-            android:textColor="#FFF"
-            tools:layout_editor_absoluteX="279dp"
-            tools:layout_editor_absoluteY="309dp" />
-
-    </LinearLayout>
-
-    <Button
-        android:id="@+id/sendData"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="508dp"
-        android:background="@color/cardview_dark_background"
-        android:text="Start-Game"
-        android:textColor="#2196F3"
-        android:textSize="24sp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.425"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent">
-
-    </Button>
-
-
 </androidx.constraintlayout.widget.ConstraintLayout>
