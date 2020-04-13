@@ -2,6 +2,7 @@ package com.example.arduino.initGame;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -13,6 +14,7 @@ import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.example.arduino.loby.LobyActivity;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.firestore.FirebaseFirestore;
 
@@ -44,9 +46,9 @@ public class InitGameActivity extends AppCompatActivity {
         seekBarTime = (SeekBar) findViewById(R.id.seekBar);
         seekBarShots = (SeekBar) findViewById(R.id.seekBar2);
         seekBarLevel = (SeekBar) findViewById(R.id.seekBar3);
-
-
-
+        seekBarLevel.setProgress(0);
+        seekBarShots.setProgress(0);
+        seekBarTime.setProgress(0);
         seekBarShots.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener(){
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
@@ -113,9 +115,13 @@ public class InitGameActivity extends AppCompatActivity {
     private void sendData(){
         db.collection("GameSettings").add(member);
         Toast.makeText(getApplicationContext(), "insert data",Toast.LENGTH_LONG ).show();
+        changeScreen(LobyActivity.class);
     }
 
-
+    public void changeScreen(Class screen){
+        Intent intent = new Intent(this, screen);
+        startActivity(intent);
+    }
 
 
 }
