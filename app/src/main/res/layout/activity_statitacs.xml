@@ -18,4 +18,12 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         tools:layout_editor_absoluteX="146dp" />
+
+    <Button
+        android:id="@+id/StatsMenu"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="BACK TO MENU"
+        tools:layout_editor_absoluteX="134dp"
+        tools:layout_editor_absoluteY="226dp" />
 </androidx.constraintlayout.widget.ConstraintLayout>
