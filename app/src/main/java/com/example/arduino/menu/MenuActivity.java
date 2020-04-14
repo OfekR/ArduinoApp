@@ -46,6 +46,8 @@ public class MenuActivity extends AppCompatActivity {
                 Log.d("MenuActicity","onClick: signing out user");
                 FirebaseAuth.getInstance().addAuthStateListener(mAuthStateListener);
                 FirebaseAuth.getInstance().signOut();
+                changeScreen(LoginActivity.class);
+
             }
         });
         joinBtn = (Button) findViewById(R.id.join_btn);
