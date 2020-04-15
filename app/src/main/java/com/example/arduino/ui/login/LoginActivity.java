@@ -9,6 +9,7 @@ import android.os.Bundle;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.os.Handler;
 import android.text.TextUtils;
 import android.util.Log;
 import android.util.Patterns;
@@ -40,6 +41,8 @@ public class LoginActivity extends AppCompatActivity {
     private Button registerButton;
     private ProgressBar loadingProgressBar;
 
+    private static final int TIME_INTERVAL = 2000; // # milliseconds, time passed between two back presses to cause exit.
+    private long timeBackPressed;
 
     @Override
     public void onStart() {
@@ -170,6 +173,18 @@ public class LoginActivity extends AppCompatActivity {
 
     }
 
+    @Override
+    public void onBackPressed() {
+        if (timeBackPressed + TIME_INTERVAL > System.currentTimeMillis())
+        {
+            super.onBackPressed();
+            finish();
+            return;
+        }
+        else { Toast.makeText(getBaseContext(), "Tap back button in order to close app", Toast.LENGTH_SHORT).show(); }
+
+        timeBackPressed = System.currentTimeMillis();
+    }
 
 
 private void UpdateButtonsVisibility(Boolean isHideButtons) {
