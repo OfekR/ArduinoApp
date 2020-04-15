@@ -10,12 +10,12 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
         <activity android:name=".gameScreen.GameScreenActivity"></activity>
-        <activity android:name=".menu.MenuActivity" />
+        <activity android:name=".ui.login.LoginActivity" />
         <activity android:name=".stats.StatitacsActivity" />
         <activity android:name=".initGame.InitGameActivity" />
         <activity android:name=".loby.LobyActivity" />
         <activity
-            android:name=".ui.login.LoginActivity"
+            android:name=".menu.MenuActivity"
             android:label="Shoots And Barrieruino">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
