@@ -56,7 +56,7 @@ public class StatitacsActivity extends AppCompatActivity {
 
         listView = (ListView)findViewById(R.id.listView1);
 
-        PlayerStats.writeStats(userId, new PlayerStats(1,2,3,4,5,6,7,8,9,10,11));
+        PlayerStats.writeStats(userId, new PlayerStats(1,2,3,4,5,6,7,8,10,9));
         DocumentReference documentReference = db.collection("PlayerStats").document(userId);
         documentReference.get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
             @Override
@@ -73,7 +73,7 @@ public class StatitacsActivity extends AppCompatActivity {
                 totalHits = task.getResult().getLong("totalHits");
                 hitPercentage = task.getResult().getLong("hitPercentage");
                 PlayerStats stats = new PlayerStats(gamesPlayed,gamesWon,gamesLost,totalPoints,bestTime,
-                        mostLaserHits,mostBombHits,totalBombHits,totalShots,totalHits,hitPercentage);
+                        mostLaserHits,mostBombHits,totalBombHits,totalShots,totalHits);
                 populateList(stats);
                 adapt();
             }
@@ -138,7 +138,7 @@ public class StatitacsActivity extends AppCompatActivity {
 
         HashMap<String,String> hitPercentageRow = new HashMap<>();
         hitPercentageRow.put(FIRST_COLUMN, "Hit accuracy:");
-        hitPercentageRow.put(SECOND_COLUMN,String.valueOf(stats.hitPercentage));
+        hitPercentageRow.put(SECOND_COLUMN,String.valueOf(stats.hitPercentage) + "%");
 
         list.add(gamesPlayedRow);
         list.add(gamesWonRow);

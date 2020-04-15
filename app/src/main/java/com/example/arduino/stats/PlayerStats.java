@@ -29,7 +29,7 @@ public class PlayerStats {
     long hitPercentage;
 
 
-    public PlayerStats(long gamesPlayed, long gamesWon, long gamesLost, long totalPoints, long bestTime, long mostLaserHits, long mostBombHits, long totalBombHits, long totalShots, long totalHits, long hitPercentage) {
+    public PlayerStats(long gamesPlayed, long gamesWon, long gamesLost, long totalPoints, long bestTime, long mostLaserHits, long mostBombHits, long totalBombHits, long totalShots, long totalHits) {
         this.gamesPlayed = gamesPlayed;
         this.gamesWon = gamesWon;
         this.gamesLost = gamesLost;
@@ -40,7 +40,7 @@ public class PlayerStats {
         this.totalBombHits = totalBombHits;
         this.totalShots = totalShots;
         this.totalHits = totalHits;
-        this.hitPercentage = hitPercentage;
+        this.hitPercentage = (long)((float)totalHits / totalShots * 100);
     }
 
     public static void writeStats(String userId, PlayerStats stats){
