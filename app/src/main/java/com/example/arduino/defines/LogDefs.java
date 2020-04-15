@@ -8,8 +8,7 @@ public final class LogDefs {
     }
     //Tags
     public static final String tagLogin = "RegisterLogin";
-    public static final String tagSuccess = "T_Success";
-    public static final String tagDebug = "T_Debug";
+    public static final String tagMenu = "MenuActivity";
 
 
 
@@ -20,6 +19,16 @@ public final class LogDefs {
     public static final String emailRegisterFailMsg = "createUserWithEmail:failure";
     public static final String emailInvalidlMsg = "email value invalid";
     public static final String passwordInvalidlMsg = "password value invalid";
+
+
+    //Main Menu
+    public static final String signoutMsg = "signing out user";
+    public static final String setupFirebaseListener = "setupFirebaseListener: setting up the auth state listener";
+    public static final String userSignedInIs = "onAuthStateChanged: user signed in is: ";
+
+
+
+
 
 
 
