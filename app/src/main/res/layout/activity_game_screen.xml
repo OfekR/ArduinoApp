@@ -26,75 +26,119 @@
 
             <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="138dp"
+                android:layout_height="match_parent"
                 android:orientation="horizontal">
 
-                <ImageView
-                    android:id="@+id/imageView5"
-                    android:layout_width="162dp"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="16dp"
-                    android:layout_marginLeft="16dp"
-                    android:layout_marginRight="16dp"
-                    android:layout_marginBottom="16dp"
-                    android:layout_weight="1"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toTopOf="parent"
-                    app:srcCompat="@drawable/keys" />
+                <LinearLayout
+                    android:layout_width="75dp"
+                    android:layout_height="match_parent"
+                    android:orientation="vertical">
 
-                <ImageView
-                    android:id="@+id/imageView6"
-                    android:layout_width="162dp"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="16dp"
-                    android:layout_marginLeft="16dp"
-                    android:layout_marginRight="16dp"
-                    android:layout_marginBottom="16dp"
-                    android:layout_weight="1"
-                    app:layout_constraintEnd_toEndOf="parent"
-                    app:srcCompat="@drawable/mine" />
+                    <ImageView
+                        android:id="@+id/imageView7"
+                        android:layout_width="43dp"
+                        android:layout_height="27dp"
+                        android:layout_marginStart="16dp"
+                        android:layout_marginLeft="16dp"
+                        android:layout_marginRight="16dp"
+                        android:layout_marginBottom="16dp"
+                        android:layout_weight="1"
+                        app:srcCompat="@drawable/defuse" />
 
-                <ImageView
-                    android:id="@+id/imageView7"
-                    android:layout_width="162dp"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="16dp"
-                    android:layout_marginLeft="16dp"
-                    android:layout_marginRight="16dp"
-                    android:layout_marginBottom="16dp"
-                    android:layout_weight="1"
-                    app:srcCompat="@drawable/defuse" />
+                    <ImageView
+                        android:id="@+id/imageView5"
+                        android:layout_width="45dp"
+                        android:layout_height="42dp"
+                        android:layout_marginStart="16dp"
+                        android:layout_marginLeft="16dp"
+                        android:layout_marginRight="16dp"
+                        android:layout_marginBottom="16dp"
+                        android:layout_weight="1"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toTopOf="parent"
+                        app:srcCompat="@drawable/keys" />
+
+                    <ImageView
+                        android:id="@+id/imageView6"
+                        android:layout_width="39dp"
+                        android:layout_height="38dp"
+                        android:layout_marginStart="16dp"
+                        android:layout_marginLeft="16dp"
+                        android:layout_marginRight="16dp"
+                        android:layout_marginBottom="16dp"
+                        android:layout_weight="1"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:srcCompat="@drawable/mine" />
+
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:id="@+id/txtGameDefuse"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:gravity="center"
+                        android:text="Defuse:" />
+
+                    <TextView
+                        android:id="@+id/txtGameKeys"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:gravity="center"
+                        android:text="Keys:" />
+
+                    <TextView
+                        android:id="@+id/txtGameMines"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:gravity="center"
+                        android:text="Mines:" />
+
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="282dp"
+                    android:layout_height="match_parent"
+                    android:orientation="vertical">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <ProgressBar
+                            android:id="@+id/progressBar2"
+                            style="?android:attr/progressBarStyleHorizontal"
+                            android:layout_width="match_parent"
+                            android:layout_height="63dp" />
+
+                        <TextView
+                            android:id="@+id/txtLife"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:gravity="center"
+                            android:text="Life: " />
+
+                        <TextView
+                            android:id="@+id/txtCountdown"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:gravity="center"
+                            android:text="00:00"
+                            android:textColor="@android:color/black"
+                            android:textSize="60sp" />
+                    </LinearLayout>
+                </LinearLayout>
             </LinearLayout>
 
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="39dp"
-                android:orientation="horizontal">
-
-                <TextView
-                    android:id="@+id/txtGameKeys"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:gravity="center"
-                    android:text="Keys:" />
-
-                <TextView
-                    android:id="@+id/txtGameMines"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:gravity="center"
-                    android:text="Mines:" />
-
-                <TextView
-                    android:id="@+id/txtGameDefuse"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:gravity="center"
-                    android:text="Defuse:" />
-            </LinearLayout>
         </LinearLayout>
 
         <LinearLayout
@@ -102,44 +146,16 @@
             android:layout_height="90dp"
             android:orientation="horizontal">
 
-            <TextView
-                android:id="@+id/txtGamePoint"
-                android:layout_width="wrap_content"
-                android:layout_height="match_parent"
-                android:layout_weight="1"
-                android:gravity="center"
-                android:text="Score:" />
-
             <LinearLayout
-                android:layout_width="127dp"
+                android:layout_width="61dp"
                 android:layout_height="match_parent"
                 android:layout_weight="1"
-                android:orientation="vertical">
-
-                <ProgressBar
-                    android:id="@+id/progressBar2"
-                    style="?android:attr/progressBarStyleHorizontal"
-                    android:layout_width="match_parent"
-                    android:layout_height="63dp" />
-
-                <TextView
-                    android:id="@+id/txtLife"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:gravity="center"
-                    android:text="Life: " />
-            </LinearLayout>
-
-            <LinearLayout
-                android:layout_width="135dp"
-                android:layout_height="match_parent"
-                android:layout_weight="1"
-                android:orientation="vertical">
+                android:orientation="horizontal">
 
                 <ImageView
                     android:id="@+id/imageView8"
-                    android:layout_width="match_parent"
-                    android:layout_height="63dp"
+                    android:layout_width="73dp"
+                    android:layout_height="39dp"
                     android:src="@drawable/ammuo" />
 
                 <TextView
@@ -150,6 +166,15 @@
                     android:text="Ammo Left:" />
 
             </LinearLayout>
+
+            <TextView
+                android:id="@+id/txtGamePoint"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:gravity="center"
+                android:text="Score:" />
+
         </LinearLayout>
 
         <LinearLayout

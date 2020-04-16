@@ -56,6 +56,7 @@ public class MenuActivity extends AppCompatActivity {
             @Override
             public  void onClick(View v){
                 HttpHelper httpHelper = new HttpHelper();
+                //TODO : check no join ready
                 httpHelper.HttpRequestForLooby("WAITING", "https://us-central1-arduino-a5968.cloudfunctions.net/addJoin");
                 changeScreen(LobyActivity.class);
                 }

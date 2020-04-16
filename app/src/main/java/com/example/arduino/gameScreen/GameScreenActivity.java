@@ -5,6 +5,7 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.CountDownTimer;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -14,6 +15,7 @@ import android.widget.TextView;
 import com.example.arduino.R;
 import com.example.arduino.initGame.Member;
 import com.example.arduino.loby.PopWindow;
+import com.example.arduino.utilities.HttpHelper;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.EventListener;
@@ -23,6 +25,7 @@ import com.google.firebase.firestore.FirebaseFirestoreException;
 import io.github.controlwear.virtual.joystick.android.JoystickView;
 
 public class GameScreenActivity extends AppCompatActivity {
+    private static final long START_TIME_IN_MILLIS = 6000000 ;
     private Game game;
     private ProgressBar pbLife;
     private TextView txtLife;
@@ -32,6 +35,10 @@ public class GameScreenActivity extends AppCompatActivity {
     private TextView txtMines;
     private TextView txtDefuse;
     private Button btnShot;
+    private TextView txtCountDown;
+    private CountDownTimer countDownTimer;
+    private boolean mTimerRunning;
+    private long mTimeLeftInMils = START_TIME_IN_MILLIS;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -60,6 +67,8 @@ public class GameScreenActivity extends AppCompatActivity {
                 num = num -1 ;
                 game.setAmmuo(num.toString());
                 txtAmmo.setText("Ammuo: - " + game.getAmmuo());
+                HttpHelper httpHelper = new HttpHelper();
+                httpHelper.HttpRequestForLooby("1","https://us-central1-arduino-a5968.cloudfunctions.net/chnageLifeInGame");
 
             }
         });

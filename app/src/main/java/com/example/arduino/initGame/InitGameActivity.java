@@ -118,6 +118,7 @@ public class InitGameActivity extends AppCompatActivity {
         Toast.makeText(getApplicationContext(), "insert data",Toast.LENGTH_LONG ).show();
         if(checkIfDataValid()){
             HttpHelper httpHelper =new HttpHelper();
+            //TODO : check no game ready
             httpHelper.HttpRequestForLooby("GAME-READY","https://us-central1-arduino-a5968.cloudfunctions.net/setGameReady");
             changeScreen(LobyActivity.class);
         }
