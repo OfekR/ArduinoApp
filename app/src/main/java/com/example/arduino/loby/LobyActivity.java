@@ -1,18 +1,26 @@
 package com.example.arduino.loby;
 
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import com.example.arduino.R;
 import com.example.arduino.gameScreen.GameScreenActivity;
+import com.example.arduino.utilities.HttpHelper;
 import com.example.arduino.utilities.MediaPlayerWrapper;
 import com.google.android.gms.common.SignInButton;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.EventListener;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.FirebaseFirestoreException;
 
 import android.content.Intent;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.MediaController;
@@ -47,7 +55,34 @@ public class LobyActivity extends AppCompatActivity {
                 }
             }
         });
+        waitForStartingGame();
 
+    }
+
+    private void waitForStartingGame() {
+        FirebaseFirestore fstore = FirebaseFirestore.getInstance();
+        final DocumentReference documentReference = fstore.collection("Appending").document("Append1");
+        documentReference.addSnapshotListener(new EventListener<DocumentSnapshot>() {
+            @Override
+            public void onEvent(@Nullable DocumentSnapshot documentSnapshot, @Nullable FirebaseFirestoreException e) {
+                assert documentSnapshot != null;
+                String valid_join = documentSnapshot.getString("waitTojoin");
+                String valid_game = documentSnapshot.getString("gameReady");
+                if(valid_game.equals("GAME-READY") && valid_join.equals("WAITING")){
+                    Log.v("LOBY-CLASS","Game-is strating");
+                    //resetValue(); TODO After we finsh the game
+                    Intent intent = new Intent(getApplicationContext(), GameScreenActivity.class);
+                    startActivity(intent);
+                }
+            }
+        });
+    }
+
+    public void resetValue(){
+        HttpHelper httpHelper = new HttpHelper();
+        HttpHelper httpHelper1 = new HttpHelper();
+        httpHelper.HttpRequestForLooby("NO-ONE-IS-WAITING", "https://us-central1-arduino-a5968.cloudfunctions.net/addJoin");
+        httpHelper1.HttpRequestForLooby("GAME-NOT-READY","https://us-central1-arduino-a5968.cloudfunctions.net/setGameReady");
 
     }
 
@@ -55,7 +90,9 @@ public class LobyActivity extends AppCompatActivity {
     protected void onPause() {
         super.onPause();
         mySong.Pause();
-        mCurrentVideoPosition = mMediaPlayer.getCurrentPosition();
+        if(mMediaPlayer != null) {
+            mCurrentVideoPosition = mMediaPlayer.getCurrentPosition();
+        }
         videoBG.pause();
     }
 
@@ -63,7 +100,9 @@ public class LobyActivity extends AppCompatActivity {
     protected void onStop() {
         super.onStop();
         mySong.Destroy();
-        mMediaPlayer.release();
+        if(mMediaPlayer != null) {
+            mMediaPlayer.release();
+        }
     }
 
     @Override
@@ -79,7 +118,9 @@ public class LobyActivity extends AppCompatActivity {
     public void onResume() {
         super.onResume();
         mySong.StartOrResume();
-        videoBG.start();
+        if(videoBG != null ) {
+            videoBG.start();
+        }
     }
 
 

@@ -8,6 +8,7 @@ import com.example.arduino.initGame.InitGameActivity;
 import com.example.arduino.loby.LobyActivity;
 import com.example.arduino.stats.StatitacsActivity;
 import com.example.arduino.ui.login.LoginActivity;
+import com.example.arduino.utilities.HttpHelper;
 import com.example.arduino.utilities.MediaPlayerWrapper;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -27,7 +28,6 @@ public class MenuActivity extends AppCompatActivity {
 
     Button joinBtn;
     Button startButton;
-    MediaPlayerWrapper mySong;
     Button statBtn;
     Button logOut;
     private FirebaseAuth.AuthStateListener mAuthStateListener;
@@ -55,8 +55,10 @@ public class MenuActivity extends AppCompatActivity {
         joinBtn.setOnClickListener(new View.OnClickListener(){
             @Override
             public  void onClick(View v){
+                HttpHelper httpHelper = new HttpHelper();
+                httpHelper.HttpRequestForLooby("WAITING", "https://us-central1-arduino-a5968.cloudfunctions.net/addJoin");
                 changeScreen(LobyActivity.class);
-            }
+                }
         });
 
         statBtn = findViewById(R.id.Stat_btn);
@@ -72,13 +74,11 @@ public class MenuActivity extends AppCompatActivity {
     @Override
     protected void onPause() {
         super.onPause();
-        mySong.Pause();
     }
 
     @Override
     protected void onStop() {
         super.onStop();
-        mySong.Destroy();
         if(mAuthStateListener != null){
             FirebaseAuth.getInstance().removeAuthStateListener(mAuthStateListener);
             mAuthStateListener = null;
@@ -89,16 +89,11 @@ public class MenuActivity extends AppCompatActivity {
     public void onStart() {
         super.onStart();
         setupFirebaseListener();
-        if(mySong == null) {
-            mySong = new MediaPlayerWrapper(R.raw.songwar,getApplicationContext());
-        }
-
     }
 
     @Override
     public void onResume() {
         super.onResume();
-        mySong.StartOrResume();
     }
 
 

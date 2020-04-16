@@ -15,6 +15,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.arduino.loby.LobyActivity;
+import com.example.arduino.utilities.HttpHelper;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.firestore.FirebaseFirestore;
 
@@ -115,13 +116,24 @@ public class InitGameActivity extends AppCompatActivity {
     private void sendData(){
         db.collection("GameSettings").add(member);
         Toast.makeText(getApplicationContext(), "insert data",Toast.LENGTH_LONG ).show();
-        changeScreen(LobyActivity.class);
+        if(checkIfDataValid()){
+            HttpHelper httpHelper =new HttpHelper();
+            httpHelper.HttpRequestForLooby("GAME-READY","https://us-central1-arduino-a5968.cloudfunctions.net/setGameReady");
+            changeScreen(LobyActivity.class);
+        }
+        else{
+            Toast.makeText(getApplicationContext(), "WRONG-DATA",Toast.LENGTH_LONG ).show();
+
+        }
+    }
+
+    private boolean checkIfDataValid() {
+        return true;
     }
 
     public void changeScreen(Class screen){
         Intent intent = new Intent(this, screen);
         startActivity(intent);
     }
-
 
 }
