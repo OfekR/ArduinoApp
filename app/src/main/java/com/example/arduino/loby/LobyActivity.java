@@ -39,11 +39,7 @@ public class LobyActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_loby);
-        videoBG = (VideoView) findViewById(R.id.videoView);
-        String path = "android.resource://"+getPackageName()+"/"+R.raw.hd1384;
-        Uri uri = Uri.parse(path);
-        videoBG.setVideoURI(uri);
-        videoBG.start();
+        initiliazeVideo();
         videoBG.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
             @Override
             public void onPrepared(MediaPlayer mp) {
@@ -59,6 +55,14 @@ public class LobyActivity extends AppCompatActivity {
 
     }
 
+    public void initiliazeVideo(){
+        videoBG = (VideoView) findViewById(R.id.videoView);
+        String path = "android.resource://"+getPackageName()+"/"+R.raw.hd1384;
+        Uri uri = Uri.parse(path);
+        videoBG.setVideoURI(uri);
+        videoBG.start();
+    }
+
     private void waitForStartingGame() {
         FirebaseFirestore fstore = FirebaseFirestore.getInstance();
         final DocumentReference documentReference = fstore.collection("Appending").document("Append1");
@@ -71,7 +75,7 @@ public class LobyActivity extends AppCompatActivity {
                 if(valid_game.equals("GAME-READY") && valid_join.equals("WAITING")){
                     Log.v("LOBY-CLASS","Game-is strating");
                     //resetValue(); TODO After we finsh the game
-                    Intent intent = new Intent(getApplicationContext(), GameScreenActivity.class);
+                    Intent intent = new Intent(getApplicationContext(), PopWindow.class);
                     startActivity(intent);
                 }
             }
