@@ -54,7 +54,7 @@ public class HttpHelper {
             @Override
             public void onEvent(@Nullable DocumentSnapshot documentSnapshot, @Nullable FirebaseFirestoreException e) {
                 assert documentSnapshot != null;
-                if(documentSnapshot.getString("waitTojoin") == null){
+                if(documentSnapshot.getString(field) == null){
                     Log.v("HTTP-CLASS","NULL-PROBLEM!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
 
                 }

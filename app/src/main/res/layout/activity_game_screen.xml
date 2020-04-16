@@ -72,7 +72,7 @@
                 android:orientation="horizontal">
 
                 <TextView
-                    android:id="@+id/textView3"
+                    android:id="@+id/txtGameKeys"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
@@ -80,7 +80,7 @@
                     android:text="Keys:" />
 
                 <TextView
-                    android:id="@+id/textView4"
+                    android:id="@+id/txtGameMines"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
@@ -88,7 +88,7 @@
                     android:text="Mines:" />
 
                 <TextView
-                    android:id="@+id/textView6"
+                    android:id="@+id/txtGameDefuse"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
@@ -103,12 +103,32 @@
             android:orientation="horizontal">
 
             <TextView
-                android:id="@+id/textView13"
+                android:id="@+id/txtGamePoint"
                 android:layout_width="wrap_content"
                 android:layout_height="match_parent"
                 android:layout_weight="1"
                 android:gravity="center"
-                android:text="Current Score:" />
+                android:text="Score:" />
+
+            <LinearLayout
+                android:layout_width="127dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <ProgressBar
+                    android:id="@+id/progressBar2"
+                    style="?android:attr/progressBarStyleHorizontal"
+                    android:layout_width="match_parent"
+                    android:layout_height="63dp" />
+
+                <TextView
+                    android:id="@+id/txtLife"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:text="Life: " />
+            </LinearLayout>
 
             <LinearLayout
                 android:layout_width="135dp"
@@ -123,7 +143,7 @@
                     android:src="@drawable/ammuo" />
 
                 <TextView
-                    android:id="@+id/textView8"
+                    android:id="@+id/txtAmmouLeft"
                     android:layout_width="match_parent"
                     android:layout_height="36dp"
                     android:gravity="center"
@@ -192,7 +212,7 @@
                 android:orientation="vertical">
 
                 <Button
-                    android:id="@+id/button2"
+                    android:id="@+id/btGameShoot"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
                     android:text="Shoot"

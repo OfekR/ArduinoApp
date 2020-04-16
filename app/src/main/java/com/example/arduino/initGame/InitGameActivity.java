@@ -114,7 +114,7 @@ public class InitGameActivity extends AppCompatActivity {
     }
 
     private void sendData(){
-        db.collection("GameSettings").add(member);
+        db.collection("GameSettings").document("doucment1").update(member.getMap());
         Toast.makeText(getApplicationContext(), "insert data",Toast.LENGTH_LONG ).show();
         if(checkIfDataValid()){
             HttpHelper httpHelper =new HttpHelper();
@@ -123,7 +123,6 @@ public class InitGameActivity extends AppCompatActivity {
         }
         else{
             Toast.makeText(getApplicationContext(), "WRONG-DATA",Toast.LENGTH_LONG ).show();
-
         }
     }
 

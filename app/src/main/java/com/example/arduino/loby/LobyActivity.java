@@ -4,6 +4,7 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import com.example.arduino.R;
 import com.example.arduino.gameScreen.GameScreenActivity;
+import com.example.arduino.initGame.Member;
 import com.example.arduino.menu.MenuActivity;
 import com.example.arduino.utilities.HttpHelper;
 import com.example.arduino.utilities.MediaPlayerWrapper;
@@ -83,9 +84,9 @@ public class LobyActivity extends AppCompatActivity {
             public void onEvent(@Nullable DocumentSnapshot documentSnapshot, @Nullable FirebaseFirestoreException e) {
                 assert documentSnapshot != null;
                 String valid_join = documentSnapshot.getString("waitTojoin");
-                String valid_game = documentSnapshot.getString("gameReady");
+                final String valid_game = documentSnapshot.getString("gameReady");
                 if(valid_game.equals("GAME-READY") && valid_join.equals("WAITING")){
-                    Log.v("LOBY-CLASS","Game-is strating");
+                    Log.v("LOBY-CLASS","Game-is strating" );
                     //resetValue(); TODO After we finsh the game
                     Intent intent = new Intent(getApplicationContext(), PopWindow.class);
                     startActivity(intent);
