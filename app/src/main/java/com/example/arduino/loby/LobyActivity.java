@@ -4,6 +4,7 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import com.example.arduino.R;
 import com.example.arduino.gameScreen.GameScreenActivity;
+import com.example.arduino.menu.MenuActivity;
 import com.example.arduino.utilities.HttpHelper;
 import com.example.arduino.utilities.MediaPlayerWrapper;
 import com.google.android.gms.common.SignInButton;
@@ -33,12 +34,23 @@ public class LobyActivity extends AppCompatActivity {
     private MediaPlayer mMediaPlayer;
     int mCurrentVideoPosition;
     private VideoView videoBG;
+    private  Button btBack;
     private MediaPlayerWrapper mySong;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_loby);
+        btBack = (Button) findViewById(R.id.Lobybutton);
+        btBack.setOnClickListener(new View.OnClickListener(){
+            @Override
+            public  void onClick(View v){
+                HttpHelper httpHelper = new HttpHelper();
+                httpHelper.HttpRequestForLooby("NO-ONE-IS-WAITING", "https://us-central1-arduino-a5968.cloudfunctions.net/addJoin");
+                Intent intent = new Intent(getApplicationContext(), MenuActivity.class);
+                startActivity(intent);
+            }
+        });
         initiliazeVideo();
         videoBG.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
             @Override

@@ -2,12 +2,15 @@ package com.example.arduino.loby;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.content.Intent;
+import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Bundle;
 import android.util.DisplayMetrics;
 import android.widget.VideoView;
 
 import com.example.arduino.R;
+import com.example.arduino.menu.MenuActivity;
 
 public class PopWindow extends AppCompatActivity {
     private VideoView videoBG;
@@ -18,6 +21,15 @@ public class PopWindow extends AppCompatActivity {
         setContentView(R.layout.activity_pop_window);
         initiliazeVideo();
         initManger();
+        // video finish listener
+        videoBG.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+
+            @Override
+            public void onCompletion(MediaPlayer mp) {
+                Intent intent = new Intent(getApplicationContext(),com.example.arduino.gameScreen.GameScreenActivity.class);
+                startActivity(intent);
+            }
+        });
 
     }
     public void initiliazeVideo(){
