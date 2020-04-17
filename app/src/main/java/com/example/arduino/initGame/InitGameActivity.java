@@ -41,7 +41,7 @@ public class InitGameActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_init_game);
+        setContentView(R.layout.initlayouts);
         member = new Member();
         db = FirebaseFirestore.getInstance();
 
