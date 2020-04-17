@@ -107,7 +107,7 @@ exports.endOfGameSendder = functions.https.onRequest((req, res) => {
                     var player = "pointsPlayer"+token;
                     old_val = real_data[player];
                     new_val = parseInt(old_val) - parseInt("1")
-                    let updateData = tokenDoc.update({pointsPlayer1:num});
+                    let updateData = tokenDoc.update({pointsPlayer1:token});
                     return res.status(200).send(old_val);
                 }
             })

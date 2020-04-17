@@ -18,6 +18,7 @@ import com.example.arduino.initGame.Member;
 import com.example.arduino.loby.PopWindow;
 import com.example.arduino.stats.PlayerStats;
 import com.example.arduino.utilities.HttpHelper;
+import com.example.arduino.utilities.MediaPlayerWrapper;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.firestore.DocumentReference;
@@ -29,6 +30,12 @@ import com.google.firebase.firestore.FirebaseFirestoreException;
 import java.util.Locale;
 
 import io.github.controlwear.virtual.joystick.android.JoystickView;
+
+
+/*
+TODO : we need to reorganize the class.
+TODO : add the auth with the game for change the field in the database
+ */
 
 public class GameScreenActivity extends AppCompatActivity {
     private static final long START_TIME_IN_MILLIS = 600000 ;
@@ -45,14 +52,13 @@ public class GameScreenActivity extends AppCompatActivity {
     private CountDownTimer countDownTimer;
     private boolean mTimerRunning;
     private long mTimeLeftInMils = START_TIME_IN_MILLIS;
+    private MediaPlayerWrapper mySong;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_game_screen);
         findAllView();
-
-
-        pbLife.setProgress(3);
         getDataFromSetting();
         JoystickView joystick = (JoystickView) findViewById(R.id.joystickView);
         joystick.setOnMoveListener(new JoystickView.OnMoveListener() {
@@ -67,19 +73,30 @@ public class GameScreenActivity extends AppCompatActivity {
             public void onClick(View v) {
                 Integer num =Integer.parseInt(game.getAmmuo());
                 num = num -1 ;
-                game.setAmmuo(num.toString());
-                txtAmmo.setText("Ammuo: - " + game.getAmmuo());
-                HttpHelper httpHelper = new HttpHelper();
-                httpHelper.HttpRequestForLooby("1","https://us-central1-arduino-a5968.cloudfunctions.net/chnageLifeInGame");
+                if(num > 0 ){
+                    mySong = new MediaPlayerWrapper(R.raw.goodgunshot,getApplicationContext());
+                    mySong.StartOrResume();
+                    game.setAmmuo(num.toString());
+                    txtAmmo.setText("Ammuo: - " + game.getAmmuo());
+                    HttpHelper httpHelper = new HttpHelper();
+                    httpHelper.HttpRequestForLooby("1","https://us-central1-arduino-a5968.cloudfunctions.net/chnageLifeInGame");
+                    mySong = new MediaPlayerWrapper(R.raw.boom,getApplicationContext());
+                    mySong.StartOrResume();
+
+                }
+                else{
+                    txtAmmo.setText("NO- Ammuo - !!!!!!!!: - ");
+                }
+
 
             }
         });
 
         startTimer();
-        ListnerForChangeInGame();
         HttpHelper httpHelper = new HttpHelper();
         httpHelper.HttpRequestForLooby(game.getPoint(),"https://us-central1-arduino-a5968.cloudfunctions.net/endOfGameSender");
-        checkForWin();
+        ListnerForChangeInGame();
+
     }
 
     private void findAllView(){
@@ -110,15 +127,28 @@ public class GameScreenActivity extends AppCompatActivity {
 
     private void checkForWin() {
        HttpHelper httpHelper = new HttpHelper();
-       httpHelper.HttpRequestForLooby("1","https://us-central1-arduino-a5968.cloudfunctions.net/endOfGameSender?num="+game.getPoint());
+       httpHelper.HttpRequestForLooby(game.getPoint(),"https://us-central1-arduino-a5968.cloudfunctions.net/endOfGameSendder");
+       gameOver();
     }
 
     private void updateCountDownText() {
         int minutes = (int) (mTimeLeftInMils/1000)/60;
         int seconds = (int) (mTimeLeftInMils/1000)%60;
 
-        String timeLeftFromat = String.format(Locale.getDefault(),"%02d:%02d",minutes,seconds);
-        txtCountDown.setText(timeLeftFromat);
+        if (seconds == 0 && minutes == 0){
+            checkForWin();
+        }
+        else if(seconds < 10 && minutes == 0){
+
+            mySong = new MediaPlayerWrapper(R.raw.countdownbeep,getApplicationContext());
+            mySong.StartOrResume();
+            String timeLeftFromat = String.format(Locale.getDefault(), "%01d",seconds);
+            txtCountDown.setText(timeLeftFromat);
+        }
+        else {
+            String timeLeftFromat = String.format(Locale.getDefault(), "%02d:%02d", minutes, seconds);
+            txtCountDown.setText(timeLeftFromat);
+        }
     }
 
 
@@ -133,7 +163,7 @@ public class GameScreenActivity extends AppCompatActivity {
         game = new Game(member);
         game.setPoint("200");
         txtAmmo.setText("Ammuo Left:" + game.getAmmuo());
-        txtLife.setText("LIFE- 3");
+        txtLife.setText("LIFE- 3"); // TODO set to 100
         txtScore.setText("SCORE- 0");
         txtKeys.setText("KEYS - 0");
         txtMines.setText("MINES - 0");
@@ -162,5 +192,34 @@ public class GameScreenActivity extends AppCompatActivity {
     }
 
     private void gameOver() {
+        FirebaseFirestore fstore = FirebaseFirestore.getInstance();
+        final DocumentReference documentReference = fstore.collection("Game").document("endgame");
+        documentReference.addSnapshotListener(new EventListener<DocumentSnapshot>() {
+            @Override
+            public void onEvent(@Nullable DocumentSnapshot documentSnapshot, @Nullable FirebaseFirestoreException e) {
+                assert documentSnapshot != null;
+                String valid_player1 = documentSnapshot.getString("valid1");
+                final String valid_player2 = documentSnapshot.getString("valid2");
+                if (valid_player1.equals("1") && valid_player2.equals("1")) {
+                    Log.v("GAME-CLASS", "GAME------------FINISHED");
+                    resetValue(); //reset game setting value
+                    sendDataTodataBase(); //TODO
+                    Intent intent = new Intent(getApplicationContext(), PopWindowGameOver.class); // Todo change for the right screen
+                    startActivity(intent);
+                }
+            }
+        });
+    }
+
+    private void sendDataTodataBase() {
+        //create document to send the values at end of the game
+    }
+
+    public void resetValue(){
+        HttpHelper httpHelper = new HttpHelper();
+        HttpHelper httpHelper1 = new HttpHelper();
+        httpHelper.HttpRequestForLooby("NO-ONE-IS-WAITING", "https://us-central1-arduino-a5968.cloudfunctions.net/addJoin");
+        httpHelper1.HttpRequestForLooby("GAME-NOT-READY","https://us-central1-arduino-a5968.cloudfunctions.net/setGameReady");
+
     }
 }

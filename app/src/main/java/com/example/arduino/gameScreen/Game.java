@@ -3,13 +3,17 @@ import android.os.Parcelable;
 import android.util.Log;
 
 import com.example.arduino.initGame.Member;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.firestore.FirebaseFirestore;
 
 public class Game {
+
     private String life;
     private String Ammuo;
     private String time;
     private  String type;
     private String point;
+    private String playerID;
 
     public String getTime() {
         return time;
@@ -35,7 +39,7 @@ public class Game {
         this.time =  (String) meb.getTime();
         this.Ammuo =  (String) meb.getNumberShot();
         this.type = (String) meb.getGameType();
-        Log.d("OWW-TAG----->","the parma of :"+"shot: "+Ammuo+"time:  "+ time);
+        this.playerID = "1";  //TODO change for real player number
 
     }
 

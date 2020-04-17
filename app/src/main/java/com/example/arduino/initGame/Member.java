@@ -57,13 +57,11 @@ public class Member implements Parcelable {
     }
     @Override
     public int describeContents() {
-// TODO Auto-generated method stub
         return 0;
     }
 
     @Override
     public void writeToParcel(Parcel dest, int flags) {
-// TODO Auto-generated method stub
 
         dest.writeStringArray(new String[]{this.time, this.numberShot,this.type });
     }
@@ -72,13 +70,11 @@ public class Member implements Parcelable {
 
         @Override
         public Member createFromParcel(Parcel source) {
-// TODO Auto-generated method stub
             return new Member(source);  //using parcelable constructor
         }
 
         @Override
         public Member[] newArray(int size) {
-// TODO Auto-generated method stub
             return new Member[size];
         }
     };

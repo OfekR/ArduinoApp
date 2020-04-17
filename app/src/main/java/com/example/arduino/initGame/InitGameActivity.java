@@ -1,5 +1,6 @@
 package com.example.arduino.initGame;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.Intent;
@@ -15,8 +16,13 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.arduino.loby.LobyActivity;
+import com.example.arduino.menu.MenuActivity;
 import com.example.arduino.utilities.HttpHelper;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
 import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 
 import com.example.arduino.R;
@@ -117,14 +123,42 @@ public class InitGameActivity extends AppCompatActivity {
         db.collection("GameSettings").document("doucment1").update(member.getMap());
         Toast.makeText(getApplicationContext(), "insert data",Toast.LENGTH_LONG ).show();
         if(checkIfDataValid()){
-            HttpHelper httpHelper =new HttpHelper();
-            //TODO : check no game ready
-            httpHelper.HttpRequestForLooby("GAME-READY","https://us-central1-arduino-a5968.cloudfunctions.net/setGameReady");
-            changeScreen(LobyActivity.class);
+            checkForGameReady();
         }
         else{
             Toast.makeText(getApplicationContext(), "WRONG-DATA",Toast.LENGTH_LONG ).show();
         }
+    }
+    private void checkForGameReady() {
+        FirebaseFirestore fstore = FirebaseFirestore.getInstance();
+        DocumentReference docRef = fstore.collection("Appending").document("Append1");
+        docRef.get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
+            @Override
+            public void onComplete(@NonNull Task<DocumentSnapshot> task) {
+                if (task.isSuccessful()) {
+                    DocumentSnapshot snapshot= task.getResult();
+                    String valid_join = snapshot.getString("gameReady");
+                    // another player is already started a game
+                    if (valid_join.equals("GAME-READY")) {
+                        Log.v("MENU-CLASS", "SOMEONE IS ALREADY START A GAME");
+                        Toast.makeText(InitGameActivity.this, "SOMEONE IS ALREADY START A GAME",
+                                Toast.LENGTH_SHORT).show();
+
+
+                    }
+                    // you can start a game
+                    else if (valid_join.equals("GAME-NOT-READY")) {
+                        HttpHelper httpHelper = new HttpHelper();
+                        httpHelper.HttpRequestForLooby("GAME-READY","https://us-central1-arduino-a5968.cloudfunctions.net/setGameReady");
+                        changeScreen(LobyActivity.class);
+                    }
+                    // check for athoer senrio if we want 3 state
+                    else {
+
+                    }
+                }
+            }
+        });
     }
 
     private boolean checkIfDataValid() {

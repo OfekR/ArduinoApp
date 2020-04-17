@@ -87,7 +87,6 @@ public class LobyActivity extends AppCompatActivity {
                 final String valid_game = documentSnapshot.getString("gameReady");
                 if(valid_game.equals("GAME-READY") && valid_join.equals("WAITING")){
                     Log.v("LOBY-CLASS","Game-is strating" );
-                    //resetValue(); TODO After we finsh the game
                     Intent intent = new Intent(getApplicationContext(), PopWindow.class);
                     startActivity(intent);
                 }
@@ -95,13 +94,7 @@ public class LobyActivity extends AppCompatActivity {
         });
     }
 
-    public void resetValue(){
-        HttpHelper httpHelper = new HttpHelper();
-        HttpHelper httpHelper1 = new HttpHelper();
-        httpHelper.HttpRequestForLooby("NO-ONE-IS-WAITING", "https://us-central1-arduino-a5968.cloudfunctions.net/addJoin");
-        httpHelper1.HttpRequestForLooby("GAME-NOT-READY","https://us-central1-arduino-a5968.cloudfunctions.net/setGameReady");
 
-    }
 
     @Override
     protected void onPause() {

@@ -1,17 +1,27 @@
 package com.example.arduino.menu;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import com.example.arduino.R;
 import com.example.arduino.defines.LogDefs;
 import com.example.arduino.initGame.InitGameActivity;
 import com.example.arduino.loby.LobyActivity;
+import com.example.arduino.loby.PopWindow;
 import com.example.arduino.stats.StatitacsActivity;
 import com.example.arduino.ui.login.LoginActivity;
 import com.example.arduino.utilities.HttpHelper;
 import com.example.arduino.utilities.MediaPlayerWrapper;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.EventListener;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.FirebaseFirestoreException;
 
 import android.app.AlertDialog;
 import android.content.DialogInterface;
@@ -55,10 +65,7 @@ public class MenuActivity extends AppCompatActivity {
         joinBtn.setOnClickListener(new View.OnClickListener(){
             @Override
             public  void onClick(View v){
-                HttpHelper httpHelper = new HttpHelper();
-                //TODO : check no join ready
-                httpHelper.HttpRequestForLooby("WAITING", "https://us-central1-arduino-a5968.cloudfunctions.net/addJoin");
-                changeScreen(LobyActivity.class);
+                checkforJoin();
                 }
         });
 
@@ -70,6 +77,38 @@ public class MenuActivity extends AppCompatActivity {
             }
         });
 
+    }
+
+    private void checkforJoin() {
+        FirebaseFirestore fstore = FirebaseFirestore.getInstance();
+        DocumentReference docRef = fstore.collection("Appending").document("Append1");
+        docRef.get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
+            @Override
+            public void onComplete(@NonNull Task<DocumentSnapshot> task) {
+                if (task.isSuccessful()) {
+                    DocumentSnapshot snapshot= task.getResult();
+                    String valid_join = snapshot.getString("waitTojoin");
+                    // antoher player is already wating
+                    if (valid_join.equals("WAITING")) {
+                        Log.v("MENU-CLASS", "SOMEONE - IS ALREADY WAITS");
+                        Toast.makeText(MenuActivity.this, "SOMEONE - IS ALREADY WAITS",
+                                Toast.LENGTH_SHORT).show();
+
+
+                    }
+                    // you can join game
+                    else if (valid_join.equals("NO-ONE-IS-WAITING")) {
+                        HttpHelper httpHelper = new HttpHelper();
+                        httpHelper.HttpRequestForLooby("WAITING", "https://us-central1-arduino-a5968.cloudfunctions.net/addJoin");
+                        changeScreen(LobyActivity.class);
+                    }
+                    // check for athoer senrio if we want 3 state
+                    else {
+
+                    }
+                }
+            }
+        });
     }
 
     @Override
