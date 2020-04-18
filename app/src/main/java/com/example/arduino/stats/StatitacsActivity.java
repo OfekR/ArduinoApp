@@ -56,11 +56,12 @@ public class StatitacsActivity extends AppCompatActivity {
 
         listView = (ListView)findViewById(R.id.listView1);
 
-        PlayerStats.writeStats(userId, new PlayerStats(1,2,3,4,5,6,7,8,10,9));
+        //PlayerStats.writeStats(userId, new PlayerStats(1,2,3,4,5,6,7,8,10,9));
         DocumentReference documentReference = db.collection("PlayerStats").document(userId);
         documentReference.get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
             @Override
             public void onComplete(@NonNull Task<DocumentSnapshot> task) {
+                //TODO - handle warnings?
                 gamesPlayed = task.getResult().getLong("gamesPlayed");
                 gamesWon = task.getResult().getLong("gamesWon");
                 gamesLost = task.getResult().getLong("gamesLost");

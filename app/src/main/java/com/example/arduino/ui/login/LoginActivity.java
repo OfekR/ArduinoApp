@@ -22,6 +22,7 @@ import android.widget.Toast;
 import com.example.arduino.R;
 import com.example.arduino.defines.LogDefs;
 import com.example.arduino.menu.MenuActivity;
+import com.example.arduino.stats.PlayerStats;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthResult;
@@ -48,7 +49,6 @@ public class LoginActivity extends AppCompatActivity {
     public void onStart() {
         super.onStart();
 
-
         // Check if user is signed in (non-null) and update UI accordingly.
         FirebaseUser currentUser = mAuth.getCurrentUser();
         updateUI(currentUser);
@@ -67,8 +67,8 @@ public class LoginActivity extends AppCompatActivity {
 
     //add stats document for new registered user
     static public void CreateStatsDocument(FirebaseUser user) {
-        //TODO impl, consider move this to utilities
-        //return;
+        PlayerStats emptyStats = new PlayerStats();
+        PlayerStats.writeStats(user.getUid(),emptyStats);
     }
 
     @Override

@@ -29,6 +29,21 @@ public class PlayerStats {
     long hitPercentage;
 
 
+    //C'tor to create new player stats
+    public PlayerStats() {
+        gamesPlayed = 0;
+        gamesWon = 0;
+        gamesLost = 0;
+        totalPoints = 0;
+        bestTime = 0;
+        mostLaserHits = 0;
+        mostBombHits = 0;
+        totalBombHits = 0;
+        totalShots = 0;
+        totalHits = 0;
+        hitPercentage = 0;
+    }
+
     public PlayerStats(long gamesPlayed, long gamesWon, long gamesLost, long totalPoints, long bestTime, long mostLaserHits, long mostBombHits, long totalBombHits, long totalShots, long totalHits) {
         this.gamesPlayed = gamesPlayed;
         this.gamesWon = gamesWon;
