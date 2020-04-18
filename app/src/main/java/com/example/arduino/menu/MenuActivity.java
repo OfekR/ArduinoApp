@@ -32,6 +32,8 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
 
+import java.util.Objects;
+
 public class MenuActivity extends AppCompatActivity {
     private static final String TAG = LogDefs.tagMenu;
 
@@ -100,7 +102,10 @@ public class MenuActivity extends AppCompatActivity {
                     else if (valid_join.equals("NO-ONE-IS-WAITING")) {
                         HttpHelper httpHelper = new HttpHelper();
                         httpHelper.HttpRequestForLooby("WAITING", "https://us-central1-arduino-a5968.cloudfunctions.net/addJoin");
-                        changeScreen(LobyActivity.class);
+                        HttpHelper httpHelper1 = new HttpHelper();
+                        httpHelper1.HttpRequestForLooby(Objects.requireNonNull(FirebaseAuth.getInstance().getCurrentUser()).getUid(),"https://us-central1-arduino-a5968.cloudfunctions.net/setPlayerId2");
+                        Intent intent = new Intent(getApplicationContext(),LobyActivity.class);
+                        startActivity(intent);
                     }
                     // check for athoer senrio if we want 3 state
                     else {
@@ -162,10 +167,6 @@ public class MenuActivity extends AppCompatActivity {
     }
 
     /*  Private Methods */
-    private void changeScreen(Class screen){
-        Intent intent = new Intent(this, screen);
-        startActivity(intent);
-    }
 
     private void SignOut() {
         Log.d(TAG,LogDefs.signoutMsg);
@@ -209,6 +210,9 @@ public class MenuActivity extends AppCompatActivity {
         FirebaseAuth.getInstance().addAuthStateListener(mAuthStateListener);
     }
 
-
+    public void changeScreen(Class screen){
+        Intent intent = new Intent(this, screen);
+        startActivity(intent);
+    }
 
 }

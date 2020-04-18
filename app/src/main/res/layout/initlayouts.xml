@@ -3,20 +3,20 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:background="@color/design_default_color_on_secondary"
+    android:background="@drawable/woodland"
     android:layout_height="match_parent">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="@color/design_default_color_on_secondary"
+        
         android:orientation="vertical">
 
         <LinearLayout
             android:id="@+id/linearLayout4"
             android:layout_width="432dp"
             android:layout_height="106dp"
-            android:background="@color/design_default_color_on_secondary"
+            
             android:gravity="bottom"
             android:orientation="horizontal"
             android:paddingLeft="10dp"
@@ -50,14 +50,14 @@
             android:layout_width="419dp"
             android:layout_height="580dp"
             android:layout_marginBottom="1dp"
-            android:background="@color/design_default_color_on_secondary"
+            
             android:gravity="bottom|center_horizontal"
             android:orientation="horizontal">
 
             <LinearLayout
                 android:layout_width="189dp"
                 android:layout_height="564dp"
-                android:background="@color/design_default_color_on_secondary"
+                
                 android:gravity="clip_horizontal|top"
                 android:orientation="vertical"
                 android:paddingLeft="10dp"
@@ -65,9 +65,9 @@
                 android:paddingBottom="10dp">
 
                 <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="120dp"
-                    android:background="#03A9F4"
+                    android:layout_width="173dp"
+                    android:layout_height="137dp"
+                    android:background="@drawable/coustombroder2"
                     android:orientation="vertical"
                     android:paddingLeft="10dp"
                     android:paddingTop="10dp"
@@ -77,7 +77,6 @@
                         android:id="@+id/imageView12"
                         android:layout_width="match_parent"
                         android:layout_height="40dp"
-                        android:background="#03A9F4"
                         android:paddingTop="10dp"
                         app:srcCompat="@drawable/time" />
 
@@ -93,13 +92,13 @@
                         android:layout_height="37dp"
                         android:gravity="center"
                         android:text="1 Min"
-                        android:textColor="@color/design_default_color_on_secondary" />
+                        android:textColor="@color/design_default_color_on_primary" />
                 </LinearLayout>
 
                 <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="120dp"
-                    android:background="#673AB7"
+                    android:layout_width="173dp"
+                    android:layout_height="137dp"
+                    android:background="@drawable/customborder4"
                     android:orientation="vertical"
                     android:paddingLeft="10dp"
                     android:paddingTop="10dp"
@@ -123,13 +122,14 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:gravity="center"
-                        android:text="0" />
+                        android:text="0"
+                        android:textColor="#FFFFFF" />
                 </LinearLayout>
 
                 <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="120dp"
-                    android:background="#E91E63"
+                    android:layout_width="173dp"
+                    android:layout_height="137dp"
+                    android:background="@drawable/customborder6"
                     android:orientation="vertical"
                     android:paddingLeft="10dp"
                     android:paddingTop="10dp"
@@ -145,17 +145,18 @@
                         app:srcCompat="@drawable/mine" />
 
                     <SeekBar
-                        android:id="@+id/seekBar11"
+                        android:id="@+id/seekBarMines"
                         android:layout_width="match_parent"
                         android:layout_height="30dp"
                         android:max="2" />
 
                     <TextView
-                        android:id="@+id/textView12"
+                        android:id="@+id/txtInitMines"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:gravity="center"
-                        android:text="Mines" />
+                        android:text="Mines"
+                        android:textColor="#FFFFFF" />
 
 
                 </LinearLayout>
@@ -164,7 +165,7 @@
             <LinearLayout
                 android:layout_width="206dp"
                 android:layout_height="562dp"
-                android:background="@color/design_default_color_on_secondary"
+                
                 android:gravity="clip_vertical|top"
                 android:orientation="vertical"
                 android:paddingLeft="10dp"
@@ -172,9 +173,9 @@
                 android:paddingBottom="10dp">
 
                 <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="120dp"
-                    android:background="#952D2D"
+                    android:layout_width="173dp"
+                    android:layout_height="137dp"
+                    android:background="@drawable/custombroder3"
                     android:orientation="vertical"
                     android:paddingRight="10dp"
                     android:paddingBottom="10dp">
@@ -182,31 +183,31 @@
                     <ImageView
                         android:id="@+id/imageView13"
                         android:layout_width="match_parent"
-                        android:layout_height="40dp"
-                        android:paddingTop="10dp"
+                        android:layout_height="50dp"
+                        android:paddingTop="20dp"
                         app:srcCompat="@drawable/level" />
 
                     <SeekBar
                         android:id="@+id/seekBar3"
                         style="@style/Widget.AppCompat.SeekBar.Discrete"
                         android:layout_width="match_parent"
-                        android:layout_height="30dp"
+                        android:layout_height="33dp"
                         android:max="2"
                         android:progress="3" />
 
                     <TextView
                         android:id="@+id/txtLevel"
                         android:layout_width="match_parent"
-                        android:layout_height="44dp"
+                        android:layout_height="41dp"
                         android:gravity="center"
-                        android:text="Easy"
-                        android:textColor="@color/design_default_color_on_secondary" />
+                        android:text="CAPTURE-THE-FLAG"
+                        android:textColor="@color/design_default_color_on_primary" />
                 </LinearLayout>
 
                 <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="120dp"
-                    android:background="#8BC34A"
+                    android:layout_width="173dp"
+                    android:layout_height="137dp"
+                    android:background="@drawable/customborder5"
                     android:orientation="vertical"
                     android:paddingTop="10dp"
                     android:paddingRight="10dp"
@@ -220,33 +221,35 @@
                         app:srcCompat="@drawable/keys" />
 
                     <SeekBar
-                        android:id="@+id/seekBar7"
+                        android:id="@+id/seekBarKeys"
                         android:layout_width="match_parent"
                         android:layout_height="30dp"
                         android:max="2" />
 
                     <TextView
-                        android:id="@+id/textView6"
+                        android:id="@+id/txtInitKeys"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:gravity="center"
-                        android:text="keys:" />
+                        android:text="keys:"
+                        android:textColor="#FFFFFF" />
                 </LinearLayout>
 
                 <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="120dp"
+                    android:layout_width="173dp"
+                    android:layout_height="137dp"
 
                     android:orientation="vertical">
 
                     <Button
                         android:id="@+id/sendData"
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:background="#CF9F0F"
+                        android:layout_width="173dp"
+                        android:layout_height="137dp"
+                        android:background="@drawable/customborder"
                         android:paddingRight="10dp"
                         android:paddingBottom="20dp"
-                        android:text="START-GAME" />
+                        android:text="START-GAME"
+                        android:textColor="#FFFFFF" />
                 </LinearLayout>
             </LinearLayout>
 

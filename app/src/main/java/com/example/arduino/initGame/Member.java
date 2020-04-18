@@ -12,9 +12,41 @@ public class Member implements Parcelable {
     private  String type;
     private  String numberShot;
     private  String time;
+    private  String keys;
+    private  String mines;
+    private  String player1;
+    private  String player2;
     private Map<String, Object> data = new HashMap<String, Object>();
 
+    public String getType() {
+        return type;
+    }
+
+    public String getKeys() {
+        return keys;
+    }
+
+    public String getMines() {
+        return mines;
+    }
+
     public Member() {
+    }
+
+    public String getPlayer1() {
+        return player1;
+    }
+
+    public void setPlayer1(String player1) {
+        this.player1 = player1;
+    }
+
+    public String getPlayer2() {
+        return player2;
+    }
+
+    public void setPlayer2(String player2) {
+        this.player2 = player2;
     }
 
     public Object getGameType() {
@@ -48,12 +80,16 @@ public class Member implements Parcelable {
         return data;
     }
     public Member(Parcel in){
-        String[] data= new String[3];
+        String[] data= new String[7];
 
         in.readStringArray(data);
         this.time= data[0];
         this.numberShot= data[1];
         this.type=data[2];
+        this.keys=data[3];
+        this.mines=data[4];
+        this.player1=data[5];
+        this.player2=data[6];
     }
     @Override
     public int describeContents() {
@@ -63,7 +99,7 @@ public class Member implements Parcelable {
     @Override
     public void writeToParcel(Parcel dest, int flags) {
 
-        dest.writeStringArray(new String[]{this.time, this.numberShot,this.type });
+        dest.writeStringArray(new String[]{this.time, this.numberShot,this.type,this.keys,this.mines,this.player1,this.player2});
     }
 
     public static final Parcelable.Creator<Member> CREATOR = new Parcelable.Creator<Member>() {
@@ -78,4 +114,12 @@ public class Member implements Parcelable {
             return new Member[size];
         }
     };
+
+    public void setKeys(String valueOf) {
+        this.keys = valueOf;
+    }
+
+    public void setMines(String valueOf) {
+        this.mines = valueOf;
+    }
 }

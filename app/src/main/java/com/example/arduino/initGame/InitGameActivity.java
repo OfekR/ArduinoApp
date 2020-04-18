@@ -17,15 +17,19 @@ import android.widget.Toast;
 
 import com.example.arduino.loby.LobyActivity;
 import com.example.arduino.menu.MenuActivity;
+import com.example.arduino.menu.PlayerId;
 import com.example.arduino.utilities.HttpHelper;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
+import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 
 import com.example.arduino.R;
+
+import java.util.Objects;
 
 public class InitGameActivity extends AppCompatActivity {
     private TextView textView;
@@ -37,25 +41,16 @@ public class InitGameActivity extends AppCompatActivity {
     private FirebaseFirestore db;
     private Member member;
     private Button sendDt;
+    private TextView txtMines;
+    private TextView txtKeys;
+    private SeekBar seekBarMines;
+    private SeekBar seekBarKeys;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.initlayouts);
-        member = new Member();
-        db = FirebaseFirestore.getInstance();
-
-
-        sendDt = (Button) findViewById(R.id.sendData);
-        textView =(TextView) findViewById(R.id.txtMin);
-        textLevel =(TextView) findViewById(R.id.txtLevel);
-        txtShots = (TextView) findViewById(R.id.txtShots);
-        seekBarTime = (SeekBar) findViewById(R.id.seekBar);
-        seekBarShots = (SeekBar) findViewById(R.id.seekBar2);
-        seekBarLevel = (SeekBar) findViewById(R.id.seekBar3);
-        seekBarLevel.setProgress(0);
-        seekBarShots.setProgress(0);
-        seekBarTime.setProgress(0);
+        priviteInitButton();
         seekBarShots.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener(){
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
@@ -93,9 +88,9 @@ public class InitGameActivity extends AppCompatActivity {
         seekBarLevel.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                if(progress == 0)  textLevel.setText("Level -" + String.valueOf(progress) + " Easy");
-                if(progress == 1)  textLevel.setText("Level - " + String.valueOf(progress) + " Hard");
-                if(progress == 2)  textLevel.setText("Level - " + String.valueOf(progress) + " Hell");
+                if(progress == 0)  textLevel.setText("CAPTURE-THE-FLAG");
+                if(progress == 1)  textLevel.setText("HIGH-SCORE");
+                if(progress == 2)  textLevel.setText("LAST-TANK-REMAINING");
                 member.setGameType(String.valueOf(progress));
             }
 
@@ -109,7 +104,40 @@ public class InitGameActivity extends AppCompatActivity {
 
             }
         });
+        seekBarMines.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                txtMines.setText("Mines - " + String.valueOf(progress));
+                member.setKeys(String.valueOf(progress));
+            }
 
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+
+            }
+        });
+        seekBarKeys.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                txtKeys.setText("Keys - " + String.valueOf(progress));
+                member.setTime(String.valueOf(progress));
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+
+            }
+        });
 
         sendDt.setOnClickListener(new View.OnClickListener(){
             @Override
@@ -117,6 +145,24 @@ public class InitGameActivity extends AppCompatActivity {
                     sendData();
             }
         });
+    }
+   private void priviteInitButton(){
+       member = new Member();
+       db = FirebaseFirestore.getInstance();
+       sendDt = (Button) findViewById(R.id.sendData);
+       textView =(TextView) findViewById(R.id.txtMin);
+       textLevel =(TextView) findViewById(R.id.txtLevel);
+       txtShots = (TextView) findViewById(R.id.txtShots);
+       seekBarTime = (SeekBar) findViewById(R.id.seekBar);
+       seekBarShots = (SeekBar) findViewById(R.id.seekBar2);
+       seekBarLevel = (SeekBar) findViewById(R.id.seekBar3);
+       txtMines = (TextView) findViewById(R.id.txtInitMines);
+       txtKeys = (TextView) findViewById(R.id.txtInitKeys);
+       seekBarMines = (SeekBar) findViewById(R.id.seekBarMines);
+       seekBarKeys = (SeekBar) findViewById(R.id.seekBarKeys);
+       seekBarLevel.setProgress(0);
+       seekBarShots.setProgress(0);
+       seekBarTime.setProgress(0);
     }
 
     private void sendData(){
@@ -129,6 +175,7 @@ public class InitGameActivity extends AppCompatActivity {
             Toast.makeText(getApplicationContext(), "WRONG-DATA",Toast.LENGTH_LONG ).show();
         }
     }
+
     private void checkForGameReady() {
         FirebaseFirestore fstore = FirebaseFirestore.getInstance();
         DocumentReference docRef = fstore.collection("Appending").document("Append1");
@@ -150,7 +197,11 @@ public class InitGameActivity extends AppCompatActivity {
                     else if (valid_join.equals("GAME-NOT-READY")) {
                         HttpHelper httpHelper = new HttpHelper();
                         httpHelper.HttpRequestForLooby("GAME-READY","https://us-central1-arduino-a5968.cloudfunctions.net/setGameReady");
-                        changeScreen(LobyActivity.class);
+                        Intent intent = new Intent(getApplicationContext(),LobyActivity.class);
+                        HttpHelper httpHelper1 = new HttpHelper();
+                        String str = Objects.requireNonNull(FirebaseAuth.getInstance().getCurrentUser()).getUid();
+                        httpHelper1.HttpRequestForLooby(str,"https://us-central1-arduino-a5968.cloudfunctions.net/setPlayerId1");
+                        startActivity(intent);
                     }
                     // check for athoer senrio if we want 3 state
                     else {

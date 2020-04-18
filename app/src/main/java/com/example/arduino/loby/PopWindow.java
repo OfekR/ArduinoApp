@@ -44,6 +44,11 @@ public class PopWindow extends AppCompatActivity {
                         String valid_time = Snapshot.getString("Duration");
                         String valid_shot = Snapshot.getString("Shots");
                         String valid_type = Snapshot.getString("Type");
+                        String valid_keys = Snapshot.getString("Keys");
+                        String valid_mines = Snapshot.getString("Mines");
+                        String valid_player1 = Snapshot.getString("playerId1");
+                        String valid_player2 = Snapshot.getString("playerId2");
+
                         if (valid_time == null) {  // defulat value
                             meb.setTime("10");
                         } else {
@@ -59,6 +64,18 @@ public class PopWindow extends AppCompatActivity {
                         } else {
                             meb.setGameType(valid_type);
                         }
+                        if (valid_keys == null) { // defulat value
+                            meb.setKeys("0");
+                        } else {
+                            meb.setKeys(valid_shot);
+                        }
+                        if (valid_mines == null) { // defulat value
+                            meb.setMines("0");
+                        } else {
+                            meb.setMines(valid_shot);
+                        }
+                        meb.setPlayer1(valid_player1);
+                        meb.setPlayer2(valid_player2);
                         Intent intentGame = new Intent(getApplicationContext(), GameScreenActivity.class);
                         Log.d("MY-TAG----->","the parma of :"+"shot: "+ valid_shot+"time:  "+valid_time);
                         intentGame.putExtra("MyMember", meb);

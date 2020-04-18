@@ -78,10 +78,19 @@ public class GameScreenActivity extends AppCompatActivity {
                     mySong.StartOrResume();
                     game.setAmmuo(num.toString());
                     txtAmmo.setText("Ammuo: - " + game.getAmmuo());
-                    HttpHelper httpHelper = new HttpHelper();
-                    httpHelper.HttpRequestForLooby("1","https://us-central1-arduino-a5968.cloudfunctions.net/chnageLifeInGame");
-                    mySong = new MediaPlayerWrapper(R.raw.boom,getApplicationContext());
-                    mySong.StartOrResume();
+                    if(game.getPlayerID().equals("1")){
+                        HttpHelper httpHelper = new HttpHelper();
+                        httpHelper.HttpRequestForLooby("2","https://us-central1-arduino-a5968.cloudfunctions.net/chnageLifeInGame");
+
+                    }
+                    // player 2
+                    else{
+                        HttpHelper httpHelper = new HttpHelper();
+                        httpHelper.HttpRequestForLooby("1","https://us-central1-arduino-a5968.cloudfunctions.net/chnageLifeInGame");
+                    }
+                    //hit sound
+                    checkForHit();
+
 
                 }
                 else{
@@ -94,8 +103,22 @@ public class GameScreenActivity extends AppCompatActivity {
 
         startTimer();
         HttpHelper httpHelper = new HttpHelper();
-        httpHelper.HttpRequestForLooby(game.getPoint(),"https://us-central1-arduino-a5968.cloudfunctions.net/endOfGameSender");
+        httpHelper.HttpRequestForLooby(game.getPoint().toString(),"https://us-central1-arduino-a5968.cloudfunctions.net/endOfGameSender");
         ListnerForChangeInGame();
+
+    }
+
+    private void checkForHit() {
+
+        boolean arduinoSensorLaser =true; //TODO check in the sensor if we hit the other player
+        if(arduinoSensorLaser){
+            mySong = new MediaPlayerWrapper(R.raw.boom,getApplicationContext());
+            mySong.StartOrResume();
+            Integer val = game.getPoint();
+            val= val+10;
+            game.setPoint(val);
+            txtScore.setText("SCORE -- "+ val.toString());
+        }
 
     }
 
@@ -127,7 +150,7 @@ public class GameScreenActivity extends AppCompatActivity {
 
     private void checkForWin() {
        HttpHelper httpHelper = new HttpHelper();
-       httpHelper.HttpRequestForLooby(game.getPoint(),"https://us-central1-arduino-a5968.cloudfunctions.net/endOfGameSendder");
+       httpHelper.HttpRequestForLooby(game.getPoint().toString(),"https://us-central1-arduino-a5968.cloudfunctions.net/endOfGameSendder");
        gameOver();
     }
 
@@ -161,12 +184,12 @@ public class GameScreenActivity extends AppCompatActivity {
         Member member = (Member) data.getParcelable("MyMember");
         assert member != null;
         game = new Game(member);
-        game.setPoint("200");
+        game.setPoint(0);
         txtAmmo.setText("Ammuo Left:" + game.getAmmuo());
         txtLife.setText("LIFE- 3"); // TODO set to 100
         txtScore.setText("SCORE- 0");
-        txtKeys.setText("KEYS - 0");
-        txtMines.setText("MINES - 0");
+        txtKeys.setText("KEYS - "+ game.getKeys());
+        txtMines.setText("MINES - " + game.getMines());
         txtDefuse.setText("DEFUSE - 0");
 
     }
@@ -178,7 +201,7 @@ public class GameScreenActivity extends AppCompatActivity {
             @Override
             public void onEvent(@Nullable DocumentSnapshot documentSnapshot, @Nullable FirebaseFirestoreException e) {
                 assert documentSnapshot != null;
-                String life_left = documentSnapshot.getString("LifePlayer1");
+                String life_left = documentSnapshot.getString("LifePlayer"+game.getPlayerID());
                 assert life_left != null;
                 if(life_left.equals("0")){
                     checkForWin();
