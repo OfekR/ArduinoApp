@@ -2,9 +2,11 @@ package com.example.arduino.gameScreen;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.Intent;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.CountDownTimer;
 import android.util.Log;
@@ -38,7 +40,7 @@ TODO : add the auth with the game for change the field in the database
  */
 
 public class GameScreenActivity extends AppCompatActivity {
-    private static final long START_TIME_IN_MILLIS = 600000 ;
+    private static final double START_TIME_IN_MILLIS = 600000 ;
     private Game game;
     private ProgressBar pbLife;
     private TextView txtLife;
@@ -51,7 +53,7 @@ public class GameScreenActivity extends AppCompatActivity {
     private TextView txtCountDown;
     private CountDownTimer countDownTimer;
     private boolean mTimerRunning;
-    private long mTimeLeftInMils = START_TIME_IN_MILLIS;
+    private double mTimeLeftInMils = START_TIME_IN_MILLIS;
     private MediaPlayerWrapper mySong;
 
     @Override
@@ -67,12 +69,13 @@ public class GameScreenActivity extends AppCompatActivity {
                 // do whatever you want
             }
         });
-
+        // Listen to the shot button and update val
         btnShot.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 Integer num =Integer.parseInt(game.getAmmuo());
                 num = num -1 ;
+                game.raiseBy1TotalData("Shots");
                 if(num > 0 ){
                     mySong = new MediaPlayerWrapper(R.raw.goodgunshot,getApplicationContext());
                     mySong.StartOrResume();
@@ -108,6 +111,10 @@ public class GameScreenActivity extends AppCompatActivity {
 
     }
 
+    /**
+     * check if the other player hit by getting data from arduino sensor
+     * need to impalement
+     */
     private void checkForHit() {
 
         boolean arduinoSensorLaser =true; //TODO check in the sensor if we hit the other player
@@ -118,6 +125,7 @@ public class GameScreenActivity extends AppCompatActivity {
             val= val+10;
             game.setPoint(val);
             txtScore.setText("SCORE -- "+ val.toString());
+            game.raiseBy1TotalData("Hits");
         }
 
     }
@@ -133,11 +141,13 @@ public class GameScreenActivity extends AppCompatActivity {
         txtDefuse = (TextView) findViewById(R.id.txtGameDefuse);
         txtCountDown = (TextView) findViewById(R.id.txtCountdown);
     }
+
+
     private  void startTimer(){
-       countDownTimer = new CountDownTimer(mTimeLeftInMils*Integer.parseInt(game.getTime())/10, 1000) {
+       countDownTimer = new CountDownTimer((long)(mTimeLeftInMils*Integer.parseInt(game.getTime())/10), 1000) {
            @Override
            public void onTick(long millisUntilFinished) {
-               mTimeLeftInMils = millisUntilFinished;
+               mTimeLeftInMils = (long) millisUntilFinished;
                updateCountDownText();
            }
 
@@ -148,20 +158,41 @@ public class GameScreenActivity extends AppCompatActivity {
        mTimerRunning =true;
     }
 
-    private void checkForWin() {
-        mySong.Pause();
-        mySong.Destroy();
+    /**
+     * check for win is wrap function for game over  close all the relvent audio and things that are opened
+     * TODO need to send the data of what happened we gat in the  arggs
+     */
+    private void checkForWin(EndOfGameReason endOfGameReason , StatusGame statusGame) {
+        if(mySong != null){
+            mySong.Pause();
+            mySong.Destroy();
+        }
+
        HttpHelper httpHelper = new HttpHelper();
        httpHelper.HttpRequestForLooby(game.getPoint().toString(),"https://us-central1-arduino-a5968.cloudfunctions.net/endOfGameSendder");
        gameOver();
     }
+
+    /**
+     * write to data base when the game is ended Log of the game for statics
+     */
+
+    private void writeDataToCloud(StatusGame statusGame) {
+        FirebaseFirestore db =FirebaseFirestore.getInstance();
+        String uid = game.getFirebaseId();
+        db.collection("Logs").document(uid).set(game.toMap(statusGame,mTimeLeftInMils));
+    }
+
+    /**
+     * update the clock and check if the game is ended by time
+     */
 
     private void updateCountDownText() {
         int minutes = (int) (mTimeLeftInMils/1000)/60;
         int seconds = (int) (mTimeLeftInMils/1000)%60;
 
         if (seconds == 0 && minutes == 0){
-            checkForWin();
+            checkForWin(EndOfGameReason.TIME, StatusGame.DONTKNOW);
         }
         else if(seconds < 10 && minutes == 0){
 
@@ -188,7 +219,7 @@ public class GameScreenActivity extends AppCompatActivity {
         game = new Game(member);
         game.setPoint(0);
         txtAmmo.setText("Ammuo Left:" + game.getAmmuo());
-        txtLife.setText("LIFE- 3"); // TODO set to 100
+        txtLife.setText("LIFE- 100"); // TODO set to 100
         txtScore.setText("SCORE- 0");
         txtKeys.setText("KEYS - "+ game.getKeys());
         txtMines.setText("MINES - " + game.getMines());
@@ -203,13 +234,20 @@ public class GameScreenActivity extends AppCompatActivity {
             @Override
             public void onEvent(@Nullable DocumentSnapshot documentSnapshot, @Nullable FirebaseFirestoreException e) {
                 assert documentSnapshot != null;
-                String life_left = documentSnapshot.getString("LifePlayer"+game.getPlayerID());
-                assert life_left != null;
-                if(life_left.equals("0")){
-                    checkForWin();
+                String my_life_left = documentSnapshot.getString("LifePlayer"+game.getPlayerID());
+                String opp_life_left = documentSnapshot.getString("LifePlayer"+game.getOppID());
+                assert my_life_left != null;
+                // check if someone lose
+                if(my_life_left.equals("0") || opp_life_left.equals("0")){
+                    if(my_life_left.equals("0")){  // I lost ):
+                        checkForWin(EndOfGameReason.LIFE,StatusGame.LOSE);
+                    }
+                    else{  // I Won (:
+                        checkForWin(EndOfGameReason.LIFE, StatusGame.WIN);
+                    }
                 }
-                pbLife.setProgress(Integer.parseInt(life_left));
-                txtLife.setText("LIFE: - " +life_left);
+                pbLife.setProgress(Integer.parseInt(my_life_left));
+                txtLife.setText("LIFE: - " +my_life_left);
                 txtScore.setText(("SCORE- ")+game.getPoint());
 
             }
@@ -227,15 +265,16 @@ public class GameScreenActivity extends AppCompatActivity {
         FirebaseFirestore fstore = FirebaseFirestore.getInstance();
         final DocumentReference documentReference = fstore.collection("Game").document("endgame");
         documentReference.addSnapshotListener(new EventListener<DocumentSnapshot>() {
+            @RequiresApi(api = Build.VERSION_CODES.N)
             @Override
             public void onEvent(@Nullable DocumentSnapshot documentSnapshot, @Nullable FirebaseFirestoreException e) {
                 assert documentSnapshot != null;
                 String valid_player1 = documentSnapshot.getString("valid1");
                 final String valid_player2 = documentSnapshot.getString("valid2");
-                if (valid_player1.equals("1") && valid_player2.equals("1")) {
+                if (valid_player1.equals("1") && valid_player2.equals("1")) {  //TODO check that we reset those values
                     Log.v("GAME-CLASS", "GAME------------FINISHED");
                     resetValue(); //reset game setting value
-                    sendDataTodataBase(); //TODO
+                    writeDataToCloud(StatusGame.LOSE); //TODO in this postion all lose
                     Intent intent = new Intent(getApplicationContext(), PopWindowGameOver.class); // Todo change for the right screen
                     startActivity(intent);
                 }
@@ -247,6 +286,9 @@ public class GameScreenActivity extends AppCompatActivity {
         //create document to send the values at end of the game
     }
 
+    /**
+     * RESET input data in appending collection in firestore
+     */
     public void resetValue(){
         HttpHelper httpHelper = new HttpHelper();
         HttpHelper httpHelper1 = new HttpHelper();
