@@ -149,6 +149,8 @@ public class GameScreenActivity extends AppCompatActivity {
     }
 
     private void checkForWin() {
+        mySong.Pause();
+        mySong.Destroy();
        HttpHelper httpHelper = new HttpHelper();
        httpHelper.HttpRequestForLooby(game.getPoint().toString(),"https://us-central1-arduino-a5968.cloudfunctions.net/endOfGameSendder");
        gameOver();
@@ -213,6 +215,13 @@ public class GameScreenActivity extends AppCompatActivity {
             }
         });
     }
+
+    /*
+    TODO we should make here the win or lose by the type of the game the played
+        1. capture the flag
+        2. points
+        3. life
+     */
 
     private void gameOver() {
         FirebaseFirestore fstore = FirebaseFirestore.getInstance();

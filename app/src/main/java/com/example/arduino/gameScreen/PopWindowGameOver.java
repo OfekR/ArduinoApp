@@ -10,13 +10,18 @@ import android.widget.Button;
 
 import com.example.arduino.R;
 import com.example.arduino.menu.MenuActivity;
+import com.example.arduino.utilities.MediaPlayerWrapper;
 
 public class PopWindowGameOver extends AppCompatActivity {
     private Button bt;
+    private MediaPlayerWrapper mySong;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_pop_window_game_over);
+        mySong = new MediaPlayerWrapper(R.raw.evil,getApplicationContext());
+        mySong.StartOrResume();
         bt = (Button) findViewById(R.id.btgameover);
         initManger();
         bt.setOnClickListener(new View.OnClickListener() {
@@ -37,6 +42,8 @@ public class PopWindowGameOver extends AppCompatActivity {
     }
     public void changeScreen(Class screen){
         Intent intent = new Intent(this, screen);
+        mySong.Pause();
+        mySong.Destroy();
         startActivity(intent);
     }
 }

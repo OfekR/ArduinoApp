@@ -10,13 +10,18 @@ import android.widget.Button;
 
 import com.example.arduino.R;
 import com.example.arduino.menu.MenuActivity;
+import com.example.arduino.utilities.MediaPlayerWrapper;
 
 public class PopWindowWin extends AppCompatActivity {
     private Button bt;
+    private MediaPlayerWrapper mySong;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        mySong = new MediaPlayerWrapper(R.raw.claps,getApplicationContext());
+        mySong.StartOrResume();
         bt = (Button) findViewById(R.id.btwin);
         setContentView(R.layout.activity_pop_window_win);
         bt.setOnClickListener(new View.OnClickListener() {
@@ -35,6 +40,8 @@ public class PopWindowWin extends AppCompatActivity {
     }
     public void changeScreen(Class screen){
         Intent intent = new Intent(this, screen);
+        mySong.Pause();
+        mySong.Destroy();
         startActivity(intent);
     }
 }
