@@ -1,55 +1,37 @@
 package com.example.arduino.gameScreen;
-import android.content.Intent;
-import android.graphics.Path;
-import android.os.Build;
-import android.os.Parcelable;
+
 import android.util.Log;
-import android.widget.Toast;
 
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.annotation.RequiresApi;
-
-import com.example.arduino.initGame.InitGameActivity;
 import com.example.arduino.initGame.Member;
-import com.example.arduino.loby.LobyActivity;
-import com.example.arduino.loby.PopWindow;
-import com.example.arduino.utilities.HttpHelper;
-import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.Task;
+
 import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.firestore.DocumentReference;
-import com.google.firebase.firestore.DocumentSnapshot;
-import com.google.firebase.firestore.EventListener;
-import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.FirebaseFirestoreException;
+
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
 
 enum StatusGame{DRAW,WIN,LOSE,DONTKNOW};
 enum EndOfGameReason{TIME,LIFE,FLAG};
 public class Game {
     private StatusGame statusEndofGame;
-    private String life;
-    private String Ammuo;
-    private String time;
-    private  String type;
+    private Integer life;
+    private  Integer Ammuo;
+    private Integer time;
+    private  Integer type;
     private Integer point;
     private String playerID;
     private  String oppID;
-    private String mines;
-    private String keys;
-    private String defuse;
-    private String[] totalData; // in the first place 1.totalHit , 2.TotalShots, 3.TotalBombHit;
+    private Integer mines;
+    private Integer keys;
+    private Integer defuse;
+    private Integer[] totalData; // in the first place 1.totalHit , 2.TotalShots, 3.TotalBombHit;
     final private String firebaseId = FirebaseAuth.getInstance().getCurrentUser().getUid();
 
-    public String getDefuse() {
+    public Integer getDefuse() {
         return defuse;
     }
 
-    public void setDefuse(String defuse) {
+    public void setDefuse(Integer defuse) {
         this.defuse = defuse;
     }
 
@@ -57,35 +39,35 @@ public class Game {
         return firebaseId;
     }
 
-    public String getType() {
+    public Integer getType() {
         return type;
     }
 
-    public String getMines() {
+    public Integer getMines() {
         return mines;
     }
 
-    public void setMines(String mines) {
+    public void setMines(Integer mines) {
         this.mines = mines;
     }
 
-    public String getKeys() {
+    public Integer getKeys() {
         return keys;
     }
 
-    public void setKeys(String keys) {
+    public void setKeys(Integer keys) {
         this.keys = keys;
     }
 
-    public String getTime() {
+    public Integer getTime() {
         return time;
     }
 
-    public void setTime(String time) {
+    public void setTime(Integer time) {
         this.time = time;
     }
 
-    public void setType(String type) {
+    public void setType(Integer type) {
         this.type = type;
     }
 
@@ -99,18 +81,18 @@ public class Game {
 
     public Game(Member meb) {
 
-        this.time =  (String) meb.getTime();
-        this.Ammuo =  (String) meb.getNumberShot();
-        this.type = (String) meb.getGameType();
-        this.keys = (String) meb.getKeys();
-        this.mines = (String) meb.getMines();
+        this.time =  Integer.parseInt((String)meb.getTime());
+        this.Ammuo =  Integer.parseInt((String)meb.getNumberShot());
+        this.type = Integer.parseInt((String)meb.getGameType());
+        this.keys =  Integer.parseInt(meb.getKeys());
+        this.mines = Integer.parseInt(meb.getMines());
         this.playerID = (String) meb.getPlayer1();
         this.oppID = (String) meb.getPlayer2();
-        this.defuse = "0";
-        this.life = "100";
-        this.totalData = new String[3];
+        this.defuse = 0;
+        this.life = 100;
+        this.totalData = new Integer[3];
         for(int i=0; i<3;i++){
-            totalData[i] = "0";
+            totalData[i] = 0;
         }
         checkValidId();
         statusEndofGame = StatusGame.DRAW;
@@ -140,26 +122,26 @@ public class Game {
         return playerID;
     }
 
-    public String getLife() {
+    public Integer getLife() {
         return life;
 
     }
     public Game() {
-        this.life = "10";
+        this.life = 10;
     }
-    public String getAmmuo() {
+    public Integer getAmmuo() {
         return Ammuo;
     }
 
-    public void setAmmuo(String ammuo) {
+    public void setAmmuo(Integer ammuo) {
         Ammuo = ammuo;
     }
 
-    public Game(String life) {
+    public Game(Integer life) {
         this.life = life;
     }
 
-    public void setLife(String life) {
+    public void setLife(Integer life) {
         this.life = life;
     }
 
@@ -167,10 +149,11 @@ public class Game {
         Map<String, Object> docData = new HashMap<>();
         this.statusEndofGame = statusGame;
         Double num = (timeleft)/1000;
+        docData.put("ID",firebaseId);
         docData.put("STATUS-END-OF-GAME", statusGame);
         docData.put("LIFE-END-OF-GAME", life);
         docData.put("AMMO-END-OF-GAME", Ammuo);
-        docData.put("TIME-LEFT-IN-SEC", num.toString());
+        docData.put("TIME-LEFT-IN-SEC",  num);
         docData.put("TYPE-END-OF-GAME", type);
         docData.put("POINTS-END-OF-GAME", point);
         docData.put("MINES-END-OF-GAME", mines);
@@ -184,18 +167,15 @@ public class Game {
 
     public void raiseBy1TotalData(String field){
         if(field.equals("Shots")){
-            Integer num = (Integer.parseInt(totalData[0])+1);
-            totalData[0] = num.toString();
+            totalData[0] = totalData[0] +1;
         }
-        else if(field.equals("Hits")){
-            Integer num = (Integer.parseInt(totalData[1])+1);
-            totalData[1] = num.toString();
+        else if(field.equals("Hits")) {
+            totalData[1] = totalData[1] + 1;
+            // Bomb
         }
-        // Bomb
         else{
-            Integer num = (Integer.parseInt(totalData[2])+1);
-            totalData[2] = num.toString();
-        }
+                totalData[2] = totalData[2] +1;
+            }
     }
 
 }

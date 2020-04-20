@@ -73,14 +73,13 @@ public class GameScreenActivity extends AppCompatActivity {
         btnShot.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Integer num =Integer.parseInt(game.getAmmuo());
-                num = num -1 ;
+                Integer num =game.getAmmuo() -1;
                 game.raiseBy1TotalData("Shots");
                 if(num > 0 ){
                     mySong = new MediaPlayerWrapper(R.raw.goodgunshot,getApplicationContext());
                     mySong.StartOrResume();
-                    game.setAmmuo(num.toString());
-                    txtAmmo.setText("Ammuo: - " + game.getAmmuo());
+                    game.setAmmuo(num);
+                    txtAmmo.setText("Ammuo: - " + (game.getAmmuo().toString()));
                     if(game.getPlayerID().equals("1")){
                         HttpHelper httpHelper = new HttpHelper();
                         httpHelper.HttpRequestForLooby("2","https://us-central1-arduino-a5968.cloudfunctions.net/chnageLifeInGame");
@@ -144,7 +143,7 @@ public class GameScreenActivity extends AppCompatActivity {
 
 
     private  void startTimer(){
-       countDownTimer = new CountDownTimer((long)(mTimeLeftInMils*Integer.parseInt(game.getTime())/10), 1000) {
+       countDownTimer = new CountDownTimer((long)(mTimeLeftInMils*game.getTime()/10), 1000) {
            @Override
            public void onTick(long millisUntilFinished) {
                mTimeLeftInMils = (long) millisUntilFinished;
@@ -218,11 +217,11 @@ public class GameScreenActivity extends AppCompatActivity {
         assert member != null;
         game = new Game(member);
         game.setPoint(0);
-        txtAmmo.setText("Ammuo Left:" + game.getAmmuo());
+        txtAmmo.setText("Ammuo Left:" + game.getAmmuo().toString());
         txtLife.setText("LIFE- 100"); // TODO set to 100
         txtScore.setText("SCORE- 0");
-        txtKeys.setText("KEYS - "+ game.getKeys());
-        txtMines.setText("MINES - " + game.getMines());
+        txtKeys.setText("KEYS - "+ game.getKeys().toString());
+        txtMines.setText("MINES - " + game.getMines().toString());
         txtDefuse.setText("DEFUSE - 0");
 
     }
@@ -248,7 +247,7 @@ public class GameScreenActivity extends AppCompatActivity {
                 }
                 pbLife.setProgress(Integer.parseInt(my_life_left));
                 txtLife.setText("LIFE: - " +my_life_left);
-                txtScore.setText(("SCORE- ")+game.getPoint());
+                txtScore.setText(("SCORE- ")+game.getPoint().toString());
 
             }
         });
@@ -273,8 +272,8 @@ public class GameScreenActivity extends AppCompatActivity {
                 final String valid_player2 = documentSnapshot.getString("valid2");
                 if (valid_player1.equals("1") && valid_player2.equals("1")) {  //TODO check that we reset those values
                     Log.v("GAME-CLASS", "GAME------------FINISHED");
-                    resetValue(); //reset game setting value
                     writeDataToCloud(StatusGame.LOSE); //TODO in this postion all lose
+                    resetValue(); //reset game setting value
                     Intent intent = new Intent(getApplicationContext(), PopWindowGameOver.class); // Todo change for the right screen
                     startActivity(intent);
                 }

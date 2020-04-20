@@ -46,4 +46,17 @@ public class PopWindowGameOver extends AppCompatActivity {
         mySong.Destroy();
         startActivity(intent);
     }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        mySong.Pause();
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        mySong.Destroy();
+    }
 }
+
