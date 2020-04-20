@@ -117,6 +117,7 @@ public class LobyActivity extends AppCompatActivity {
         }
     }
 
+
     @Override
     public void onStart() {
         super.onStart();
