@@ -161,6 +161,7 @@ public class LoginActivity extends AppCompatActivity {
                                     Toast.makeText(LoginActivity.this, errorMsg ,
                                             Toast.LENGTH_SHORT).show();
                                     updateUI(null);
+
                                 }
 
                                 // ...
