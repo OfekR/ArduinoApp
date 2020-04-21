@@ -38,6 +38,20 @@ public class HttpHelper {
             }
         });
     }
+    public void HttpRequest(String url){
+        OkHttpClient client = new OkHttpClient();
+        Request request = new Request.Builder().url(url).build();
+        client.newCall(request).enqueue(new Callback() {
+            @Override
+            public void onFailure(Request request, IOException e) {
+                e.printStackTrace();
+            }
+
+            @Override
+            public void onResponse(Response response) throws IOException {
+            }
+        });
+    }
 
     /**
      * NOT-WORKING -- NEED TO fIX

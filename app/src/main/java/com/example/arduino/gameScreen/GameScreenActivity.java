@@ -143,18 +143,23 @@ public class GameScreenActivity extends AppCompatActivity {
 
 
     private  void startTimer(){
-       countDownTimer = new CountDownTimer((long)(mTimeLeftInMils*game.getTime()/10), 1000) {
-           @Override
-           public void onTick(long millisUntilFinished) {
-               mTimeLeftInMils = (long) millisUntilFinished;
-               updateCountDownText();
-           }
+        if(game.getType() == 3){
+            txtCountDown.setText("NO-TIME-UNTIL-DEATH");
+        }
+        else {
+            countDownTimer = new CountDownTimer((long) (mTimeLeftInMils * game.getTime() / 10), 1000) {
+                @Override
+                public void onTick(long millisUntilFinished) {
+                    mTimeLeftInMils = (long) millisUntilFinished;
+                    updateCountDownText();
+                }
 
-           @Override
-           public void onFinish() {
-           }
-       }.start();
-       mTimerRunning =true;
+                @Override
+                public void onFinish() {
+                }
+            }.start();
+            mTimerRunning = true;
+        }
     }
 
     /**
@@ -168,8 +173,13 @@ public class GameScreenActivity extends AppCompatActivity {
         }
 
        HttpHelper httpHelper = new HttpHelper();
-       httpHelper.HttpRequestForLooby(game.getPoint().toString(),"https://us-central1-arduino-a5968.cloudfunctions.net/endOfGameSendder");
-       gameOver();
+        String points = game.getPoint().toString();
+        String life = game.getLife().toString();
+        String flag = game.getFlag().toString();
+        String arggsfield = "?token="+game.getPlayerID()+"&flag="+flag+"&points="+points+"&life="+life+"&valid=1";
+        String url = "https://us-central1-arduino-a5968.cloudfunctions.net/endOfGameSendder"+arggsfield;
+       httpHelper.HttpRequest(url);
+       gameOver(endOfGameReason ,statusGame);
     }
 
     /**
@@ -235,7 +245,13 @@ public class GameScreenActivity extends AppCompatActivity {
                 assert documentSnapshot != null;
                 String my_life_left = documentSnapshot.getString("LifePlayer"+game.getPlayerID());
                 String opp_life_left = documentSnapshot.getString("LifePlayer"+game.getOppID());
+                Long my_flag = (Long) documentSnapshot.get("flag"+game.getPlayerID());
+                Long opp_flag = (Long) documentSnapshot.get("flag"+game.getOppID());
                 assert my_life_left != null;
+                assert opp_flag !=null;
+                assert my_flag != null;
+                assert opp_flag != null;
+                game.setFlag(my_flag);
                 // check if someone lose
                 if(my_life_left.equals("0") || opp_life_left.equals("0")){
                     if(my_life_left.equals("0")){  // I lost ):
@@ -244,6 +260,15 @@ public class GameScreenActivity extends AppCompatActivity {
                     else{  // I Won (:
                         checkForWin(EndOfGameReason.LIFE, StatusGame.WIN);
                     }
+                }
+                else if( my_flag == 1 || opp_flag == 1){
+                    if(opp_flag == 1){  // I lost ):
+                        checkForWin(EndOfGameReason.FLAG,StatusGame.LOSE);
+                    }
+                    else{  // I Won (:
+                        checkForWin(EndOfGameReason.FLAG, StatusGame.WIN);
+                    }
+
                 }
                 pbLife.setProgress(Integer.parseInt(my_life_left));
                 txtLife.setText("LIFE: - " +my_life_left);
@@ -260,7 +285,7 @@ public class GameScreenActivity extends AppCompatActivity {
         3. life
      */
 
-    private void gameOver() {
+    private void gameOver(EndOfGameReason endOfGameReason , StatusGame statusGame) {
         FirebaseFirestore fstore = FirebaseFirestore.getInstance();
         final DocumentReference documentReference = fstore.collection("Game").document("endgame");
         documentReference.addSnapshotListener(new EventListener<DocumentSnapshot>() {
@@ -270,12 +295,68 @@ public class GameScreenActivity extends AppCompatActivity {
                 assert documentSnapshot != null;
                 String valid_player1 = documentSnapshot.getString("valid1");
                 final String valid_player2 = documentSnapshot.getString("valid2");
+                String my_points =  documentSnapshot.getString("points"+game.getPlayerID());
+                String opp_points =  documentSnapshot.getString("points"+game.getOppID());
+                String my_flag =  documentSnapshot.getString("flag"+game.getPlayerID());
+                String opp_flag =  documentSnapshot.getString("flag"+game.getOppID());
+                String my_life =  documentSnapshot.getString("life"+game.getPlayerID());
+                String opp_life =   documentSnapshot.getString("life"+game.getOppID());
+
                 if (valid_player1.equals("1") && valid_player2.equals("1")) {  //TODO check that we reset those values
-                    Log.v("GAME-CLASS", "GAME------------FINISHED");
-                    writeDataToCloud(StatusGame.LOSE); //TODO in this postion all lose
                     resetValue(); //reset game setting value
-                    Intent intent = new Intent(getApplicationContext(), PopWindowGameOver.class); // Todo change for the right screen
-                    startActivity(intent);
+                    Log.v("GAME-CLASS", "GAME------------FINISHED");
+                    if(game.getType() == 1 ) // capture the flag
+                    {
+                        assert (my_flag != null);
+                        assert (opp_flag != null);
+                        if(my_flag.equals("1")){  // I Won
+                            writeDataToCloud(StatusGame.WIN); //TODO in this postion all lose
+                            Intent intent = new Intent(getApplicationContext(), PopWindowWin.class); // Todo change for the right screen
+                            startActivity(intent);
+                        }
+                        else{   // Lost
+                            writeDataToCloud(StatusGame.LOSE); //TODO in this postion all lose
+                            Intent intent = new Intent(getApplicationContext(), PopWindowGameOver.class); // Todo change for the right screen
+                            startActivity(intent);
+                        }
+                    }
+                    else if(game.getType() == 2)  // High score game
+                    {
+                        assert (my_points != null);
+                        assert (opp_points != null);
+                        if(my_points.equals(opp_points)){  // draw
+                            writeDataToCloud(StatusGame.DRAW); //TODO in this postion all lose
+                            Intent intent = new Intent(getApplicationContext(), PopWindowWin.class); // Todo change for the right screen
+                            startActivity(intent);
+                        }
+                        else if (Integer.parseInt(my_points) > Integer.parseInt(opp_points)){   // won
+                            writeDataToCloud(StatusGame.WIN); //TODO in this postion all lose
+                            Intent intent = new Intent(getApplicationContext(), PopWindowWin.class); // Todo change for the right screen
+                            startActivity(intent);
+                        }
+                        else{  // lost
+                            writeDataToCloud(StatusGame.LOSE); //TODO in this postion all lose
+                            Intent intent = new Intent(getApplicationContext(), PopWindowGameOver.class); // Todo change for the right screen
+                            startActivity(intent);
+                        }
+
+                    }
+
+                    else{      // life last tank stand game
+                        assert (my_life != null);
+                        assert (opp_life != null);
+                        if(Integer.parseInt(my_life) > Integer.parseInt(opp_life)){  // I Won
+                            writeDataToCloud(StatusGame.WIN); //TODO in this postion all lose
+                            Intent intent = new Intent(getApplicationContext(), PopWindowWin.class); // Todo change for the right screen
+                            startActivity(intent);
+                        }
+                        else{   // Lost
+                            writeDataToCloud(StatusGame.LOSE); //TODO in this postion all lose
+                            Intent intent = new Intent(getApplicationContext(), PopWindowGameOver.class); // Todo change for the right screen
+                            startActivity(intent);
+                        }
+                    }
+
                 }
             }
         });
@@ -288,9 +369,14 @@ public class GameScreenActivity extends AppCompatActivity {
     /**
      * RESET input data in appending collection in firestore
      */
+
+
+    //TODO NEED to reset the flag in frst game
     public void resetValue(){
         HttpHelper httpHelper = new HttpHelper();
         HttpHelper httpHelper1 = new HttpHelper();
+        HttpHelper httpHelper2 = new HttpHelper();
+        httpHelper2.HttpRequest("https://us-central1-arduino-a5968.cloudfunctions.net/resetvalidend?token="+game.getPlayerID());
         httpHelper.HttpRequestForLooby("NO-ONE-IS-WAITING", "https://us-central1-arduino-a5968.cloudfunctions.net/addJoin");
         httpHelper1.HttpRequestForLooby("GAME-NOT-READY","https://us-central1-arduino-a5968.cloudfunctions.net/setGameReady");
 

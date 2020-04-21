@@ -91,7 +91,7 @@ public class InitGameActivity extends AppCompatActivity {
                 if(progress == 0)  textLevel.setText("CAPTURE-THE-FLAG");
                 if(progress == 1)  textLevel.setText("HIGH-SCORE");
                 if(progress == 2)  textLevel.setText("LAST-TANK-REMAINING");
-                member.setGameType(String.valueOf(progress));
+                member.setGameType(String.valueOf(progress+1));
             }
 
             @Override
@@ -108,7 +108,7 @@ public class InitGameActivity extends AppCompatActivity {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
                 txtMines.setText("Mines - " + String.valueOf(progress));
-                member.setKeys(String.valueOf(progress));
+                member.setMines(String.valueOf(progress));
             }
 
             @Override
@@ -125,7 +125,7 @@ public class InitGameActivity extends AppCompatActivity {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
                 txtKeys.setText("Keys - " + String.valueOf(progress));
-                member.setTime(String.valueOf(progress));
+                member.setKeys(String.valueOf(progress));
             }
 
             @Override
@@ -166,7 +166,7 @@ public class InitGameActivity extends AppCompatActivity {
     }
 
     private void sendData(){
-        db.collection("GameSettings").document("doucment1").update(member.getMap());
+        //db.collection("GameSettings").document("doucment1").update(member.getMap());
         Toast.makeText(getApplicationContext(), "insert data",Toast.LENGTH_LONG ).show();
         if(checkIfDataValid()){
             checkForGameReady();
@@ -194,18 +194,21 @@ public class InitGameActivity extends AppCompatActivity {
 
                     }
                     // you can start a game
-                    else if (valid_join.equals("GAME-NOT-READY")) {
+                    else {
+                        HttpHelper httpHelper1 = new HttpHelper();
+                        String args = "?keys="+member.getKeys()+"&mine="+member.getMines()+"&type="+member.getType()+"&shots="+member.getNumberShot()+"&time="+member.getTime();
+                        String url = " https://us-central1-arduino-a5968.cloudfunctions.net/setfirstGame"+args;
+                        httpHelper1.HttpRequest(url);
+
                         HttpHelper httpHelper = new HttpHelper();
                         httpHelper.HttpRequestForLooby("GAME-READY","https://us-central1-arduino-a5968.cloudfunctions.net/setGameReady");
                         Intent intent = new Intent(getApplicationContext(),LobyActivity.class);
-                        HttpHelper httpHelper1 = new HttpHelper();
-                        String str = Objects.requireNonNull(FirebaseAuth.getInstance().getCurrentUser()).getUid();
-                        httpHelper1.HttpRequestForLooby(str,"https://us-central1-arduino-a5968.cloudfunctions.net/setPlayerId1");
-                        startActivity(intent);
-                    }
-                    // check for athoer senrio if we want 3 state
-                    else {
 
+                        HttpHelper httpHelper2 = new HttpHelper();
+                        String str = Objects.requireNonNull(FirebaseAuth.getInstance().getCurrentUser()).getUid();
+                        httpHelper2.HttpRequestForLooby(str,"https://us-central1-arduino-a5968.cloudfunctions.net/setPlayerId1");
+
+                        startActivity(intent);
                     }
                 }
             }

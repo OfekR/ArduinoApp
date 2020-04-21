@@ -23,6 +23,7 @@ public class Game {
     private  String oppID;
     private Integer mines;
     private Integer keys;
+    private  Long flag;
     private Integer defuse;
     private Integer[] totalData; // in the first place 1.totalHit , 2.TotalShots, 3.TotalBombHit;
     final private String firebaseId = FirebaseAuth.getInstance().getCurrentUser().getUid();
@@ -75,6 +76,14 @@ public class Game {
         this.point = point;
     }
 
+    public Long getFlag() {
+        return flag;
+    }
+
+    public void setFlag(Long flag) {
+        this.flag = flag;
+    }
+
     public Integer getPoint() {
         return point;
     }
@@ -89,7 +98,8 @@ public class Game {
         this.playerID = (String) meb.getPlayer1();
         this.oppID = (String) meb.getPlayer2();
         this.defuse = 0;
-        this.life = 100;
+        this.life = 20;
+        this.flag = Long.valueOf(0);
         this.totalData = new Integer[3];
         for(int i=0; i<3;i++){
             totalData[i] = 0;
@@ -162,6 +172,7 @@ public class Game {
         docData.put("NUM-HITS-END-OF-GAME", totalData[1]);
         docData.put("NUM-SHOTS-END-OF-GAME", totalData[0]);
         docData.put("NUM-BOMB-END-OF-GAME", totalData[2]);
+        docData.put("FLAG", flag);
         return docData;
     }
 

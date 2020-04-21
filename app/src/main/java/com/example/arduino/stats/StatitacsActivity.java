@@ -233,8 +233,13 @@ public class StatitacsActivity extends AppCompatActivity {
 
     private void getuserNameAcc() {
         usernameText.setText(FirebaseAuth.getInstance().getCurrentUser().getEmail());
-        int num = (int)((totalHits*100/totalShots));
-        acuurcyProgressbar.setProgress(num);
+        if(totalShots == 0){
+            acuurcyProgressbar.setProgress(0);
+        }
+        else {
+            int num = (int) ((totalHits * 100 / totalShots));
+            acuurcyProgressbar.setProgress(num);
+        }
     }
 
     // change rating by the number of game you played

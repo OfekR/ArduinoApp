@@ -15,6 +15,7 @@ import com.example.arduino.R;
 import com.example.arduino.gameScreen.GameScreenActivity;
 import com.example.arduino.initGame.Member;
 import com.example.arduino.menu.MenuActivity;
+import com.example.arduino.utilities.HttpHelper;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.EventListener;
@@ -49,27 +50,27 @@ public class PopWindow extends AppCompatActivity {
                         String valid_player1 = Snapshot.getString("playerId1");
                         String valid_player2 = Snapshot.getString("playerId2");
 
-                        if (valid_time == null) {  // defulat value
+                        if (valid_time == null || valid_time.equals("")) {  // defulat value
                             meb.setTime("10");
                         } else {
                             meb.setTime(valid_time);
                         }
-                        if (valid_shot == null) { // defulat value
+                        if (valid_shot == null || valid_shot.equals("")) { // defulat value
                             meb.setNumberShot("30");
                         } else {
                             meb.setNumberShot(valid_shot);
                         }
-                        if (valid_type == null) {  // defulat value
+                        if (valid_type == null || valid_type.equals("")) {  // defulat value
                             meb.setGameType("1");
                         } else {
                             meb.setGameType(valid_type);
                         }
-                        if (valid_keys == null) { // defulat value
+                        if (valid_keys == null || valid_keys.equals("")) { // defulat value
                             meb.setKeys("0");
                         } else {
                             meb.setKeys(valid_shot);
                         }
-                        if (valid_mines == null) { // defulat value
+                        if (valid_mines == null || valid_mines.equals("")) { // defulat value
                             meb.setMines("0");
                         } else {
                             meb.setMines(valid_shot);
@@ -78,6 +79,10 @@ public class PopWindow extends AppCompatActivity {
                         meb.setPlayer2(valid_player2);
                         Intent intentGame = new Intent(getApplicationContext(), GameScreenActivity.class);
                         Log.d("MY-TAG----->","the parma of :"+"shot: "+ valid_shot+"time:  "+valid_time);
+                        HttpHelper httpHelper = new HttpHelper();
+                        httpHelper.HttpRequestForLooby("1" ,"https://us-central1-arduino-a5968.cloudfunctions.net/resetLifeInGame");
+                        HttpHelper httpHelper1 = new HttpHelper();
+                        httpHelper1.HttpRequestForLooby("2"," https://us-central1-arduino-a5968.cloudfunctions.net/resetLifeInGame");
                         intentGame.putExtra("MyMember", meb);
                         startActivity(intentGame);
                     }
