@@ -28,11 +28,15 @@ import com.example.arduino.utilities.MediaPlayerWrapper;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.EventListener;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.FirebaseFirestoreException;
+import com.google.firebase.firestore.Query;
+import com.google.firebase.firestore.QuerySnapshot;
+import com.google.firebase.firestore.core.OrderBy;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -65,6 +69,9 @@ public class StatitacsActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.altrenative_stats_menu);
+        listTop5Score = new ArrayList<HashMap<String,String>>();
+        listTop5Flag = new ArrayList<HashMap<String,String>>();
+        listTop5Time = new ArrayList<HashMap<String,String>>();
 
         /*
         sendDt= (Button) findViewById(R.id.StatsMenu);
@@ -101,7 +108,7 @@ public class StatitacsActivity extends AppCompatActivity {
                 totalBombHits = task.getResult().getLong("totalBombHits");
                 totalShots = task.getResult().getLong("totalShots");
                 totalHits = task.getResult().getLong("totalHits");
-                hitPercentage = task.getResult().getLong("hitPercentage");
+                hitPercentage = task.getResult().getLong("hitsPercentage");
                 PlayerStats stats = new PlayerStats(gamesPlayed, gamesWon, gamesLost, totalPoints, bestTime,
                         mostLaserHits, mostBombHits, totalBombHits, totalShots, totalHits);
                 changeRateandPic();
@@ -114,19 +121,37 @@ public class StatitacsActivity extends AppCompatActivity {
         btTop5Score.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                sendClicker("TopScore");
+                if(!listTop5Score.isEmpty()){
+                    activateList(listTop5Score);
+
+                }
+                else{
+                    sendClicker("totalPoints",listTop5Score);
+
+                }
             }
         });
         btTop5Flag.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                sendClicker("TopFlag");
+                if(!listTop5Flag.isEmpty()){
+                    activateList(listTop5Flag);
+                }
+                else{
+                    sendClicker("gamesWon",listTop5Flag);
+
+                }
             }
         });
         bTtop5Time.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                sendClicker("TopTime");
+                if(!listTop5Time.isEmpty()){
+                    activateList(listTop5Time);
+                }
+                else{
+                    sendClicker("bestTime", listTop5Time);
+                }
             }
         });
         bTMystats.setOnClickListener(new View.OnClickListener() {
@@ -137,100 +162,34 @@ public class StatitacsActivity extends AppCompatActivity {
     }
 
 
-    private  void sendClicker(final String doc){
-            DocumentReference documentReference = db.collection("TopPlayer").document(doc);
-            documentReference.get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
-                @Override
-                public void onComplete(@NonNull Task<DocumentSnapshot> task) {
-                    setList((task.getResult().getString("first")),(task.getResult().getString("second")),
-                            (task.getResult().getString("third")),(task.getResult().getString("four")),(task.getResult().getString("five")),doc);
-                }
-            });
+    private  void sendClicker(final String field , final ArrayList<HashMap<String,String>> list){
+        CollectionReference stats = db.collection("PlayerStats");
+                final Query query = stats.orderBy(field, Query.Direction.DESCENDING).limit(5);
+                query.addSnapshotListener(new EventListener<QuerySnapshot>() {
+                    @Override
+                    public void onEvent(@Nullable QuerySnapshot queryDocumentSnapshots, @Nullable FirebaseFirestoreException e) {
+                        if(queryDocumentSnapshots.isEmpty()){
+                                // need to handle if empty
+                        }
+                        else{
+                            for(DocumentSnapshot doc : queryDocumentSnapshots.getDocuments()){
+                                HashMap<String,String> firstTopScore = new HashMap<>();
+                                firstTopScore.put(FIRST_COLUMN, doc.getReference().getId());
+                                firstTopScore.put(SECOND_COLUMN,doc.getLong(field).toString());
+                                list.add(firstTopScore);
+                            }
+                        }
+                    }
+                });
+                ListViewAdapter adapter = new ListViewAdapter(this, list);
+                listView.setAdapter(adapter);
+
         }
 
-
-    private void setList(String first,String second,String third,String four,String five,String doc ){
-            if(doc.equals("TopScore")){
-                listTop5Score = new ArrayList<HashMap<String,String>>();
-                HashMap<String,String> firstTopScore = new HashMap<>();
-                firstTopScore.put(FIRST_COLUMN, first);
-                firstTopScore.put(SECOND_COLUMN,"Score");
-                HashMap<String,String> secondTopScore = new HashMap<>();
-                secondTopScore.put(FIRST_COLUMN, second);
-                secondTopScore.put(SECOND_COLUMN,"Score");
-                HashMap<String,String> thirdTopScore = new HashMap<>();
-                thirdTopScore.put(FIRST_COLUMN, third);
-                thirdTopScore.put(SECOND_COLUMN,"Score");
-                HashMap<String,String> fourTopScore = new HashMap<>();
-                fourTopScore.put(FIRST_COLUMN, four);
-                fourTopScore.put(SECOND_COLUMN,"Score");
-                HashMap<String,String> fiveTopScore = new HashMap<>();
-                fiveTopScore.put(FIRST_COLUMN, five);
-                fiveTopScore.put(SECOND_COLUMN,"Score");
-                listTop5Score.add(firstTopScore);
-                listTop5Score.add(secondTopScore);
-                listTop5Score.add(thirdTopScore);
-                listTop5Score.add(fourTopScore);
-                listTop5Score.add(fiveTopScore);
-                ListViewAdapter adapter = new ListViewAdapter(this, listTop5Score);
-                listView.setAdapter(adapter);
-
-
-            }
-            else if(doc.equals("TopFlag")){
-                listTop5Flag = new ArrayList<HashMap<String,String>>();
-                HashMap<String,String> firstTopFlag= new HashMap<>();
-                firstTopFlag.put(FIRST_COLUMN, first);
-                firstTopFlag.put(SECOND_COLUMN,"Score");
-                HashMap<String,String> secondTopFlag = new HashMap<>();
-                secondTopFlag.put(FIRST_COLUMN, second);
-                secondTopFlag.put(SECOND_COLUMN,"Score");
-                HashMap<String,String> thirdTopFlag = new HashMap<>();
-                thirdTopFlag.put(FIRST_COLUMN, third);
-                thirdTopFlag.put(SECOND_COLUMN,"Score");
-                HashMap<String,String> fourTopFlag = new HashMap<>();
-                fourTopFlag.put(FIRST_COLUMN, four);
-                fourTopFlag.put(SECOND_COLUMN,"Score");
-                HashMap<String,String> fiveTopFlag = new HashMap<>();
-                fiveTopFlag.put(FIRST_COLUMN, five);
-                fiveTopFlag.put(SECOND_COLUMN,"Score");
-                listTop5Flag.add(firstTopFlag);
-                listTop5Flag.add(secondTopFlag);
-                listTop5Flag.add(thirdTopFlag);
-                listTop5Flag.add(fourTopFlag);
-                listTop5Flag.add(fiveTopFlag);
-                ListViewAdapter adapter = new ListViewAdapter(this, listTop5Flag);
-                listView.setAdapter(adapter);
-            }
-            else if(doc.equals("TopTime")){
-                listTop5Time = new ArrayList<HashMap<String,String>>();
-                HashMap<String,String> firstTopTime = new HashMap<>();
-                firstTopTime.put(FIRST_COLUMN, first);
-                firstTopTime.put(SECOND_COLUMN,"Score");
-                HashMap<String,String> secondTopTime = new HashMap<>();
-                secondTopTime.put(FIRST_COLUMN, second);
-                secondTopTime.put(SECOND_COLUMN,"Score");
-                HashMap<String,String> thirdTopTime = new HashMap<>();
-                thirdTopTime.put(FIRST_COLUMN, third);
-                thirdTopTime.put(SECOND_COLUMN,"Score");
-                HashMap<String,String> fourTopTime = new HashMap<>();
-                fourTopTime.put(FIRST_COLUMN, four);
-                fourTopTime.put(SECOND_COLUMN,"Score");
-                HashMap<String,String> fiveTopTime = new HashMap<>();
-                fiveTopTime.put(FIRST_COLUMN, five);
-                fiveTopTime.put(SECOND_COLUMN,"Score");
-                listTop5Time.add(firstTopTime);
-                listTop5Time.add(secondTopTime);
-                listTop5Time.add(thirdTopTime);
-                listTop5Time.add(fourTopTime);
-                listTop5Time.add(fiveTopTime);
-                ListViewAdapter adapter = new ListViewAdapter(this, listTop5Time);
-                listView.setAdapter(adapter);
-
-
-            }
+        private void activateList(ArrayList<HashMap<String,String>> list){
+            ListViewAdapter adapter = new ListViewAdapter(this, list);
+            listView.setAdapter(adapter);
         }
-
     private void getuserNameAcc() {
         usernameText.setText(FirebaseAuth.getInstance().getCurrentUser().getEmail());
         if(totalShots == 0){

@@ -28,8 +28,11 @@ import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.EventListener;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.FirebaseFirestoreException;
+import com.google.firebase.firestore.ListenerRegistration;
 
+import java.util.HashMap;
 import java.util.Locale;
+import java.util.Map;
 
 import io.github.controlwear.virtual.joystick.android.JoystickView;
 
@@ -40,7 +43,11 @@ TODO : add the auth with the game for change the field in the database
  */
 
 public class GameScreenActivity extends AppCompatActivity {
-    private static final double START_TIME_IN_MILLIS = 600000 ;
+    private static final long START_TIME_IN_MILLIS = 600000 ;
+    private ListenerRegistration registration;
+    private ListenerRegistration registration1;
+    private ListenerRegistration registration2;
+
     private Game game;
     private ProgressBar pbLife;
     private TextView txtLife;
@@ -53,8 +60,9 @@ public class GameScreenActivity extends AppCompatActivity {
     private TextView txtCountDown;
     private CountDownTimer countDownTimer;
     private boolean mTimerRunning;
-    private double mTimeLeftInMils = START_TIME_IN_MILLIS;
+    private long mTimeLeftInMils = START_TIME_IN_MILLIS;
     private MediaPlayerWrapper mySong;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -92,8 +100,6 @@ public class GameScreenActivity extends AppCompatActivity {
                     }
                     //hit sound
                     checkForHit();
-
-
                 }
                 else{
                     txtAmmo.setText("NO- Ammuo - !!!!!!!!: - ");
@@ -145,6 +151,9 @@ public class GameScreenActivity extends AppCompatActivity {
     private  void startTimer(){
         if(game.getType() == 3){
             txtCountDown.setText("NO-TIME-UNTIL-DEATH");
+            txtCountDown.setTextSize(15);
+            txtCountDown.getCompoundPaddingTop();
+            txtCountDown.getPaddingRight();
         }
         else {
             countDownTimer = new CountDownTimer((long) (mTimeLeftInMils * game.getTime() / 10), 1000) {
@@ -167,11 +176,6 @@ public class GameScreenActivity extends AppCompatActivity {
      * TODO need to send the data of what happened we gat in the  arggs
      */
     private void checkForWin(EndOfGameReason endOfGameReason , StatusGame statusGame) {
-        if(mySong != null){
-            mySong.Pause();
-            mySong.Destroy();
-        }
-
        HttpHelper httpHelper = new HttpHelper();
         String points = game.getPoint().toString();
         String life = game.getLife().toString();
@@ -186,10 +190,88 @@ public class GameScreenActivity extends AppCompatActivity {
      * write to data base when the game is ended Log of the game for statics
      */
 
-    private void writeDataToCloud(StatusGame statusGame) {
+    private void writeDataToCloud(final StatusGame statusGame) {
         FirebaseFirestore db =FirebaseFirestore.getInstance();
         String uid = game.getFirebaseId();
         db.collection("Logs").document(uid).set(game.toMap(statusGame,mTimeLeftInMils));
+
+        FirebaseFirestore fstore = FirebaseFirestore.getInstance();
+        final DocumentReference documentReference = fstore.collection("PlayerStats").document(game.getFirebaseId());
+         registration = documentReference.addSnapshotListener(new EventListener<DocumentSnapshot>() {
+            @Override
+            public void onEvent(@Nullable DocumentSnapshot documentSnapshot, @Nullable FirebaseFirestoreException e) {
+                assert documentSnapshot != null;
+                // before
+                Long _bestTime = (Long) documentSnapshot.get("bestTime");
+                Long _gamesLost = (Long) documentSnapshot.get("gamesLost");
+                Long _gamesPlayed = (Long) documentSnapshot.get("gamesPlayed");
+                Long _gamesWon = (Long) documentSnapshot.get("gamesWon");
+                Long _hitsPercentage = (Long) documentSnapshot.get("hitsPercentage");
+                Long _mostBombHits = (Long) documentSnapshot.get("mostBombHits");
+                Long _mostLaserHits = (Long) documentSnapshot.get("mostLaserHits");
+                Long _totalBombHits = (Long) documentSnapshot.get("totalBombHits");
+                Long _totalHits = (Long) documentSnapshot.get("totalHits");
+                Long _totalPoints = (Long) documentSnapshot.get("totalPoints");
+                Long _totalShots = (Long) documentSnapshot.get("totalShots");
+                assert _bestTime != null;
+                assert _gamesLost != null;
+                assert _gamesPlayed != null;
+                assert _gamesWon != null;
+                assert _hitsPercentage != null;
+                assert _mostBombHits != null;
+                assert _mostLaserHits != null;
+                assert _totalBombHits != null;
+                assert _totalHits != null;
+                assert _totalPoints != null;
+                assert _totalShots != null;
+                Long totalshots = game.getTotalData()[0];
+                Long totalbomb = game.getTotalData()[1];
+                Long totalhits = game.getTotalData()[2];
+                if (_bestTime < mTimeLeftInMils) {
+                    _bestTime = mTimeLeftInMils;
+                }
+                if (_mostBombHits < totalbomb) {
+                    _mostBombHits = totalbomb;
+                }
+                if (_mostLaserHits < totalhits) {
+                    _mostLaserHits = totalhits;
+                }
+                _gamesPlayed = _gamesPlayed + 1;
+                if (statusGame.equals(StatusGame.WIN)) {
+                    _gamesWon = _gamesWon + 1;
+
+                }
+                if (statusGame.equals(StatusGame.LOSE)) {
+                    _gamesLost = _gamesLost + 1;
+
+                }
+                _totalBombHits = _totalBombHits + totalbomb;
+                _totalHits = _totalHits + totalhits; //TODO fix it
+                _totalPoints = _totalPoints + game.getPoint();
+                _totalShots = _totalShots + totalshots;
+                if (_totalShots != 0) {
+                    _hitsPercentage = _totalHits / _totalShots;
+                }
+                DocumentMover documentMover = new DocumentMover(game.getFirebaseId(),_bestTime,_gamesLost,_gamesPlayed,_gamesWon,
+                        _hitsPercentage,_mostBombHits,_mostLaserHits,_totalBombHits,_totalHits,_totalPoints,_totalShots);
+                if(statusGame.equals(StatusGame.WIN)){
+                    Intent intent = new Intent(getApplicationContext(), PopWindowWin.class); // Todo change for the right screen
+                    intent.putExtra("DocumentPusher",documentMover);
+                    startActivity(intent.addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY));
+                }
+                else if (statusGame.equals(StatusGame.LOSE)){
+                    Intent intent = new Intent(getApplicationContext(), PopWindowGameOver.class); // Todo change for the right screen
+                    intent.putExtra("DocumentPusher",documentMover);
+                    startActivity(intent.addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY));
+                }
+                else{
+                    Intent intent = new Intent(getApplicationContext(), PopWindowWin.class); // Todo change for the right screen
+                    intent.putExtra("DocumentPusher",documentMover);
+                    startActivity(intent.addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY));
+                }
+            }
+        });
+       // registration.remove();
     }
 
     /**
@@ -201,12 +283,14 @@ public class GameScreenActivity extends AppCompatActivity {
         int seconds = (int) (mTimeLeftInMils/1000)%60;
 
         if (seconds == 0 && minutes == 0){
+           // mySong.Pause();
+           // mySong.Destroy();
             checkForWin(EndOfGameReason.TIME, StatusGame.DONTKNOW);
         }
         else if(seconds < 10 && minutes == 0){
 
-            mySong = new MediaPlayerWrapper(R.raw.countdownbeep,getApplicationContext());
-            mySong.StartOrResume();
+          //  mySong = new MediaPlayerWrapper(R.raw.countdownbeep,getApplicationContext());
+          //  mySong.StartOrResume();
             String timeLeftFromat = String.format(Locale.getDefault(), "%01d",seconds);
             txtCountDown.setText(timeLeftFromat);
         }
@@ -239,7 +323,7 @@ public class GameScreenActivity extends AppCompatActivity {
     private void ListnerForChangeInGame() {
         FirebaseFirestore fstore = FirebaseFirestore.getInstance();
         final DocumentReference documentReference = fstore.collection("Game").document("firstgame");
-        documentReference.addSnapshotListener(new EventListener<DocumentSnapshot>() {
+        registration1 = documentReference.addSnapshotListener(new EventListener<DocumentSnapshot>() {
             @Override
             public void onEvent(@Nullable DocumentSnapshot documentSnapshot, @Nullable FirebaseFirestoreException e) {
                 assert documentSnapshot != null;
@@ -288,7 +372,7 @@ public class GameScreenActivity extends AppCompatActivity {
     private void gameOver(EndOfGameReason endOfGameReason , StatusGame statusGame) {
         FirebaseFirestore fstore = FirebaseFirestore.getInstance();
         final DocumentReference documentReference = fstore.collection("Game").document("endgame");
-        documentReference.addSnapshotListener(new EventListener<DocumentSnapshot>() {
+        registration2 = documentReference.addSnapshotListener(new EventListener<DocumentSnapshot>() {
             @RequiresApi(api = Build.VERSION_CODES.N)
             @Override
             public void onEvent(@Nullable DocumentSnapshot documentSnapshot, @Nullable FirebaseFirestoreException e) {
@@ -309,15 +393,13 @@ public class GameScreenActivity extends AppCompatActivity {
                     {
                         assert (my_flag != null);
                         assert (opp_flag != null);
-                        if(my_flag.equals("1")){  // I Won
+                        if(my_flag.equals("0")){  // I Won
                             writeDataToCloud(StatusGame.WIN); //TODO in this postion all lose
-                            Intent intent = new Intent(getApplicationContext(), PopWindowWin.class); // Todo change for the right screen
-                            startActivity(intent);
+
                         }
                         else{   // Lost
                             writeDataToCloud(StatusGame.LOSE); //TODO in this postion all lose
-                            Intent intent = new Intent(getApplicationContext(), PopWindowGameOver.class); // Todo change for the right screen
-                            startActivity(intent);
+
                         }
                     }
                     else if(game.getType() == 2)  // High score game
@@ -326,18 +408,15 @@ public class GameScreenActivity extends AppCompatActivity {
                         assert (opp_points != null);
                         if(my_points.equals(opp_points)){  // draw
                             writeDataToCloud(StatusGame.DRAW); //TODO in this postion all lose
-                            Intent intent = new Intent(getApplicationContext(), PopWindowWin.class); // Todo change for the right screen
-                            startActivity(intent);
+
                         }
                         else if (Integer.parseInt(my_points) > Integer.parseInt(opp_points)){   // won
                             writeDataToCloud(StatusGame.WIN); //TODO in this postion all lose
-                            Intent intent = new Intent(getApplicationContext(), PopWindowWin.class); // Todo change for the right screen
-                            startActivity(intent);
+
                         }
                         else{  // lost
                             writeDataToCloud(StatusGame.LOSE); //TODO in this postion all lose
-                            Intent intent = new Intent(getApplicationContext(), PopWindowGameOver.class); // Todo change for the right screen
-                            startActivity(intent);
+
                         }
 
                     }
@@ -347,13 +426,11 @@ public class GameScreenActivity extends AppCompatActivity {
                         assert (opp_life != null);
                         if(Integer.parseInt(my_life) > Integer.parseInt(opp_life)){  // I Won
                             writeDataToCloud(StatusGame.WIN); //TODO in this postion all lose
-                            Intent intent = new Intent(getApplicationContext(), PopWindowWin.class); // Todo change for the right screen
-                            startActivity(intent);
+
                         }
                         else{   // Lost
                             writeDataToCloud(StatusGame.LOSE); //TODO in this postion all lose
-                            Intent intent = new Intent(getApplicationContext(), PopWindowGameOver.class); // Todo change for the right screen
-                            startActivity(intent);
+
                         }
                     }
 
@@ -376,9 +453,28 @@ public class GameScreenActivity extends AppCompatActivity {
         HttpHelper httpHelper = new HttpHelper();
         HttpHelper httpHelper1 = new HttpHelper();
         HttpHelper httpHelper2 = new HttpHelper();
-        httpHelper2.HttpRequest("https://us-central1-arduino-a5968.cloudfunctions.net/resetvalidend?token="+game.getPlayerID());
+      //  httpHelper2.HttpRequest("https://us-central1-arduino-a5968.cloudfunctions.net/resetvalidend?token="+game.getPlayerID()); //TODO change
         httpHelper.HttpRequestForLooby("NO-ONE-IS-WAITING", "https://us-central1-arduino-a5968.cloudfunctions.net/addJoin");
         httpHelper1.HttpRequestForLooby("GAME-NOT-READY","https://us-central1-arduino-a5968.cloudfunctions.net/setGameReady");
 
+    }
+
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        if(mySong != null){
+            mySong.Pause();
+            mySong.Destroy();
+        }
+        if (registration != null) {
+            registration.remove();
+        }
+        if (registration1 != null) {
+            registration1.remove();
+        }
+        if (registration2 != null) {
+            registration2.remove();
+        }
     }
 }

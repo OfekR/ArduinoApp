@@ -25,7 +25,7 @@ public class Game {
     private Integer keys;
     private  Long flag;
     private Integer defuse;
-    private Integer[] totalData; // in the first place 1.totalHit , 2.TotalShots, 3.TotalBombHit;
+    private Long[] totalData; // in the first place 1.totalHit , 2.TotalShots, 3.TotalBombHit;
     final private String firebaseId = FirebaseAuth.getInstance().getCurrentUser().getUid();
 
     public Integer getDefuse() {
@@ -100,9 +100,9 @@ public class Game {
         this.defuse = 0;
         this.life = 20;
         this.flag = Long.valueOf(0);
-        this.totalData = new Integer[3];
+        this.totalData = new Long[3];
         for(int i=0; i<3;i++){
-            totalData[i] = 0;
+            totalData[i] = Long.valueOf(0);
         }
         checkValidId();
         statusEndofGame = StatusGame.DRAW;
@@ -136,6 +136,9 @@ public class Game {
         return life;
 
     }
+
+
+
     public Game() {
         this.life = 10;
     }
@@ -174,6 +177,10 @@ public class Game {
         docData.put("NUM-BOMB-END-OF-GAME", totalData[2]);
         docData.put("FLAG", flag);
         return docData;
+    }
+
+    public Long[] getTotalData() {
+        return totalData;
     }
 
     public void raiseBy1TotalData(String field){

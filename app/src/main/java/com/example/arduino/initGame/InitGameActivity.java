@@ -45,6 +45,7 @@ public class InitGameActivity extends AppCompatActivity {
     private TextView txtKeys;
     private SeekBar seekBarMines;
     private SeekBar seekBarKeys;
+    private Intent intent;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -208,7 +209,7 @@ public class InitGameActivity extends AppCompatActivity {
                         String str = Objects.requireNonNull(FirebaseAuth.getInstance().getCurrentUser()).getUid();
                         httpHelper2.HttpRequestForLooby(str,"https://us-central1-arduino-a5968.cloudfunctions.net/setPlayerId1");
 
-                        startActivity(intent);
+                        startActivity(intent.addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY));
                     }
                 }
             }

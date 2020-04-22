@@ -21,9 +21,11 @@ import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.EventListener;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.FirebaseFirestoreException;
+import com.google.firebase.firestore.ListenerRegistration;
 
 public class PopWindow extends AppCompatActivity {
     private VideoView videoBG;
+    private ListenerRegistration registration;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -37,7 +39,8 @@ public class PopWindow extends AppCompatActivity {
             @Override
             public void onCompletion(MediaPlayer mp) {
                 final DocumentReference docReff = FirebaseFirestore.getInstance().collection("GameSettings").document("doucment1");
-                docReff.addSnapshotListener(new EventListener<DocumentSnapshot>() {
+                ListenerRegistration registration = docReff.addSnapshotListener(new EventListener<DocumentSnapshot>() {
+
                     @Override
                     public void onEvent(@Nullable DocumentSnapshot Snapshot, @Nullable FirebaseFirestoreException e) {
                         assert Snapshot != null;
@@ -50,31 +53,32 @@ public class PopWindow extends AppCompatActivity {
                         String valid_player1 = Snapshot.getString("playerId1");
                         String valid_player2 = Snapshot.getString("playerId2");
 
-                        if (valid_time == null || valid_time.equals("")) {  // defulat value
+                        if (valid_time.equals("null") || valid_time.equals("")) {  // defulat value
                             meb.setTime("10");
                         } else {
                             meb.setTime(valid_time);
                         }
-                        if (valid_shot == null || valid_shot.equals("")) { // defulat value
+                        if (valid_shot.equals("null") || valid_shot.equals("")) { // defulat value
                             meb.setNumberShot("30");
                         } else {
                             meb.setNumberShot(valid_shot);
                         }
-                        if (valid_type == null || valid_type.equals("")) {  // defulat value
+                        if (valid_type.equals("null") || valid_type.equals("")) {  // defulat value
                             meb.setGameType("1");
                         } else {
                             meb.setGameType(valid_type);
                         }
-                        if (valid_keys == null || valid_keys.equals("")) { // defulat value
+                        if (valid_keys.equals("null") || valid_keys.equals("")) { // defulat value
                             meb.setKeys("0");
                         } else {
-                            meb.setKeys(valid_shot);
+                            meb.setKeys(valid_keys);
                         }
-                        if (valid_mines == null || valid_mines.equals("")) { // defulat value
+                        if (valid_mines.equals("null") || valid_mines.equals("")) { // defulat value
                             meb.setMines("0");
                         } else {
-                            meb.setMines(valid_shot);
+                            meb.setMines(valid_mines);
                         }
+
                         meb.setPlayer1(valid_player1);
                         meb.setPlayer2(valid_player2);
                         Intent intentGame = new Intent(getApplicationContext(), GameScreenActivity.class);
@@ -84,9 +88,10 @@ public class PopWindow extends AppCompatActivity {
                         HttpHelper httpHelper1 = new HttpHelper();
                         httpHelper1.HttpRequestForLooby("2"," https://us-central1-arduino-a5968.cloudfunctions.net/resetLifeInGame");
                         intentGame.putExtra("MyMember", meb);
-                        startActivity(intentGame);
+                        startActivity(intentGame.addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY));
                     }
                 });
+
             }
         });
 
@@ -104,5 +109,13 @@ public class PopWindow extends AppCompatActivity {
         int width = dm.widthPixels;
         int height = dm.heightPixels;
         getWindow().setLayout((int)(width*.8),(int)(height*.6));
+    }
+    @Override
+    public void onPause() {
+        super.onPause();
+        // Remove post value event listener
+        if (registration != null) {
+            registration.remove();
+        }
     }
 }

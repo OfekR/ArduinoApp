@@ -18,26 +18,32 @@ import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.EventListener;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.FirebaseFirestoreException;
+import com.google.firebase.firestore.ListenerRegistration;
 
 import android.content.Intent;
 import android.media.MediaPlayer;
+import android.media.MediaRouter;
 import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.view.Window;
 import android.widget.Button;
 import android.widget.MediaController;
 import android.widget.VideoView;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.Callable;
 
 public class LobyActivity extends AppCompatActivity {
     private MediaPlayer mMediaPlayer;
     int mCurrentVideoPosition;
     private VideoView videoBG;
+    ListenerRegistration registration;
     private  Button btBack;
     private MediaPlayerWrapper mySong;
+    private int flag =0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -50,7 +56,7 @@ public class LobyActivity extends AppCompatActivity {
                 HttpHelper httpHelper = new HttpHelper();
                 httpHelper.HttpRequestForLooby("NO-ONE-IS-WAITING", "https://us-central1-arduino-a5968.cloudfunctions.net/addJoin");
                 Intent intent = new Intent(getApplicationContext(), MenuActivity.class);
-                startActivity(intent);
+                startActivity(intent.addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY));
             }
         });
         initiliazeVideo();
@@ -80,7 +86,7 @@ public class LobyActivity extends AppCompatActivity {
     private void waitForStartingGame() {
         FirebaseFirestore fstore = FirebaseFirestore.getInstance();
         final DocumentReference documentReference = fstore.collection("Appending").document("Append1");
-        documentReference.addSnapshotListener(new EventListener<DocumentSnapshot>() {
+        registration =documentReference.addSnapshotListener(new EventListener<DocumentSnapshot>() {
             @Override
             public void onEvent(@Nullable DocumentSnapshot documentSnapshot, @Nullable FirebaseFirestoreException e) {
                 assert documentSnapshot != null;
@@ -89,10 +95,11 @@ public class LobyActivity extends AppCompatActivity {
                 if(valid_game.equals("GAME-READY") && valid_join.equals("WAITING")){
                     Log.v("LOBY-CLASS","Game-is strating" );
                     Intent intent = new Intent(getApplicationContext(), PopWindow.class);
-                    startActivity(intent);
-                }
+                    startActivity(intent.addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY));                }
             }
         });
+
+
     }
 
 
@@ -102,6 +109,9 @@ public class LobyActivity extends AppCompatActivity {
     protected void onPause() {
         super.onPause();
         mySong.Pause();
+        if(registration != null){
+            registration.remove();
+        }
         if(mMediaPlayer != null) {
             mCurrentVideoPosition = mMediaPlayer.getCurrentPosition();
         }
@@ -135,6 +145,7 @@ public class LobyActivity extends AppCompatActivity {
             videoBG.start();
         }
     }
+
 
 
 }

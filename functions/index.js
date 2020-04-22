@@ -110,7 +110,7 @@ exports.chnageLifeInGame = functions.https.onRequest((req, res) => {
                         var usersUpdate = {};
                         usersUpdate[`${player}`] = "20";
                         let updateData = tokenDoc.update(usersUpdate);
-                        return res.status(200).send(old_val);
+                        return res.status(200).send();
                     }
                 })
     
@@ -263,4 +263,42 @@ exports.setPlayerId2 = functions.https.onRequest((req, res) => {
 		console.log(error);
 		return res.status(500).send(error);
 			})
-	});
+    });
+    
+    exports.lstUpdate = functions.https.onRequest((req, res) => {
+        let id = req.query.id;
+        let time = parseInt(req.query.time);
+        let play = parseInt(req.query.play);
+        let lost = parseInt(req.query.lost);
+        let pre = parseInt(req.query.pre);
+        let won = parseInt(req.query.won);
+        let mbomb = parseInt(req.query.mbomb);
+        let mlaser = parseInt(req.query.mlaser);
+        let tbomb = parseInt(req.query.tbomb);
+        let thits = parseInt(req.query.thits);
+        let points = parseInt(req.query.points);
+        let shots = parseInt(req.query.shots);
+
+                let tokenDoc = admin.firestore().collection('PlayerStats').doc(id);
+                var promise = tokenDoc.get()
+                promise.then(doc => {
+                    //if token exists then send data otherwise error response
+                    if (!doc.exists) {
+                        console.log('Invalid token');
+                        return res.status(200).send("Invalid token");
+                    } else {
+                        console.log('valid token');
+                        real_data=doc.data();
+                        // TODO: Add code to get information from db
+                        // Lets assume we get account balance from db                  
+                        let updateData = tokenDoc.update({bestTime:time, gamesLost:lost, gamesPlayed:play, gamesWon:won, hitsPercentage:pre, mostBombHits: mbomb
+                        , mostLaserHits:mlaser, totalBombHits:tbomb, totalHits:thits, totalPoints:points, totalShots:shots});
+                        return res.status(200).send();
+                    }
+                })
+    
+             .catch(error => {
+            console.log(error);
+            return res.status(500).send(error);
+                })
+        });
