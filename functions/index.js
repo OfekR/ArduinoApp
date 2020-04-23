@@ -278,6 +278,11 @@ exports.setPlayerId2 = functions.https.onRequest((req, res) => {
         let thits = parseInt(req.query.thits);
         let points = parseInt(req.query.points);
         let shots = parseInt(req.query.shots);
+        let flags = parseInt(req.query.flags);
+        let numPlayedflags = parseInt(req.query.numPlayedflags);
+        let numPlayedtime = parseInt(req.query.numPlayedtime);
+        let numPlayedhighscore = parseInt(req.query.numPlayedhighscore);
+
 
                 let tokenDoc = admin.firestore().collection('PlayerStats').doc(id);
                 var promise = tokenDoc.get()
@@ -292,7 +297,8 @@ exports.setPlayerId2 = functions.https.onRequest((req, res) => {
                         // TODO: Add code to get information from db
                         // Lets assume we get account balance from db                  
                         let updateData = tokenDoc.update({bestTime:time, gamesLost:lost, gamesPlayed:play, gamesWon:won, hitsPercentage:pre, mostBombHits: mbomb
-                        , mostLaserHits:mlaser, totalBombHits:tbomb, totalHits:thits, totalPoints:points, totalShots:shots});
+                        , mostLaserHits:mlaser, totalBombHits:tbomb, totalHits:thits, totalPoints:points, totalShots:shots,flags:flags,numPlayedflags:numPlayedflags,
+                        numPlayedtime:numPlayedtime,numPlayedhighscore:numPlayedhighscore });
                         return res.status(200).send();
                     }
                 })

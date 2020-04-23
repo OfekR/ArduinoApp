@@ -1,16 +1,8 @@
 package com.example.arduino.stats;
 
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-
-import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnSuccessListener;
-import com.google.android.gms.tasks.Task;
 import com.google.firebase.firestore.DocumentReference;
-import com.google.firebase.firestore.DocumentSnapshot;
-import com.google.firebase.firestore.EventListener;
 import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.FirebaseFirestoreException;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -27,6 +19,10 @@ public class PlayerStats {
     long totalShots;
     long totalHits;
     long hitPercentage;
+    long numFlags;
+    long numPlayedFlags;
+    long numPlayedHighScore;
+    long numPlayedTime;
 
 
     //C'tor to create new player stats
@@ -42,9 +38,13 @@ public class PlayerStats {
         totalShots = 0;
         totalHits = 0;
         hitPercentage = 0;
+        numFlags =0;
+        numPlayedFlags =0;
+        numPlayedHighScore =0;
+        numPlayedTime =0;
     }
 
-    public PlayerStats(long gamesPlayed, long gamesWon, long gamesLost, long totalPoints, long bestTime, long mostLaserHits, long mostBombHits, long totalBombHits, long totalShots, long totalHits) {
+    public PlayerStats(long gamesPlayed, long gamesWon, long gamesLost, long totalPoints, long bestTime, long mostLaserHits, long mostBombHits, long totalBombHits, long totalShots, long totalHits, long flags, long numPlayedflags, long numPlayedtime, long numPlayedhighscore) {
         this.gamesPlayed = gamesPlayed;
         this.gamesWon = gamesWon;
         this.gamesLost = gamesLost;
@@ -55,6 +55,10 @@ public class PlayerStats {
         this.totalBombHits = totalBombHits;
         this.totalShots = totalShots;
         this.totalHits = totalHits;
+        this.numFlags = flags;
+        numPlayedFlags = numPlayedflags;
+        numPlayedTime = numPlayedtime;
+        numPlayedHighScore = numPlayedhighscore;
         this.hitPercentage = (long)((float)totalHits / totalShots * 100);
     }
 
@@ -73,6 +77,11 @@ public class PlayerStats {
         hm.put("totalShots", stats.totalShots);
         hm.put("totalHits", stats.totalHits);
         hm.put("hitPercentage", stats.hitPercentage);
+        hm.put("numFlags", stats.numFlags);
+        hm.put("totalFlagsPlayed", stats.numPlayedFlags);
+        hm.put("totalScorePlayed", stats.numPlayedHighScore);
+        hm.put("totalTimePlayed", stats.numPlayedTime);
+
         documentReference.set(hm).addOnSuccessListener(new OnSuccessListener<Void>() {
             @Override
             public void onSuccess(Void aVoid) {

@@ -48,7 +48,8 @@ public class PopWindowWin extends AppCompatActivity {
         String url = "https://us-central1-arduino-a5968.cloudfunctions.net/lstUpdate";
         String arrg = "?id="+documentMover.getId()+"&time="+documentMover.get_bestTime()+"&play="+documentMover.get_gamesPlayed()+"&lost="+documentMover.get_gamesLost()+
                 "&pre="+documentMover.get_hitsPercentage()+"&won="+documentMover.get_gamesWon()+"&mbomb="+documentMover.get_mostBombHits()+"&mlaser="+documentMover.get_mostLaserHits()+
-                "&tbomb="+documentMover.get_totalBombHits()+"&thits="+documentMover.get_totalHits()+"&points="+documentMover.get_totalPoints()+"&shots="+documentMover.get_totalShots();
+                "&tbomb="+documentMover.get_totalBombHits()+"&thits="+documentMover.get_totalHits()+"&points="+documentMover.get_totalPoints()+"&shots="+documentMover.get_totalShots()+
+                "&flags="+documentMover.get_flags()+"&numPlayedflags="+documentMover.get_numflags()+"&numPlayedtime="+documentMover.get_numtime()+"&numPlayedhighscore="+documentMover.get_numScore();
         url= url+arrg;
         httpHelper.HttpRequest(url);
         changeScreen(MenuActivity.class);

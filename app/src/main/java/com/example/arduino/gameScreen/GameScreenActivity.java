@@ -197,11 +197,12 @@ public class GameScreenActivity extends AppCompatActivity {
 
         FirebaseFirestore fstore = FirebaseFirestore.getInstance();
         final DocumentReference documentReference = fstore.collection("PlayerStats").document(game.getFirebaseId());
-         registration = documentReference.addSnapshotListener(new EventListener<DocumentSnapshot>() {
+        documentReference.get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
             @Override
-            public void onEvent(@Nullable DocumentSnapshot documentSnapshot, @Nullable FirebaseFirestoreException e) {
-                assert documentSnapshot != null;
+            public void onComplete(@NonNull Task<DocumentSnapshot> task) {
                 // before
+                DocumentSnapshot documentSnapshot= task.getResult();
+                assert documentSnapshot != null;
                 Long _bestTime = (Long) documentSnapshot.get("bestTime");
                 Long _gamesLost = (Long) documentSnapshot.get("gamesLost");
                 Long _gamesPlayed = (Long) documentSnapshot.get("gamesPlayed");
@@ -213,7 +214,12 @@ public class GameScreenActivity extends AppCompatActivity {
                 Long _totalHits = (Long) documentSnapshot.get("totalHits");
                 Long _totalPoints = (Long) documentSnapshot.get("totalPoints");
                 Long _totalShots = (Long) documentSnapshot.get("totalShots");
-                assert _bestTime != null;
+                Long _flags = (Long) documentSnapshot.get("flags");
+                Long _numPlayedflags = (Long) documentSnapshot.get("numPlayedflags");
+                Long _numPlayedtime = (Long) documentSnapshot.get("numPlayedtime");
+                Long _numPlayedhighscore = (Long) documentSnapshot.get("numPlayedhighscore");
+
+                assert(_bestTime != null);
                 assert _gamesLost != null;
                 assert _gamesPlayed != null;
                 assert _gamesWon != null;
@@ -224,6 +230,10 @@ public class GameScreenActivity extends AppCompatActivity {
                 assert _totalHits != null;
                 assert _totalPoints != null;
                 assert _totalShots != null;
+                assert(_flags != null);
+                assert  _numPlayedflags != null;
+                assert  _numPlayedtime != null;
+                assert _numPlayedhighscore != null;
                 Long totalshots = game.getTotalData()[0];
                 Long totalbomb = game.getTotalData()[1];
                 Long totalhits = game.getTotalData()[2];
@@ -245,6 +255,15 @@ public class GameScreenActivity extends AppCompatActivity {
                     _gamesLost = _gamesLost + 1;
 
                 }
+                if(game.getType() == 1){
+                    _numPlayedflags = _numPlayedflags+1;
+                }
+                else if(game.getType() == 2){
+                    _numPlayedhighscore = _numPlayedhighscore+1;
+                }
+                else{
+                    _numPlayedtime = _numPlayedtime+1;
+                }
                 _totalBombHits = _totalBombHits + totalbomb;
                 _totalHits = _totalHits + totalhits; //TODO fix it
                 _totalPoints = _totalPoints + game.getPoint();
@@ -253,7 +272,7 @@ public class GameScreenActivity extends AppCompatActivity {
                     _hitsPercentage = _totalHits / _totalShots;
                 }
                 DocumentMover documentMover = new DocumentMover(game.getFirebaseId(),_bestTime,_gamesLost,_gamesPlayed,_gamesWon,
-                        _hitsPercentage,_mostBombHits,_mostLaserHits,_totalBombHits,_totalHits,_totalPoints,_totalShots);
+                        _hitsPercentage,_mostBombHits,_mostLaserHits,_totalBombHits,_totalHits,_totalPoints,_totalShots,_flags,_numPlayedflags,_numPlayedhighscore,_numPlayedtime);
                 if(statusGame.equals(StatusGame.WIN)){
                     Intent intent = new Intent(getApplicationContext(), PopWindowWin.class); // Todo change for the right screen
                     intent.putExtra("DocumentPusher",documentMover);
@@ -424,7 +443,7 @@ public class GameScreenActivity extends AppCompatActivity {
                     else{      // life last tank stand game
                         assert (my_life != null);
                         assert (opp_life != null);
-                        if(Integer.parseInt(my_life) > Integer.parseInt(opp_life)){  // I Won
+                        if(Integer.parseInt(my_life) >= Integer.parseInt(opp_life)){  // I Won
                             writeDataToCloud(StatusGame.WIN); //TODO in this postion all lose
 
                         }

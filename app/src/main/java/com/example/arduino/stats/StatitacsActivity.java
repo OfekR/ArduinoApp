@@ -5,26 +5,21 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.Intent;
-import android.media.MediaPlayer;
-import android.net.Uri;
 import android.os.Bundle;
-import android.view.SurfaceHolder;
-import android.view.SurfaceView;
 import android.view.View;
-import android.widget.ArrayAdapter;
 import android.widget.Button;
-import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.RatingBar;
 import android.widget.TextView;
-import android.widget.VideoView;
 
 import com.example.arduino.R;
-import com.example.arduino.gameScreen.GameScreenActivity;
-import com.example.arduino.menu.MenuActivity;
-import com.example.arduino.utilities.MediaPlayerWrapper;
+import com.github.mikephil.charting.charts.PieChart;
+import com.github.mikephil.charting.data.PieData;
+import com.github.mikephil.charting.data.PieDataSet;
+import com.github.mikephil.charting.data.PieEntry;
+import com.github.mikephil.charting.utils.ColorTemplate;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
@@ -36,15 +31,15 @@ import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.FirebaseFirestoreException;
 import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QuerySnapshot;
-import com.google.firebase.firestore.core.OrderBy;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 public class StatitacsActivity extends AppCompatActivity {
     private Button sendDt;
     long gamesPlayed, gamesWon, gamesLost, totalPoints, bestTime,
-    mostLaserHits, mostBombHits, totalBombHits, totalShots, totalHits, hitPercentage;
+    mostLaserHits, mostBombHits, totalBombHits, totalShots, totalHits, hitPercentage,numPlayedhighscore,numPlayedtime,numPlayedflags,flags;
     FirebaseFirestore db = FirebaseFirestore.getInstance();
     FirebaseAuth fAuth = FirebaseAuth.getInstance();
     private String userId = fAuth.getCurrentUser().getUid();
@@ -62,6 +57,11 @@ public class StatitacsActivity extends AppCompatActivity {
     private Button btTop5Score;
     private Button bTtop5Time;
     private Button bTMystats;
+    private TextView sumflag;
+    private TextView sumgame;
+    private TextView sumTime;
+    private TextView sumScore;
+
 
     private ProgressBar acuurcyProgressbar;
 
@@ -91,6 +91,11 @@ public class StatitacsActivity extends AppCompatActivity {
         btTop5Score = (Button) findViewById(R.id.btTopScore);
         bTtop5Time = (Button) findViewById(R.id.btTopTime);
         bTMystats = (Button) findViewById(R.id.btMystats);
+        sumTime = (TextView) findViewById(R.id.sctxtTime);
+        sumScore = (TextView) findViewById(R.id.sctxtScore);
+        sumgame = (TextView) findViewById(R.id.sctxtsumgame);
+        sumflag = (TextView) findViewById(R.id.scFlag);
+
 
         //PlayerStats.writeStats(userId, new PlayerStats(1,2,3,4,5,6,7,8,10,9));
         DocumentReference documentReference = db.collection("PlayerStats").document(userId);
@@ -109,10 +114,16 @@ public class StatitacsActivity extends AppCompatActivity {
                 totalShots = task.getResult().getLong("totalShots");
                 totalHits = task.getResult().getLong("totalHits");
                 hitPercentage = task.getResult().getLong("hitsPercentage");
+                flags = task.getResult().getLong("flags");
+                numPlayedflags = task.getResult().getLong("numPlayedflags");
+                numPlayedtime = task.getResult().getLong("numPlayedtime");
+                numPlayedhighscore = task.getResult().getLong("numPlayedhighscore");
+
                 PlayerStats stats = new PlayerStats(gamesPlayed, gamesWon, gamesLost, totalPoints, bestTime,
-                        mostLaserHits, mostBombHits, totalBombHits, totalShots, totalHits);
+                        mostLaserHits, mostBombHits, totalBombHits, totalShots, totalHits, flags, numPlayedflags, numPlayedtime, numPlayedhighscore);
                 changeRateandPic();
                 getuserNameAcc();
+                setupChart();
                 populateList(stats);
                 adapt();
             }
@@ -159,6 +170,36 @@ public class StatitacsActivity extends AppCompatActivity {
             public void onClick(View v) {
               adapt();           }
         });
+    }
+
+    private void setupChart() {
+        List<PieEntry> pieEntries = new ArrayList<>();
+        pieEntries.add(new PieEntry(numPlayedflags));
+        pieEntries.add(new PieEntry(numPlayedhighscore));
+        pieEntries.add(new PieEntry(numPlayedtime));
+        PieDataSet dataset = new PieDataSet(pieEntries,"Games");
+        dataset.setColors(ColorTemplate.COLORFUL_COLORS);
+        PieData data = new PieData((dataset));
+        Long _tmpFlag =  numPlayedflags;
+        Long _tmpsum =  gamesPlayed;
+        Long _tmpscore =  numPlayedhighscore;
+        Long _tmptime =  numPlayedtime;
+
+        PieChart chart = (PieChart) findViewById(R.id.pieChart);
+        chart.setDrawMarkers(false); // To remove markers when click
+        chart.setDrawEntryLabels(false); // To remove labels from piece of pie
+        chart.setDrawMarkers(false);
+        chart.setDrawCenterText(false);
+        chart.getDescription().setEnabled(false); // To remove description of pie
+        chart.getLegend().setEnabled(false);
+
+        sumflag.setText("Flag-Game: " + _tmpFlag.toString());
+        sumgame.setText("Total-Game: " + _tmpsum.toString());
+        sumScore.setText("High-Score: " + _tmpscore.toString());
+        sumTime.setText("Last-Tank : " + _tmptime.toString());
+
+        chart.setData(data);
+        chart.invalidate();
     }
 
 
@@ -275,6 +316,24 @@ public class StatitacsActivity extends AppCompatActivity {
         hitPercentageRow.put(FIRST_COLUMN, "Hit accuracy:");
         hitPercentageRow.put(SECOND_COLUMN,String.valueOf(stats.hitPercentage) + "%");
 
+        HashMap<String,String> numFlags = new HashMap<>();
+        numFlags.put(FIRST_COLUMN, "NumFlags:");
+        numFlags.put(SECOND_COLUMN,String.valueOf(stats.numFlags));
+
+        HashMap<String,String> totalPlayedFlags = new HashMap<>();
+        totalPlayedFlags.put(FIRST_COLUMN, "Total Played - Flags:");
+        totalPlayedFlags.put(SECOND_COLUMN,String.valueOf(stats.numPlayedFlags));
+
+        HashMap<String,String> totalPalyedScore = new HashMap<>();
+        totalPalyedScore.put(FIRST_COLUMN, "Total Played - Score:");
+        totalPalyedScore.put(SECOND_COLUMN,String.valueOf(stats.numPlayedHighScore));
+
+        HashMap<String,String> totalPlayedTime = new HashMap<>();
+        totalPlayedTime.put(FIRST_COLUMN, "Total Played - Time:");
+        totalPlayedTime.put(SECOND_COLUMN,String.valueOf(stats.numPlayedTime));
+
+
+
         list.add(gamesPlayedRow);
         list.add(gamesWonRow);
         list.add(gamesLostRow);
@@ -286,6 +345,11 @@ public class StatitacsActivity extends AppCompatActivity {
         list.add(totalShotsRow);
         list.add(totalHitsRow);
         list.add(hitPercentageRow);
+        list.add(numFlags);
+        list.add(totalPlayedFlags);
+        list.add(totalPalyedScore);
+        list.add(totalPlayedTime);
+
 
     }
 

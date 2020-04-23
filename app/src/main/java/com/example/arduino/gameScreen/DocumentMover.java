@@ -10,15 +10,20 @@ public class DocumentMover implements Parcelable {
     private Long _gamesPlayed;
     private Long _gamesWon;
     private Long _hitsPercentage;
-    private Long _mostBombHits ;
+    private Long _mostBombHits;
     private Long _mostLaserHits;
     private Long _totalBombHits;
     private Long _totalHits;
     private Long _totalPoints;
     private Long _totalShots;
+    private Long _flags;
+    private Long _numflags;
+    private Long _numScore;
+    private Long _numtime;
 
 
-    public DocumentMover(String id, Long _bestTime, Long _gamesLost, Long _gamesPlayed, Long _gamesWon, Long _hitsPercentage, Long _mostBombHits, Long _mostLaserHits, Long _totalBombHits, Long _totalHits, Long _totalPoints, Long _totalShots) {
+    public DocumentMover(String id, Long _bestTime, Long _gamesLost, Long _gamesPlayed, Long _gamesWon, Long _hitsPercentage, Long _mostBombHits, Long _mostLaserHits, Long _totalBombHits, Long _totalHits, Long _totalPoints, Long _totalShots, Long flags
+            , Long numflags, Long numScore, Long numTime) {
         this.id = id;
         this._bestTime = _bestTime;
         this._gamesLost = _gamesLost;
@@ -31,58 +36,10 @@ public class DocumentMover implements Parcelable {
         this._totalHits = _totalHits;
         this._totalPoints = _totalPoints;
         this._totalShots = _totalShots;
-    }
-
-    public String getId() {
-        return id;
-    }
-
-    public Long get_bestTime() {
-        return _bestTime;
-    }
-
-    public Long get_gamesLost() {
-        return _gamesLost;
-    }
-
-    public Long get_gamesPlayed() {
-        return _gamesPlayed;
-    }
-
-    public Long get_gamesWon() {
-        return _gamesWon;
-    }
-
-    public Long get_hitsPercentage() {
-        return _hitsPercentage;
-    }
-
-    public Long get_mostBombHits() {
-        return _mostBombHits;
-    }
-
-    public Long get_mostLaserHits() {
-        return _mostLaserHits;
-    }
-
-    public Long get_totalBombHits() {
-        return _totalBombHits;
-    }
-
-    public Long get_totalHits() {
-        return _totalHits;
-    }
-
-    public Long get_totalPoints() {
-        return _totalPoints;
-    }
-
-    public Long get_totalShots() {
-        return _totalShots;
-    }
-
-    public static Creator<DocumentMover> getCREATOR() {
-        return CREATOR;
+        this._flags = flags;
+        this._numflags = numflags;
+        this._numScore = numScore;
+        this._numtime = numTime;
     }
 
     protected DocumentMover(Parcel in) {
@@ -142,6 +99,26 @@ public class DocumentMover implements Parcelable {
         } else {
             _totalShots = in.readLong();
         }
+        if (in.readByte() == 0) {
+            _flags = null;
+        } else {
+            _flags = in.readLong();
+        }
+        if (in.readByte() == 0) {
+            _numflags = null;
+        } else {
+            _numflags = in.readLong();
+        }
+        if (in.readByte() == 0) {
+            _numScore = null;
+        } else {
+            _numScore = in.readLong();
+        }
+        if (in.readByte() == 0) {
+            _numtime = null;
+        } else {
+            _numtime = in.readLong();
+        }
     }
 
     public static final Creator<DocumentMover> CREATOR = new Creator<DocumentMover>() {
@@ -155,6 +132,70 @@ public class DocumentMover implements Parcelable {
             return new DocumentMover[size];
         }
     };
+
+    public String getId() {
+        return id;
+    }
+
+    public Long get_bestTime() {
+        return _bestTime;
+    }
+
+    public Long get_gamesLost() {
+        return _gamesLost;
+    }
+
+    public Long get_gamesPlayed() {
+        return _gamesPlayed;
+    }
+
+    public Long get_gamesWon() {
+        return _gamesWon;
+    }
+
+    public Long get_hitsPercentage() {
+        return _hitsPercentage;
+    }
+
+    public Long get_mostBombHits() {
+        return _mostBombHits;
+    }
+
+    public Long get_mostLaserHits() {
+        return _mostLaserHits;
+    }
+
+    public Long get_flags() {
+        return _flags;
+    }
+
+    public Long get_numflags() {
+        return _numflags;
+    }
+
+    public Long get_numScore() {
+        return _numScore;
+    }
+
+    public Long get_numtime() {
+        return _numtime;
+    }
+
+    public Long get_totalBombHits() {
+        return _totalBombHits;
+    }
+
+    public Long get_totalHits() {
+        return _totalHits;
+    }
+
+    public Long get_totalPoints() {
+        return _totalPoints;
+    }
+
+    public Long get_totalShots() {
+        return _totalShots;
+    }
 
     @Override
     public int describeContents() {
@@ -229,6 +270,30 @@ public class DocumentMover implements Parcelable {
         } else {
             dest.writeByte((byte) 1);
             dest.writeLong(_totalShots);
+        }
+        if (_flags == null) {
+            dest.writeByte((byte) 0);
+        } else {
+            dest.writeByte((byte) 1);
+            dest.writeLong(_flags);
+        }
+        if (_numflags == null) {
+            dest.writeByte((byte) 0);
+        } else {
+            dest.writeByte((byte) 1);
+            dest.writeLong(_numflags);
+        }
+        if (_numScore == null) {
+            dest.writeByte((byte) 0);
+        } else {
+            dest.writeByte((byte) 1);
+            dest.writeLong(_numScore);
+        }
+        if (_numtime == null) {
+            dest.writeByte((byte) 0);
+        } else {
+            dest.writeByte((byte) 1);
+            dest.writeLong(_numtime);
         }
     }
 }
