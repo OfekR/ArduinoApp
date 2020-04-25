@@ -24,6 +24,11 @@ import com.example.arduino.utilities.HttpHelper;
 import com.example.arduino.utilities.MediaPlayerWrapper;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.EventListener;
@@ -45,11 +50,12 @@ TODO : add the auth with the game for change the field in the database
 
 public class GameScreenActivity extends AppCompatActivity {
     private static final long START_TIME_IN_MILLIS = 600000 ;
-    private ListenerRegistration registration;
+    private ValueEventListener registration;
     private ListenerRegistration registration1;
     private ListenerRegistration registration2;
-
+    private DatabaseReference  mDatabase;
     private Game game;
+    private DatabaseReference gamedocRef;
     private ProgressBar pbLife;
     private TextView txtLife;
     private TextView txtAmmo;
@@ -68,6 +74,7 @@ public class GameScreenActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        mDatabase = FirebaseDatabase.getInstance().getReference();
         setContentView(R.layout.activity_game_screen);
         findAllView();
         getDataFromSetting();
@@ -89,16 +96,16 @@ public class GameScreenActivity extends AppCompatActivity {
                     mySong.StartOrResume();
                     game.setAmmuo(num);
                     txtAmmo.setText("Ammuo: - " + (game.getAmmuo().toString()));
+                   Integer hit;
                     if(game.getPlayerID().equals("1")){
-                        HttpHelper httpHelper = new HttpHelper();
-                        httpHelper.HttpRequestForLooby("2","https://us-central1-arduino-a5968.cloudfunctions.net/chnageLifeInGame");
+                        hit = Integer.parseInt(game.getValuesShared().getLife2()) -1;
 
                     }
                     // player 2
                     else{
-                        HttpHelper httpHelper = new HttpHelper();
-                        httpHelper.HttpRequestForLooby("1","https://us-central1-arduino-a5968.cloudfunctions.net/chnageLifeInGame");
+                        hit = Integer.parseInt(game.getValuesShared().getLife1())  -1;
                     }
+                    mDatabase.child("Game").child("life"+game.getOppID()).setValue(hit.toString());
                     //hit sound
                     checkForHit();
                 }
@@ -111,8 +118,6 @@ public class GameScreenActivity extends AppCompatActivity {
         });
 
         startTimer();
-        HttpHelper httpHelper = new HttpHelper();
-        httpHelper.HttpRequestForLooby(game.getPoint().toString(),"https://us-central1-arduino-a5968.cloudfunctions.net/endOfGameSender");
         ListnerForChangeInGame();
     }
 
@@ -131,6 +136,8 @@ public class GameScreenActivity extends AppCompatActivity {
             game.setPoint(val);
             txtScore.setText("SCORE -- "+ val.toString());
             game.raiseBy1TotalData("Hits");
+            mDatabase.child("Game").child("points"+game.getPlayerID()).setValue(val.toString());
+
         }
 
     }
@@ -176,13 +183,11 @@ public class GameScreenActivity extends AppCompatActivity {
      * TODO need to send the data of what happened we gat in the  arggs
      */
     private void checkForWin(EndOfGameReason endOfGameReason , StatusGame statusGame) {
-       HttpHelper httpHelper = new HttpHelper();
-        String points = game.getPoint().toString();
-        String life = game.getLife().toString();
-        String flag = game.getFlag().toString();
-        String arggsfield = "?token="+game.getPlayerID()+"&flag="+flag+"&points="+points+"&life="+life+"&valid=1";
-        String url = "https://us-central1-arduino-a5968.cloudfunctions.net/endOfGameSendder"+arggsfield;
-       httpHelper.HttpRequest(url);
+        if(endOfGameReason.equals(EndOfGameReason.FLAG)) Log.d("GAME-REASON-END-->","We Lost Because -  FLAG");
+        if(endOfGameReason.equals(EndOfGameReason.LIFE)) Log.d("GAME-REASON-END-->","We Lost Because -  LIFE");
+        if(endOfGameReason.equals(EndOfGameReason.TIME)) Log.d("GAME-REASON-END-->","We Lost Because -  TIME");
+        gamedocRef.removeEventListener(registration);
+        countDownTimer.cancel();
        gameOver(endOfGameReason ,statusGame);
     }
 
@@ -193,10 +198,7 @@ public class GameScreenActivity extends AppCompatActivity {
     private void writeDataToCloud(final StatusGame statusGame) {
         FirebaseFirestore db =FirebaseFirestore.getInstance();
         String uid = game.getFirebaseId();
-        registration1.remove();
-        registration2.remove();
         db.collection("Logs").document(uid).set(game.toMap(statusGame,mTimeLeftInMils));
-
         FirebaseFirestore fstore = FirebaseFirestore.getInstance();
         final DocumentReference documentReference = fstore.collection("PlayerStats").document(game.getFirebaseId());
         documentReference.get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
@@ -275,6 +277,7 @@ public class GameScreenActivity extends AppCompatActivity {
                 }
                 DocumentMover documentMover = new DocumentMover(game.getFirebaseId(),_bestTime,_gamesLost,_gamesPlayed,_gamesWon,
                         _hitsPercentage,_mostBombHits,_mostLaserHits,_totalBombHits,_totalHits,_totalPoints,_totalShots,_flags,_numPlayedflags,_numPlayedhighscore,_numPlayedtime);
+                Log.d("Writing to data cloud","-----> Moving to Pop window");
                 if(statusGame.equals(StatusGame.WIN)){
                     Intent intent = new Intent(getApplicationContext(), PopWindowWin.class); // Todo change for the right screen
                     intent.putExtra("DocumentPusher",documentMover);
@@ -341,33 +344,42 @@ public class GameScreenActivity extends AppCompatActivity {
 
     }
 
-    private void ListnerForChangeInGame() {
-        FirebaseFirestore fstore = FirebaseFirestore.getInstance();
-        final DocumentReference documentReference = fstore.collection("Game").document("firstgame");
-        registration1 = documentReference.addSnapshotListener(new EventListener<DocumentSnapshot>() {
+    private void ListnerForChangeInGame(){
+        final FirebaseDatabase database = FirebaseDatabase.getInstance();
+        gamedocRef = database.getReference("Game/");
+
+        registration = gamedocRef.addValueEventListener(new ValueEventListener() {
             @Override
-            public void onEvent(@Nullable DocumentSnapshot documentSnapshot, @Nullable FirebaseFirestoreException e) {
-                assert documentSnapshot != null;
-                String my_life_left = documentSnapshot.getString("LifePlayer"+game.getPlayerID());
-                String opp_life_left = documentSnapshot.getString("LifePlayer"+game.getOppID());
-                String my_flag = documentSnapshot.getString("flag"+game.getPlayerID());
-                String opp_flag = documentSnapshot.getString("flag"+game.getOppID());
-                assert (my_life_left != null);
-                assert (opp_flag !=null);
-                assert (my_flag != null);
-                assert (opp_flag != null);
-                game.setFlag((Long.parseLong(my_flag)));
-                // check if someone lose
-                if(my_life_left.equals("0") || opp_life_left.equals("0")){
-                    if(my_life_left.equals("0")){  // I lost ):
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                Integer my_life_left,opp_flag,my_flag,opp_life_left;
+                ValuesShared values = dataSnapshot.getValue(ValuesShared.class);
+                game.setValuesShared(values);
+                assert values != null;
+                if(game.getPlayerID().equals("1")){
+                    my_life_left = Integer.parseInt(values.getLife1());
+                     my_flag = Integer.parseInt(values.getFlag1());
+                    opp_flag = Integer.parseInt(values.getFlag2());
+                    opp_life_left = Integer.parseInt(values.getLife2());
+                }
+                else{
+                     my_life_left = Integer.parseInt(values.getLife2());
+                     my_flag = Integer.parseInt(values.getFlag2());
+                     opp_flag = Integer.parseInt(values.getFlag1());
+                     opp_life_left = Integer.parseInt(values.getLife1());
+                }
+                game.setFlag(my_flag);
+                game.setLife(my_life_left);
+                if(my_life_left == 0 || opp_life_left == 0){
+                    Log.d("Life ---> ","My--Life is  "+ my_life_left + "    Opp--Life is " + opp_life_left );
+                    if(my_life_left == 0){  // I lost ):
                         checkForWin(EndOfGameReason.LIFE,StatusGame.LOSE);
                     }
                     else{  // I Won (:
                         checkForWin(EndOfGameReason.LIFE, StatusGame.WIN);
                     }
                 }
-                else if( my_flag.equals("1") || opp_flag.equals("1")){
-                    if(opp_flag.equals("1")){  // I lost ):
+                else if( my_flag ==  1 || opp_flag == 1){
+                    if(opp_flag == 1){  // I lost ):
                         checkForWin(EndOfGameReason.FLAG,StatusGame.LOSE);
                     }
                     else{  // I Won (:
@@ -375,10 +387,14 @@ public class GameScreenActivity extends AppCompatActivity {
                     }
 
                 }
-                pbLife.setProgress(Integer.parseInt(my_life_left));
+                pbLife.setProgress(my_life_left);
                 txtLife.setText("LIFE: - " +my_life_left);
                 txtScore.setText(("SCORE- ")+game.getPoint().toString());
 
+            }
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+                System.out.println("The read failed: " + databaseError.getCode());
             }
         });
     }
@@ -389,76 +405,57 @@ public class GameScreenActivity extends AppCompatActivity {
         2. points
         3. life
      */
-
     private void gameOver(EndOfGameReason endOfGameReason , StatusGame statusGame) {
-        FirebaseFirestore fstore = FirebaseFirestore.getInstance();
-        final DocumentReference documentReference = fstore.collection("Game").document("endgame");
-        registration2 = documentReference.addSnapshotListener(new EventListener<DocumentSnapshot>() {
-            @RequiresApi(api = Build.VERSION_CODES.N)
-            @Override
-            public void onEvent(@Nullable DocumentSnapshot documentSnapshot, @Nullable FirebaseFirestoreException e) {
-                assert documentSnapshot != null;
-                String valid_player1 = documentSnapshot.getString("valid1");
-                final String valid_player2 = documentSnapshot.getString("valid2");
-                String my_points =  documentSnapshot.getString("points"+game.getPlayerID());
-                String opp_points =  documentSnapshot.getString("points"+game.getOppID());
-                String my_flag =  documentSnapshot.getString("flag"+game.getPlayerID());
-                String opp_flag =  documentSnapshot.getString("flag"+game.getOppID());
-                String my_life =  documentSnapshot.getString("life"+game.getPlayerID());
-                String opp_life =   documentSnapshot.getString("life"+game.getOppID());
-
-                if (valid_player1.equals("1") && valid_player2.equals("1")) {  //TODO check that we reset those values
-                    resetValue(); //reset game setting value
-                    Log.v("GAME-CLASS", "GAME------------FINISHED");
-                    if(game.getType() == 1 ) // capture the flag
-                    {
-                        assert (my_flag != null);
-                        assert (opp_flag != null);
-                        if(my_flag.equals("0")){  // I Won
-                            writeDataToCloud(StatusGame.WIN); //TODO in this postion all lose
-
-                        }
-                        else{   // Lost
-                            writeDataToCloud(StatusGame.LOSE); //TODO in this postion all lose
-
-                        }
-                    }
-                    else if(game.getType() == 2)  // High score game
-                    {
-                        assert (my_points != null);
-                        assert (opp_points != null);
-                        if(my_points.equals(opp_points)){  // draw
-                            writeDataToCloud(StatusGame.DRAW); //TODO in this postion all lose
-
-                        }
-                        else if (Integer.parseInt(my_points) > Integer.parseInt(opp_points)){   // won
-                            writeDataToCloud(StatusGame.WIN); //TODO in this postion all lose
-
-                        }
-                        else{  // lost
-                            writeDataToCloud(StatusGame.LOSE); //TODO in this postion all lose
-
-                        }
-
-                    }
-
-                    else{      // life last tank stand game
-                        assert (my_life != null);
-                        assert (opp_life != null);
-                        if(Integer.parseInt(my_life) >= Integer.parseInt(opp_life)){  // I Won
-                            writeDataToCloud(StatusGame.WIN); //TODO in this postion all lose
-
-                        }
-                        else{   // Lost
-                            writeDataToCloud(StatusGame.LOSE); //TODO in this postion all lose
-
-                        }
-                    }
-
-                }
+        Integer my_life_left,opp_flag,my_flag,opp_life_left,my_points,opp_points;
+        ValuesShared values = game.getValuesShared();   // reading the val for help
+        if(game.getPlayerID().equals("1")){
+            my_life_left = Integer.parseInt(values.getLife1());
+            my_flag = Integer.parseInt(values.getFlag1());
+            opp_flag = Integer.parseInt(values.getFlag2());
+            opp_life_left = Integer.parseInt(values.getLife2());
+            opp_points = Integer.parseInt(values.getPoints2());
+            my_points = Integer.parseInt(values.getPoints1());
+        }
+        else{
+            my_life_left = Integer.parseInt(values.getLife2());
+            my_flag = Integer.parseInt(values.getFlag2());
+            opp_flag = Integer.parseInt(values.getFlag1());
+            opp_life_left = Integer.parseInt(values.getLife1());
+            opp_points = Integer.parseInt(values.getPoints1());
+            my_points = Integer.parseInt(values.getPoints2());
+        }
+        resetValue(); //reset game setting value
+        Log.v("GAME-CLASS", "GAME------------FINISHED");
+        if(game.getType() == 1 ){ // capture the flag
+            if(my_flag == 0){  // I Won
+                writeDataToCloud(StatusGame.WIN);
             }
-        });
+            else{   // Lost
+                writeDataToCloud(StatusGame.LOSE);
+            }
+        }
+        else if(game.getType() == 2){  // High score game
+            if(my_points.equals(opp_points)){  // draw
+                writeDataToCloud(StatusGame.DRAW);
+            }
+            else if (my_points > opp_points){   // won
+                writeDataToCloud(StatusGame.WIN);
+            }
+            else{  // lost
+                writeDataToCloud(StatusGame.LOSE);
+            }
+
+        }
+        else{      // life last tank stand game
+            if(my_life_left >= opp_life_left){  // I Won
+                writeDataToCloud(StatusGame.WIN);
+            }
+            else{   // Lost
+                writeDataToCloud(StatusGame.LOSE);
+            }
+        }
     }
+
 
     private void sendDataTodataBase() {
         //create document to send the values at end of the game
@@ -473,8 +470,8 @@ public class GameScreenActivity extends AppCompatActivity {
     public void resetValue(){
         HttpHelper httpHelper = new HttpHelper();
         HttpHelper httpHelper1 = new HttpHelper();
-        HttpHelper httpHelper2 = new HttpHelper();
-      //  httpHelper2.HttpRequest("https://us-central1-arduino-a5968.cloudfunctions.net/resetvalidend?token="+game.getPlayerID()); //TODO change
+        mDatabase.child("Game").child("life1").setValue("20");
+        mDatabase.child("Game").child("life2").setValue("20");
         httpHelper.HttpRequestForLooby("NO-ONE-IS-WAITING", "https://us-central1-arduino-a5968.cloudfunctions.net/addJoin");
         httpHelper1.HttpRequestForLooby("GAME-NOT-READY","https://us-central1-arduino-a5968.cloudfunctions.net/setGameReady");
 

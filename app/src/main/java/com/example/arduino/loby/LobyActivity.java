@@ -44,6 +44,7 @@ public class LobyActivity extends AppCompatActivity {
     private  Button btBack;
     private MediaPlayerWrapper mySong;
     private int flag =0;
+    private ListenerRegistration registration1;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -53,8 +54,16 @@ public class LobyActivity extends AppCompatActivity {
         btBack.setOnClickListener(new View.OnClickListener(){
             @Override
             public  void onClick(View v){
-                HttpHelper httpHelper = new HttpHelper();
-                httpHelper.HttpRequestForLooby("NO-ONE-IS-WAITING", "https://us-central1-arduino-a5968.cloudfunctions.net/addJoin");
+                Bundle bundle = getIntent().getExtras();
+                String message = bundle.getString("Classifier");
+                if (message.equals("Init")) {
+                    HttpHelper httpHelper = new HttpHelper();
+                    httpHelper.HttpRequestForLooby("GAME-NOT-READY", "https://us-central1-arduino-a5968.cloudfunctions.net/setGameReady");
+                }
+                else{
+                    HttpHelper httpHelper = new HttpHelper();
+                    httpHelper.HttpRequestForLooby("NO-ONE-IS-WAITING", "https://us-central1-arduino-a5968.cloudfunctions.net/addJoin");
+                }
                 Intent intent = new Intent(getApplicationContext(), MenuActivity.class);
                 startActivity(intent.addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY));
             }
@@ -91,19 +100,78 @@ public class LobyActivity extends AppCompatActivity {
             public void onEvent(@Nullable DocumentSnapshot documentSnapshot, @Nullable FirebaseFirestoreException e) {
                 assert documentSnapshot != null;
                 String valid_join = documentSnapshot.getString("waitTojoin");
-                final String valid_game = documentSnapshot.getString("gameReady");
-                if(valid_game.equals("GAME-READY") && valid_join.equals("WAITING")){
+                String valid_game = documentSnapshot.getString("gameReady");
+                System.out.println("The ---- valid Game is " + valid_game + " The ---- valid Join is " +valid_join );
+                assert valid_join != null;
+                assert valid_game != null;
+                if((valid_game.equals("GAME-READY") && valid_join.equals("WAITING"))){
+                    System.out.println("Inside::::The ---- valid Game is " + valid_game + " The ---- valid Join is " +valid_join );
                     Log.v("LOBY-CLASS","Game-is strating" );
-                    Intent intent = new Intent(getApplicationContext(), PopWindow.class);
-                    startActivity(intent.addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY));                }
+                    resetchange();
+                }
             }
         });
 
 
     }
 
+    private void resetchange() {
+        registration.remove();
+        final DocumentReference docReff = FirebaseFirestore.getInstance().collection("GameSettings").document("doucment1");
+        registration1 = docReff.addSnapshotListener(new EventListener<DocumentSnapshot>() {
+            @Override
+            public void onEvent(@Nullable DocumentSnapshot Snapshot, @Nullable FirebaseFirestoreException e) {
+                assert Snapshot != null;
+                Member meb = new Member();
+                String valid_time = Snapshot.getString("Duration");
+                String valid_shot = Snapshot.getString("Shots");
+                String valid_type = Snapshot.getString("Type");
+                String valid_keys = Snapshot.getString("Keys");
+                String valid_mines = Snapshot.getString("Mines");
+                String valid_player1 = Snapshot.getString("playerId1");
+                String valid_player2 = Snapshot.getString("playerId2");
 
+                if (valid_time.equals("null") || valid_time.equals("")) {  // defulat value
+                    meb.setTime("10");
+                } else {
+                    meb.setTime(valid_time);
+                }
+                if (valid_shot.equals("null") || valid_shot.equals("")) { // defulat value
+                    meb.setNumberShot("30");
+                } else {
+                    meb.setNumberShot(valid_shot);
+                }
+                if (valid_type.equals("null") || valid_type.equals("")) {  // defulat value
+                    meb.setGameType("1");
+                } else {
+                    meb.setGameType(valid_type);
+                }
+                if (valid_keys.equals("null") || valid_keys.equals("")) { // defulat value
+                    meb.setKeys("0");
+                } else {
+                    meb.setKeys(valid_keys);
+                }
+                if (valid_mines.equals("null") || valid_mines.equals("")) { // defulat value
+                    meb.setMines("0");
+                } else {
+                    meb.setMines(valid_mines);
+                }
 
+                meb.setPlayer1(valid_player1);
+                meb.setPlayer2(valid_player2);
+                Intent intentGame = new Intent(getApplicationContext(), GameScreenActivity.class);
+                intentGame.putExtra("MyMember", meb);
+                Log.d("MY-TAG----->","the parma of :"+"shot: "+ valid_shot+"time:  "+valid_time);
+                changescreen(intentGame);
+
+            }
+        });
+    }
+
+    private void changescreen(Intent intent) {
+        registration1.remove();
+        startActivity(intent.addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY));
+    }
 
     @Override
     protected void onPause() {
@@ -145,7 +213,5 @@ public class LobyActivity extends AppCompatActivity {
             videoBG.start();
         }
     }
-
-
 
 }

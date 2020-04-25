@@ -16,6 +16,8 @@ import com.example.arduino.gameScreen.GameScreenActivity;
 import com.example.arduino.initGame.Member;
 import com.example.arduino.menu.MenuActivity;
 import com.example.arduino.utilities.HttpHelper;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.EventListener;
@@ -26,9 +28,12 @@ import com.google.firebase.firestore.ListenerRegistration;
 public class PopWindow extends AppCompatActivity {
     private VideoView videoBG;
     private ListenerRegistration registration;
+    private DatabaseReference mDatabase;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        mDatabase = FirebaseDatabase.getInstance().getReference();
+
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_pop_window);
         initiliazeVideo();
@@ -39,7 +44,7 @@ public class PopWindow extends AppCompatActivity {
             @Override
             public void onCompletion(MediaPlayer mp) {
                 final DocumentReference docReff = FirebaseFirestore.getInstance().collection("GameSettings").document("doucment1");
-                ListenerRegistration registration = docReff.addSnapshotListener(new EventListener<DocumentSnapshot>() {
+                 registration = docReff.addSnapshotListener(new EventListener<DocumentSnapshot>() {
 
                     @Override
                     public void onEvent(@Nullable DocumentSnapshot Snapshot, @Nullable FirebaseFirestoreException e) {
@@ -83,10 +88,6 @@ public class PopWindow extends AppCompatActivity {
                         meb.setPlayer2(valid_player2);
                         Intent intentGame = new Intent(getApplicationContext(), GameScreenActivity.class);
                         Log.d("MY-TAG----->","the parma of :"+"shot: "+ valid_shot+"time:  "+valid_time);
-                        HttpHelper httpHelper = new HttpHelper();
-                        httpHelper.HttpRequestForLooby("1" ,"https://us-central1-arduino-a5968.cloudfunctions.net/resetLifeInGame");
-                        HttpHelper httpHelper1 = new HttpHelper();
-                        httpHelper1.HttpRequestForLooby("2"," https://us-central1-arduino-a5968.cloudfunctions.net/resetLifeInGame");
                         intentGame.putExtra("MyMember", meb);
                         startActivity(intentGame.addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY));
                     }

@@ -40,7 +40,7 @@ public class InitGameActivity extends AppCompatActivity {
     private SeekBar seekBarLevel;
     private FirebaseFirestore db;
     private Member member;
-    private Button sendDt;
+    private Button sendDt,backmenu;
     private TextView txtMines;
     private TextView txtKeys;
     private SeekBar seekBarMines;
@@ -52,6 +52,13 @@ public class InitGameActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.initlayouts);
         priviteInitButton();
+        backmenu= (Button) findViewById(R.id.backendMenu);
+        backmenu.setOnClickListener(new View.OnClickListener(){
+            @Override
+            public  void onClick(View v){
+                changeScreen(MenuActivity.class);
+            }
+        });
         seekBarShots.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener(){
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
@@ -209,7 +216,7 @@ public class InitGameActivity extends AppCompatActivity {
                         HttpHelper httpHelper2 = new HttpHelper();
                         String str = Objects.requireNonNull(FirebaseAuth.getInstance().getCurrentUser()).getUid();
                         httpHelper2.HttpRequestForLooby(str,"https://us-central1-arduino-a5968.cloudfunctions.net/setPlayerId1");
-
+                        intent.putExtra("Classifier", "Init");
                         startActivity(intent.addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY));
                     }
                 }

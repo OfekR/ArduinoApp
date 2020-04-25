@@ -1,6 +1,7 @@
 package com.example.arduino.stats;
 
 import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FirebaseFirestore;
 
@@ -76,12 +77,11 @@ public class PlayerStats {
         hm.put("totalBombHits", stats.totalBombHits);
         hm.put("totalShots", stats.totalShots);
         hm.put("totalHits", stats.totalHits);
-        hm.put("hitPercentage", stats.hitPercentage);
-        hm.put("numFlags", stats.numFlags);
-        hm.put("totalFlagsPlayed", stats.numPlayedFlags);
-        hm.put("totalScorePlayed", stats.numPlayedHighScore);
-        hm.put("totalTimePlayed", stats.numPlayedTime);
-
+        hm.put("hitsPercentage", stats.hitPercentage);
+        hm.put("flags", stats.numFlags);
+        hm.put("numPlayedflags", stats.numPlayedFlags);
+        hm.put("numPlayedhighscore", stats.numPlayedHighScore);
+        hm.put("numPlayedtime", stats.numPlayedTime);
         documentReference.set(hm).addOnSuccessListener(new OnSuccessListener<Void>() {
             @Override
             public void onSuccess(Void aVoid) {

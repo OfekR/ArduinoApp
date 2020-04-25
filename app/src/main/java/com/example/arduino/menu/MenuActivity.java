@@ -105,6 +105,7 @@ public class MenuActivity extends AppCompatActivity {
                         HttpHelper httpHelper1 = new HttpHelper();
                         httpHelper1.HttpRequestForLooby(Objects.requireNonNull(FirebaseAuth.getInstance().getCurrentUser()).getUid(),"https://us-central1-arduino-a5968.cloudfunctions.net/setPlayerId2");
                         Intent intent = new Intent(getApplicationContext(),LobyActivity.class);
+                        intent.putExtra("Classifier", "Join");
                         startActivity(intent);
                     }
                     // check for athoer senrio if we want 3 state

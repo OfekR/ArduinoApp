@@ -23,8 +23,9 @@ public class Game {
     private  String oppID;
     private Integer mines;
     private Integer keys;
-    private  Long flag;
+    private  Integer flag;
     private Integer defuse;
+    private ValuesShared valuesShared;
     private Long[] totalData; // in the first place 1.totalHit , 2.TotalShots, 3.TotalBombHit;
     final private String firebaseId = FirebaseAuth.getInstance().getCurrentUser().getUid();
 
@@ -76,16 +77,24 @@ public class Game {
         this.point = point;
     }
 
-    public Long getFlag() {
+    public Integer getFlag() {
         return flag;
     }
 
-    public void setFlag(Long flag) {
+    public void setFlag(Integer flag) {
         this.flag = flag;
     }
 
     public Integer getPoint() {
         return point;
+    }
+
+    public ValuesShared getValuesShared() {
+        return valuesShared;
+    }
+
+    public void setValuesShared(ValuesShared valuesShared) {
+        this.valuesShared = valuesShared;
     }
 
     public Game(Member meb) {
@@ -99,11 +108,12 @@ public class Game {
         this.oppID = (String) meb.getPlayer2();
         this.defuse = 0;
         this.life = 20;
-        this.flag = Long.valueOf(0);
+        this.flag = 0;
         this.totalData = new Long[3];
         for(int i=0; i<3;i++){
             totalData[i] = Long.valueOf(0);
         }
+        valuesShared = new ValuesShared("20","20","0","0","1","1","0","0");
         checkValidId();
         statusEndofGame = StatusGame.DRAW;
     }
@@ -140,8 +150,8 @@ public class Game {
 
 
     public Game() {
-        this.life = 10;
     }
+
     public Integer getAmmuo() {
         return Ammuo;
     }
@@ -150,9 +160,6 @@ public class Game {
         Ammuo = ammuo;
     }
 
-    public Game(Integer life) {
-        this.life = life;
-    }
 
     public void setLife(Integer life) {
         this.life = life;

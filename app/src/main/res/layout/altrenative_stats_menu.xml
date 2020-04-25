@@ -193,7 +193,7 @@
     <ListView
         android:id="@+id/listView1"
         android:layout_width="411dp"
-        android:layout_height="362dp"
+        android:layout_height="262dp"
         android:background="#2876C5"
 
         app:layout_constraintStart_toStartOf="parent"
@@ -201,6 +201,14 @@
 
 
     </ListView>
+
+    <Button
+        android:id="@+id/backTomenu"
+        android:layout_width="match_parent"
+        android:layout_height="69dp"
+        android:background="#13324A"
+        android:text="BACK-TO-MENU"
+        android:textColor="#FFFFFF" />
 
 
 </LinearLayout>

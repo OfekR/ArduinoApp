@@ -15,6 +15,7 @@ import android.widget.RatingBar;
 import android.widget.TextView;
 
 import com.example.arduino.R;
+import com.example.arduino.menu.MenuActivity;
 import com.github.mikephil.charting.charts.PieChart;
 import com.github.mikephil.charting.data.PieData;
 import com.github.mikephil.charting.data.PieDataSet;
@@ -73,15 +74,15 @@ public class StatitacsActivity extends AppCompatActivity {
         listTop5Flag = new ArrayList<HashMap<String,String>>();
         listTop5Time = new ArrayList<HashMap<String,String>>();
 
-        /*
-        sendDt= (Button) findViewById(R.id.StatsMenu);
+
+        sendDt= (Button) findViewById(R.id.backTomenu);
         sendDt.setOnClickListener(new View.OnClickListener(){
             @Override
             public  void onClick(View v){
                 changeScreen(MenuActivity.class);
             }
         });
-*/
+
         usernameText = (TextView) findViewById(R.id.txtusername1);
         acuurcyProgressbar = (ProgressBar) findViewById(R.id.progressBar5);
         ratingBar = (RatingBar) findViewById(R.id.ratingBar);
