@@ -19,6 +19,7 @@ import com.example.arduino.R;
 import com.example.arduino.initGame.Member;
 import com.example.arduino.loby.PopWindow;
 import com.example.arduino.stats.PlayerStats;
+import com.example.arduino.utilities.BluetoothConnectionService;
 import com.example.arduino.utilities.HttpHelper;
 import com.example.arduino.utilities.MediaPlayerWrapper;
 import com.google.android.gms.tasks.OnCompleteListener;
@@ -74,7 +75,7 @@ public class GameScreenActivity extends AppCompatActivity {
         joystick.setOnMoveListener(new JoystickView.OnMoveListener() {
             @Override
             public void onMove(int angle, int strength) {
-                // do whatever you want
+                System.out.println("The-JoyStick angle -------> " + angle+ "The- Strength--------->  "+strength);
             }
         });
         // Listen to the shot button and update val
@@ -113,7 +114,6 @@ public class GameScreenActivity extends AppCompatActivity {
         HttpHelper httpHelper = new HttpHelper();
         httpHelper.HttpRequestForLooby(game.getPoint().toString(),"https://us-central1-arduino-a5968.cloudfunctions.net/endOfGameSender");
         ListnerForChangeInGame();
-
     }
 
     /**
@@ -193,6 +193,8 @@ public class GameScreenActivity extends AppCompatActivity {
     private void writeDataToCloud(final StatusGame statusGame) {
         FirebaseFirestore db =FirebaseFirestore.getInstance();
         String uid = game.getFirebaseId();
+        registration1.remove();
+        registration2.remove();
         db.collection("Logs").document(uid).set(game.toMap(statusGame,mTimeLeftInMils));
 
         FirebaseFirestore fstore = FirebaseFirestore.getInstance();
@@ -348,13 +350,13 @@ public class GameScreenActivity extends AppCompatActivity {
                 assert documentSnapshot != null;
                 String my_life_left = documentSnapshot.getString("LifePlayer"+game.getPlayerID());
                 String opp_life_left = documentSnapshot.getString("LifePlayer"+game.getOppID());
-                Long my_flag = (Long) documentSnapshot.get("flag"+game.getPlayerID());
-                Long opp_flag = (Long) documentSnapshot.get("flag"+game.getOppID());
-                assert my_life_left != null;
-                assert opp_flag !=null;
-                assert my_flag != null;
-                assert opp_flag != null;
-                game.setFlag(my_flag);
+                String my_flag = documentSnapshot.getString("flag"+game.getPlayerID());
+                String opp_flag = documentSnapshot.getString("flag"+game.getOppID());
+                assert (my_life_left != null);
+                assert (opp_flag !=null);
+                assert (my_flag != null);
+                assert (opp_flag != null);
+                game.setFlag((Long.parseLong(my_flag)));
                 // check if someone lose
                 if(my_life_left.equals("0") || opp_life_left.equals("0")){
                     if(my_life_left.equals("0")){  // I lost ):
@@ -364,8 +366,8 @@ public class GameScreenActivity extends AppCompatActivity {
                         checkForWin(EndOfGameReason.LIFE, StatusGame.WIN);
                     }
                 }
-                else if( my_flag == 1 || opp_flag == 1){
-                    if(opp_flag == 1){  // I lost ):
+                else if( my_flag.equals("1") || opp_flag.equals("1")){
+                    if(opp_flag.equals("1")){  // I lost ):
                         checkForWin(EndOfGameReason.FLAG,StatusGame.LOSE);
                     }
                     else{  // I Won (:
@@ -479,21 +481,6 @@ public class GameScreenActivity extends AppCompatActivity {
     }
 
 
-    @Override
-    protected void onPause() {
-        super.onPause();
-        if(mySong != null){
-            mySong.Pause();
-            mySong.Destroy();
-        }
-        if (registration != null) {
-            registration.remove();
-        }
-        if (registration1 != null) {
-            registration1.remove();
-        }
-        if (registration2 != null) {
-            registration2.remove();
-        }
-    }
 }
+
+

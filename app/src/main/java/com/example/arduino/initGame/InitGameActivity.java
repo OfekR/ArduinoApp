@@ -189,13 +189,14 @@ public class InitGameActivity extends AppCompatActivity {
                     // another player is already started a game
                     if (valid_join.equals("GAME-READY")) {
                         Log.v("MENU-CLASS", "SOMEONE IS ALREADY START A GAME");
+                        Log.v("MENU-CLASS",valid_join);
                         Toast.makeText(InitGameActivity.this, "SOMEONE IS ALREADY START A GAME",
                                 Toast.LENGTH_SHORT).show();
 
 
                     }
                     // you can start a game
-                    else {
+                    else  if(valid_join.equals("GAME-NOT-READY")){
                         HttpHelper httpHelper1 = new HttpHelper();
                         String args = "?keys="+member.getKeys()+"&mine="+member.getMines()+"&type="+member.getType()+"&shots="+member.getNumberShot()+"&time="+member.getTime();
                         String url = " https://us-central1-arduino-a5968.cloudfunctions.net/setfirstGame"+args;
