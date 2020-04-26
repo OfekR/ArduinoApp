@@ -23,6 +23,7 @@ import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -45,12 +46,14 @@ public class InitGameActivity extends AppCompatActivity {
     private TextView txtKeys;
     private SeekBar seekBarMines;
     private SeekBar seekBarKeys;
+    private DatabaseReference mDatabase;
     private Intent intent;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.initlayouts);
+        mDatabase = FirebaseDatabase.getInstance().getReference();
         priviteInitButton();
         backmenu= (Button) findViewById(R.id.backendMenu);
         backmenu.setOnClickListener(new View.OnClickListener(){
@@ -204,18 +207,13 @@ public class InitGameActivity extends AppCompatActivity {
                     }
                     // you can start a game
                     else  if(valid_join.equals("GAME-NOT-READY")){
-                        HttpHelper httpHelper1 = new HttpHelper();
-                        String args = "?keys="+member.getKeys()+"&mine="+member.getMines()+"&type="+member.getType()+"&shots="+member.getNumberShot()+"&time="+member.getTime();
-                        String url = " https://us-central1-arduino-a5968.cloudfunctions.net/setfirstGame"+args;
-                        httpHelper1.HttpRequest(url);
+                        GameSetting gameSetting = new GameSetting((String) member.getTime(),member.getKeys(),member.getMines(),(String) member.getNumberShot(),member.getType());
+                       // mDatabase.child("GameSettings").setValue(gameSetting);
+                        mDatabase.child("GameSettings").updateChildren(gameSetting.toHashMap());
 
                         HttpHelper httpHelper = new HttpHelper();
                         httpHelper.HttpRequestForLooby("GAME-READY","https://us-central1-arduino-a5968.cloudfunctions.net/setGameReady");
                         Intent intent = new Intent(getApplicationContext(),LobyActivity.class);
-
-                        HttpHelper httpHelper2 = new HttpHelper();
-                        String str = Objects.requireNonNull(FirebaseAuth.getInstance().getCurrentUser()).getUid();
-                        httpHelper2.HttpRequestForLooby(str,"https://us-central1-arduino-a5968.cloudfunctions.net/setPlayerId1");
                         intent.putExtra("Classifier", "Init");
                         startActivity(intent.addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY));
                     }

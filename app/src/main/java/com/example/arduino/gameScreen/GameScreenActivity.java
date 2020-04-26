@@ -129,8 +129,8 @@ public class GameScreenActivity extends AppCompatActivity {
 
         boolean arduinoSensorLaser =true; //TODO check in the sensor if we hit the other player
         if(arduinoSensorLaser){
-            mySong = new MediaPlayerWrapper(R.raw.boom,getApplicationContext());
-            mySong.StartOrResume();
+         //   mySong = new MediaPlayerWrapper(R.raw.boom,getApplicationContext());
+        //    mySong.StartOrResume();
             Integer val = game.getPoint();
             val= val+10;
             game.setPoint(val);

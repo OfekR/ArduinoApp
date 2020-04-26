@@ -7,6 +7,7 @@ import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 public class PlayerStats {
     long gamesPlayed;
@@ -24,6 +25,7 @@ public class PlayerStats {
     long numPlayedFlags;
     long numPlayedHighScore;
     long numPlayedTime;
+    String nickname;
 
 
     //C'tor to create new player stats
@@ -43,6 +45,7 @@ public class PlayerStats {
         numPlayedFlags =0;
         numPlayedHighScore =0;
         numPlayedTime =0;
+        nickname =  Objects.requireNonNull(FirebaseAuth.getInstance().getCurrentUser()).getEmail();
     }
 
     public PlayerStats(long gamesPlayed, long gamesWon, long gamesLost, long totalPoints, long bestTime, long mostLaserHits, long mostBombHits, long totalBombHits, long totalShots, long totalHits, long flags, long numPlayedflags, long numPlayedtime, long numPlayedhighscore) {
@@ -82,6 +85,7 @@ public class PlayerStats {
         hm.put("numPlayedflags", stats.numPlayedFlags);
         hm.put("numPlayedhighscore", stats.numPlayedHighScore);
         hm.put("numPlayedtime", stats.numPlayedTime);
+        hm.put("nickname",stats.nickname);
         documentReference.set(hm).addOnSuccessListener(new OnSuccessListener<Void>() {
             @Override
             public void onSuccess(Void aVoid) {

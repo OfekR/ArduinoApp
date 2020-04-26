@@ -150,7 +150,7 @@ public class StatitacsActivity extends AppCompatActivity {
                     activateList(listTop5Flag);
                 }
                 else{
-                    sendClicker("gamesWon",listTop5Flag);
+                    sendClicker("flags",listTop5Flag);
 
                 }
             }
@@ -216,7 +216,7 @@ public class StatitacsActivity extends AppCompatActivity {
                         else{
                             for(DocumentSnapshot doc : queryDocumentSnapshots.getDocuments()){
                                 HashMap<String,String> firstTopScore = new HashMap<>();
-                                firstTopScore.put(FIRST_COLUMN, doc.getReference().getId());
+                                firstTopScore.put(FIRST_COLUMN, doc.getString("nickname"));
                                 firstTopScore.put(SECOND_COLUMN,doc.getLong(field).toString());
                                 list.add(firstTopScore);
                             }

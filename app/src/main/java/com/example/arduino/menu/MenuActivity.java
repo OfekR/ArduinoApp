@@ -17,6 +17,7 @@ import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.EventListener;
@@ -32,6 +33,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
 
+import java.util.HashMap;
 import java.util.Objects;
 
 public class MenuActivity extends AppCompatActivity {
@@ -43,11 +45,13 @@ public class MenuActivity extends AppCompatActivity {
     Button statBtn;
     Button logOut;
     private FirebaseAuth.AuthStateListener mAuthStateListener;
+    private DatabaseReference mDatabase;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_menu);
+        mDatabase = FirebaseDatabase.getInstance().getReference();
         startButton = findViewById(R.id.start_btn);
         startButton.setOnClickListener(new View.OnClickListener(){
             @Override
@@ -102,8 +106,9 @@ public class MenuActivity extends AppCompatActivity {
                     else if (valid_join.equals("NO-ONE-IS-WAITING")) {
                         HttpHelper httpHelper = new HttpHelper();
                         httpHelper.HttpRequestForLooby("WAITING", "https://us-central1-arduino-a5968.cloudfunctions.net/addJoin");
-                        HttpHelper httpHelper1 = new HttpHelper();
-                        httpHelper1.HttpRequestForLooby(Objects.requireNonNull(FirebaseAuth.getInstance().getCurrentUser()).getUid(),"https://us-central1-arduino-a5968.cloudfunctions.net/setPlayerId2");
+                        HashMap<String,Object> hashMap = new HashMap<>();
+                        hashMap.put("playerId2",FirebaseAuth.getInstance().getUid());
+                        mDatabase.child("GameSettings").updateChildren(hashMap);
                         Intent intent = new Intent(getApplicationContext(),LobyActivity.class);
                         intent.putExtra("Classifier", "Join");
                         startActivity(intent);

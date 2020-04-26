@@ -18,6 +18,16 @@ public class Member implements Parcelable {
     private  String player2;
     private Map<String, Object> data = new HashMap<String, Object>();
 
+   public Member(GameSetting gameSetting){
+        this.time= gameSetting.getDuration();
+        this.numberShot= gameSetting.getShots();
+        this.type=gameSetting.getType();
+        this.keys=gameSetting.getKeys();
+        this.mines=gameSetting.getMines();
+        this.player1=gameSetting.getPlayerId1();
+        this.player2=gameSetting.getPlayerId2();
+    }
+
     public String getType() {
         return type;
     }
