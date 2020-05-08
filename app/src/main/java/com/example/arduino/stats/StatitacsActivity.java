@@ -133,6 +133,7 @@ public class StatitacsActivity extends AppCompatActivity {
         btTop5Score.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                // check whether data already retirived, if already then just show data otheriwse reterive from firbase
                 if(!listTop5Score.isEmpty()){
                     activateList(listTop5Score);
 

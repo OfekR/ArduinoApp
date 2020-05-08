@@ -55,6 +55,8 @@ public class InitGameActivity extends AppCompatActivity {
         setContentView(R.layout.initlayouts);
         mDatabase = FirebaseDatabase.getInstance().getReference();
         priviteInitButton();
+        //TODO - move into privtInitButton the following field
+        //backmenu return to main menu
         backmenu= (Button) findViewById(R.id.backendMenu);
         backmenu.setOnClickListener(new View.OnClickListener(){
             @Override
@@ -157,6 +159,7 @@ public class InitGameActivity extends AppCompatActivity {
             }
         });
     }
+    //associate fields and buttons from XML
    private void priviteInitButton(){
        member = new Member();
        db = FirebaseFirestore.getInstance();
@@ -179,7 +182,10 @@ public class InitGameActivity extends AppCompatActivity {
     private void sendData(){
         //db.collection("GameSettings").document("doucment1").update(member.getMap());
         Toast.makeText(getApplicationContext(), "insert data",Toast.LENGTH_LONG ).show();
+        //TODO - implement CheckIfDataValid - it should check if all compents are ready to play - tanks are right pos
+        //TODO check - maybe lower barrier down
         if(checkIfDataValid()){
+            // check if game can be started from firebase
             checkForGameReady();
         }
         else{

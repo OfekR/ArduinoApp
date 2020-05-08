@@ -6,7 +6,7 @@ import android.os.Parcelable;
 
 import java.util.HashMap;
 import java.util.Map;
-
+//TODO - Remove this class and use GameSetting instead
 public class Member implements Parcelable {
 
     private  String type;

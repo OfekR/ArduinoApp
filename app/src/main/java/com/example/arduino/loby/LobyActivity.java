@@ -54,6 +54,7 @@ public class LobyActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_loby);
         btBack = (Button) findViewById(R.id.Lobybutton);
+        // when pressed the back button , check who pressed and update firebase accrodingly
         btBack.setOnClickListener(new View.OnClickListener(){
             @Override
             public  void onClick(View v){
@@ -96,6 +97,7 @@ public class LobyActivity extends AppCompatActivity {
     }
 
     private void waitForStartingGame() {
+        //wait untill all players joined
         FirebaseFirestore fstore = FirebaseFirestore.getInstance();
         final DocumentReference documentReference = fstore.collection("Appending").document("Append1");
         registration =documentReference.addSnapshotListener(new EventListener<DocumentSnapshot>() {
@@ -108,8 +110,10 @@ public class LobyActivity extends AppCompatActivity {
                 assert valid_join != null;
                 assert valid_game != null;
                 if((valid_game.equals("GAME-READY") && valid_join.equals("WAITING"))){
+                    //Both players are in - Start game
                     System.out.println("Inside::::The ---- valid Game is " + valid_game + " The ---- valid Join is " +valid_join );
                     Log.v("LOBY-CLASS","Game-is strating" );
+                    // Retrive game setting from firebase
                     listnerForread();
                 }
             }
@@ -126,7 +130,7 @@ public class LobyActivity extends AppCompatActivity {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
                 gameSetting = dataSnapshot.getValue(GameSetting.class);
-                resetchange();
+                ChangeScreenToGameLayout();
             }
             @Override
             public void onCancelled(DatabaseError databaseError) {
@@ -137,8 +141,9 @@ public class LobyActivity extends AppCompatActivity {
     }
 
 
-    private void resetchange() {
+    private void ChangeScreenToGameLayout() {
         Intent intentGame = new Intent(getApplicationContext(), GameScreenActivity.class);
+        //TODO - convert to gamesetting
         Member member = new Member(gameSetting);
         intentGame.putExtra("MyMember", member);
         changescreen(intentGame);

@@ -91,6 +91,26 @@ exports.chnageLifeInGame = functions.https.onRequest((req, res) => {
 		return res.status(500).send(error);
 			})
     });
+
+
+    exports.setHits = functions.https.onRequest((req, res) => {
+        let token = req.query.token;
+        let promise = admin.database().ref('Game').once('value');
+        promise.then(function(snapshot) {
+        var tmp =Number(snapshot.val().valid1);
+        if(isNaN(tmp)){
+            return res.status(200).send('bad');
+        }
+        tmp = tmp +1;
+         admin.database().ref("/Game/" +token).set(`${tmp}`);
+        return res.status(200).send(`${tmp}`);
+        })
+        .catch(error => {
+            console.log(error);
+            return res.status(500).send(error);
+      })
+      });
+
     
     exports.resetLifeInGame = functions.https.onRequest((req, res) => {
         let token = req.query.token;

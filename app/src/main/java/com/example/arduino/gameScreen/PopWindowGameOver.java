@@ -70,6 +70,7 @@ public class PopWindowGameOver extends AppCompatActivity {
         DocumentMover documentMover = (DocumentMover) data.getParcelable("DocumentPusher");
         assert documentMover != null;
         HttpHelper httpHelper = new HttpHelper();
+        // cloud function to update Stats from Log db
         String url = "https://us-central1-arduino-a5968.cloudfunctions.net/lstUpdate";
         String arrg = "?id="+documentMover.getId()+"&time="+documentMover.get_bestTime()+"&play="+documentMover.get_gamesPlayed()+"&lost="+documentMover.get_gamesLost()+
                 "&pre="+documentMover.get_hitsPercentage()+"&won="+documentMover.get_gamesWon()+"&mbomb="+documentMover.get_mostBombHits()+"&mlaser="+documentMover.get_mostLaserHits()+

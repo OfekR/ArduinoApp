@@ -13,6 +13,7 @@ import java.util.Map;
 enum StatusGame{DRAW,WIN,LOSE,DONTKNOW};
 enum EndOfGameReason{TIME,LIFE,FLAG};
 public class Game {
+    private Integer num_hits;
     private StatusGame statusEndofGame;
     private Integer life;
     private  Integer Ammuo;
@@ -97,6 +98,14 @@ public class Game {
         this.valuesShared = valuesShared;
     }
 
+    public Integer getNum_hits() {
+        return num_hits;
+    }
+
+    public void setNum_hits(Integer num_hits) {
+        this.num_hits = num_hits;
+    }
+
     public Game(Member meb) {
 
         this.time =  Integer.parseInt((String)meb.getTime());
@@ -109,6 +118,7 @@ public class Game {
         this.defuse = 0;
         this.life = 20;
         this.flag = 0;
+        this.num_hits =0;   // num of hits i gat from opp
         this.totalData = new Long[3];
         for(int i=0; i<3;i++){
             totalData[i] = Long.valueOf(0);

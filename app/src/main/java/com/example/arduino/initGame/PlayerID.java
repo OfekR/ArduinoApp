@@ -8,6 +8,7 @@ import android.os.Parcelable;
 Not in use maybe need later for game
 instead use playerId use simple number 1 and 2
  */
+/*
 public class PlayerID implements Parcelable {
     private String joinPlayerId;
     private String createrPlayerId;
@@ -59,3 +60,4 @@ public class PlayerID implements Parcelable {
         dest.writeString(createrPlayerId);
     }
 }
+*/

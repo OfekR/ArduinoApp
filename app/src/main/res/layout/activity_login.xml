@@ -92,8 +92,9 @@
 
 
     <ImageView
-        android:layout_width="406dp"
-        android:layout_height="398dp"
+        android:layout_width="350dp"
+        android:layout_height="wrap_content"
+        android:paddingBottom="50dp"
         android:src="@drawable/tank_login"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"

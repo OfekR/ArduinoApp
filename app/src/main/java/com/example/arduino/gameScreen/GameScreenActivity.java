@@ -1,12 +1,12 @@
 package com.example.arduino.gameScreen;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.BluetoothDevice;
+import android.bluetooth.BluetoothSocket;
 import android.content.Intent;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.CountDownTimer;
 import android.util.Log;
@@ -14,12 +14,11 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.ProgressBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.example.arduino.R;
 import com.example.arduino.initGame.Member;
 import com.example.arduino.loby.PopWindow;
-import com.example.arduino.stats.PlayerStats;
-import com.example.arduino.utilities.BluetoothConnectionService;
 import com.example.arduino.utilities.HttpHelper;
 import com.example.arduino.utilities.MediaPlayerWrapper;
 import com.google.android.gms.tasks.OnCompleteListener;
@@ -31,16 +30,17 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
-import com.google.firebase.firestore.EventListener;
 import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.FirebaseFirestoreException;
 import com.google.firebase.firestore.ListenerRegistration;
 
-import java.util.HashMap;
+import java.io.IOException;
+import java.io.OutputStream;
 import java.util.Locale;
-import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
 
 import io.github.controlwear.virtual.joystick.android.JoystickView;
+
 
 
 /*
@@ -51,8 +51,6 @@ TODO : add the auth with the game for change the field in the database
 public class GameScreenActivity extends AppCompatActivity {
     private static final long START_TIME_IN_MILLIS = 600000 ;
     private ValueEventListener registration;
-    private ListenerRegistration registration1;
-    private ListenerRegistration registration2;
     private DatabaseReference  mDatabase;
     private Game game;
     private DatabaseReference gamedocRef;
@@ -69,6 +67,15 @@ public class GameScreenActivity extends AppCompatActivity {
     private boolean mTimerRunning;
     private long mTimeLeftInMils = START_TIME_IN_MILLIS;
     private MediaPlayerWrapper mySong;
+    private final String DEVICE_ADDRESS = "98:D3:51:FD:D9:45"; //MAC Address of Bluetooth Module
+    private final UUID PORT_UUID = UUID.fromString("00001101-0000-1000-8000-00805f9b34fb");
+
+    private BluetoothDevice device;
+    private BluetoothSocket socket;
+    private OutputStream outputStream;
+    private String command ="";
+
+
 
 
     @Override
@@ -76,50 +83,85 @@ public class GameScreenActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         mDatabase = FirebaseDatabase.getInstance().getReference();
         setContentView(R.layout.activity_game_screen);
+        // Register bluetooth receiver
         findAllView();
+        initBluetoothConnection();
         getDataFromSetting();
-        JoystickView joystick = (JoystickView) findViewById(R.id.joystickView);
+        JoystickView joystick = (JoystickView) findViewById(R.id.joystickViewCarControl);
         joystick.setOnMoveListener(new JoystickView.OnMoveListener() {
             @Override
             public void onMove(int angle, int strength) {
+                try {
+                    char c = findCommand(angle,strength);
+                    System.out.println("The-JoyStick angle -------> " + angle+ "and the Char i send is ---> " + c);
+                    outputStream.write(c); //transmits the value of command to the bluetooth
+
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
                 System.out.println("The-JoyStick angle -------> " + angle+ "The- Strength--------->  "+strength);
             }
         });
         // Listen to the shot button and update val
+        JoystickView joystickServo = (JoystickView) findViewById(R.id.joystickViewTurretControl);
+        joystickServo.setOnMoveListener(new JoystickView.OnMoveListener() {
+            @Override
+            public void onMove(int angle, int strength) {
+                try {
+                    char c = findCommandServo(angle,strength);
+                    System.out.println("The-JoyStick angle -------> " + angle+ "and the Char i send is ---> " + c);
+                    outputStream.write(c); //transmits the value of command to the bluetooth
+
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                System.out.println("The-JoyStick angle -------> " + angle+ "The- Strength--------->  "+strength);
+            }
+        });
+
         btnShot.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 Integer num =game.getAmmuo() -1;
                 game.raiseBy1TotalData("Shots");
                 if(num > 0 ){
+                    if(mySong !=  null) mySong.Destroy();
                     mySong = new MediaPlayerWrapper(R.raw.goodgunshot,getApplicationContext());
                     mySong.StartOrResume();
                     game.setAmmuo(num);
                     txtAmmo.setText("Ammuo: - " + (game.getAmmuo().toString()));
-                   Integer hit;
-                    if(game.getPlayerID().equals("1")){
-                        hit = Integer.parseInt(game.getValuesShared().getLife2()) -1;
-
-                    }
-                    // player 2
-                    else{
-                        hit = Integer.parseInt(game.getValuesShared().getLife1())  -1;
-                    }
-                    mDatabase.child("Game").child("life"+game.getOppID()).setValue(hit.toString());
                     //hit sound
-                    checkForHit();
+                   // checkForHit();
                 }
                 else{
                     txtAmmo.setText("NO- Ammuo - !!!!!!!!: - ");
                 }
-
-
             }
         });
 
         startTimer();
         ListnerForChangeInGame();
     }
+
+    private void initBluetoothConnection() {
+        // TODO: 1) block activity to allow safe connection (require few seconds to establish connection)
+        // TODO 2) retry to connect BT
+
+        if(BTinit()){
+            if(BTconnect()){
+              //  changeScreen(PopWindow.class);
+            }
+            else{
+                Toast.makeText(getApplicationContext(), "No-BlueTooth-Connection-Please restart", Toast.LENGTH_SHORT).show();
+
+            }
+        }
+        else{
+            Toast.makeText(getApplicationContext(), "Please pair the device first", Toast.LENGTH_SHORT).show();
+
+        }
+    }
+
 
     /**
      * check if the other player hit by getting data from arduino sensor
@@ -140,6 +182,21 @@ public class GameScreenActivity extends AppCompatActivity {
 
         }
 
+    }
+
+    private  void gatHit(){
+        Integer hit;
+        if(game.getPlayerID().equals("1")){
+            hit = Integer.parseInt(game.getValuesShared().getLife1()) -1;
+        }
+        // player 2
+        else{
+            hit = Integer.parseInt(game.getValuesShared().getLife2())  -1;
+        }
+        if(mySong !=  null) mySong.Destroy();
+        mySong = new MediaPlayerWrapper(R.raw.boom,getApplicationContext());
+        mySong.StartOrResume();
+        mDatabase.child("Game").child("life"+game.getPlayerID()).setValue(hit.toString());
     }
 
     private void findAllView(){
@@ -172,6 +229,7 @@ public class GameScreenActivity extends AppCompatActivity {
 
                 @Override
                 public void onFinish() {
+                    checkForWin();
                 }
             }.start();
             mTimerRunning = true;
@@ -182,17 +240,17 @@ public class GameScreenActivity extends AppCompatActivity {
      * check for win is wrap function for game over  close all the relvent audio and things that are opened
      * TODO need to send the data of what happened we gat in the  arggs
      */
-    private void checkForWin(EndOfGameReason endOfGameReason , StatusGame statusGame) {
-        if(endOfGameReason.equals(EndOfGameReason.FLAG)) Log.d("GAME-REASON-END-->","We Lost Because -  FLAG");
-        if(endOfGameReason.equals(EndOfGameReason.LIFE)) Log.d("GAME-REASON-END-->","We Lost Because -  LIFE");
-        if(endOfGameReason.equals(EndOfGameReason.TIME)) Log.d("GAME-REASON-END-->","We Lost Because -  TIME");
+    private void checkForWin() {
+        //if(endOfGameReason.equals(EndOfGameReason.FLAG)) Log.d("GAME-REASON-END-->","We Lost Because -  FLAG");
+        //if(endOfGameReason.equals(EndOfGameReason.LIFE)) Log.d("GAME-REASON-END-->","We Lost Because -  LIFE");
+        //if(endOfGameReason.equals(EndOfGameReason.TIME)) Log.d("GAME-REASON-END-->","We Lost Because -  TIME");
         gamedocRef.removeEventListener(registration);
         countDownTimer.cancel();
-       gameOver(endOfGameReason ,statusGame);
+       gameOver();
     }
 
     /**
-     * write to data base when the game is ended Log of the game for statics
+     * write to data base when the game is ended Log of the game for statics (stats also update auto)
      */
 
     private void writeDataToCloud(final StatusGame statusGame) {
@@ -309,7 +367,7 @@ public class GameScreenActivity extends AppCompatActivity {
         if (seconds == 0 && minutes == 0){
            // mySong.Pause();
            // mySong.Destroy();
-            checkForWin(EndOfGameReason.TIME, StatusGame.DONTKNOW);
+         //   checkForWin(EndOfGameReason.TIME, StatusGame.DONTKNOW);
         }
         else if(seconds < 10 && minutes == 0){
 
@@ -344,6 +402,7 @@ public class GameScreenActivity extends AppCompatActivity {
 
     }
 
+    // All game manegement
     private void ListnerForChangeInGame(){
         final FirebaseDatabase database = FirebaseDatabase.getInstance();
         gamedocRef = database.getReference("Game/");
@@ -351,41 +410,42 @@ public class GameScreenActivity extends AppCompatActivity {
         registration = gamedocRef.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
-                Integer my_life_left,opp_flag,my_flag,opp_life_left;
+                Integer my_life_left,opp_flag,my_flag,opp_life_left,my_hit,opp_hit,opp_points;
                 ValuesShared values = dataSnapshot.getValue(ValuesShared.class);
                 game.setValuesShared(values);
                 assert values != null;
                 if(game.getPlayerID().equals("1")){
                     my_life_left = Integer.parseInt(values.getLife1());
-                     my_flag = Integer.parseInt(values.getFlag1());
+                    my_flag = Integer.parseInt(values.getFlag1());
                     opp_flag = Integer.parseInt(values.getFlag2());
                     opp_life_left = Integer.parseInt(values.getLife2());
+                    my_hit = Integer.parseInt(values.getValid1());
+                    opp_hit = Integer.parseInt(values.getValid2());
+                    opp_points =Integer.parseInt(values.getPoints2());
                 }
                 else{
                      my_life_left = Integer.parseInt(values.getLife2());
                      my_flag = Integer.parseInt(values.getFlag2());
                      opp_flag = Integer.parseInt(values.getFlag1());
                      opp_life_left = Integer.parseInt(values.getLife1());
+                     opp_hit = Integer.parseInt(values.getValid1());
+                     my_hit = Integer.parseInt(values.getValid2());
+                    opp_points =Integer.parseInt(values.getPoints1());
                 }
                 game.setFlag(my_flag);
                 game.setLife(my_life_left);
-                if(my_life_left == 0 || opp_life_left == 0){
-                    Log.d("Life ---> ","My--Life is  "+ my_life_left + "    Opp--Life is " + opp_life_left );
-                    if(my_life_left == 0){  // I lost ):
-                        checkForWin(EndOfGameReason.LIFE,StatusGame.LOSE);
-                    }
-                    else{  // I Won (:
-                        checkForWin(EndOfGameReason.LIFE, StatusGame.WIN);
-                    }
-                }
-                else if( my_flag ==  1 || opp_flag == 1){
-                    if(opp_flag == 1){  // I lost ):
-                        checkForWin(EndOfGameReason.FLAG,StatusGame.LOSE);
-                    }
-                    else{  // I Won (:
-                        checkForWin(EndOfGameReason.FLAG, StatusGame.WIN);
-                    }
 
+                //update number hit
+                assert(my_hit >= game.getNum_hits());
+                if(my_hit > game.getNum_hits()){
+                    game.setNum_hits(game.getNum_hits()+1);
+                    gatHit();
+                    //TODO - add field to Game firbase field which indicate hit, and change the point calc to oppenet side
+                    opp_points = opp_points+10;
+                    mDatabase.child("Game").child("points"+game.getOppID()).setValue(opp_points.toString());
+                }
+                if(my_life_left == 0 || opp_life_left == 0 ||  my_flag ==  1 || opp_flag == 1 ) {
+                    checkForWin();
                 }
                 pbLife.setProgress(my_life_left);
                 txtLife.setText("LIFE: - " +my_life_left);
@@ -405,7 +465,7 @@ public class GameScreenActivity extends AppCompatActivity {
         2. points
         3. life
      */
-    private void gameOver(EndOfGameReason endOfGameReason , StatusGame statusGame) {
+    private void gameOver() {
         Integer my_life_left,opp_flag,my_flag,opp_life_left,my_points,opp_points;
         ValuesShared values = game.getValuesShared();   // reading the val for help
         if(game.getPlayerID().equals("1")){
@@ -427,6 +487,9 @@ public class GameScreenActivity extends AppCompatActivity {
         resetValue(); //reset game setting value
         Log.v("GAME-CLASS", "GAME------------FINISHED");
         if(game.getType() == 1 ){ // capture the flag
+            if(my_life_left == 0 ){
+                writeDataToCloud(StatusGame.LOSE);
+            }
             if(my_flag == 0){  // I Won
                 writeDataToCloud(StatusGame.WIN);
             }
@@ -435,6 +498,9 @@ public class GameScreenActivity extends AppCompatActivity {
             }
         }
         else if(game.getType() == 2){  // High score game
+            if(my_life_left == 0 ){
+                writeDataToCloud(StatusGame.LOSE);
+            }
             if(my_points.equals(opp_points)){  // draw
                 writeDataToCloud(StatusGame.DRAW);
             }
@@ -468,15 +534,227 @@ public class GameScreenActivity extends AppCompatActivity {
 
     //TODO NEED to reset the flag in frst game
     public void resetValue(){
+        try {
+            socket.close();
+        }
+        catch (Exception e){}
         HttpHelper httpHelper = new HttpHelper();
         HttpHelper httpHelper1 = new HttpHelper();
-        mDatabase.child("Game").child("life1").setValue("20");
-        mDatabase.child("Game").child("life2").setValue("20");
+        ValuesShared vs = new ValuesShared();
+        mDatabase.child("Game").setValue(vs.resetObject());
         httpHelper.HttpRequestForLooby("NO-ONE-IS-WAITING", "https://us-central1-arduino-a5968.cloudfunctions.net/addJoin");
         httpHelper1.HttpRequestForLooby("GAME-NOT-READY","https://us-central1-arduino-a5968.cloudfunctions.net/setGameReady");
 
     }
 
+
+    //Initializes bluetooth module
+    public boolean BTinit()
+    {
+        boolean found = false;
+
+        BluetoothAdapter bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+
+        if(bluetoothAdapter == null) //Checks if the device supports bluetooth
+        {
+            Toast.makeText(getApplicationContext(), "Device doesn't support bluetooth", Toast.LENGTH_SHORT).show();
+        }
+
+        if(bluetoothAdapter.isEnabled()) //Checks if bluetooth is enabled. If not, the program will ask permission from the user to enable it
+        {
+
+            Set<BluetoothDevice> bondedDevices = bluetoothAdapter.getBondedDevices();
+
+            if (bondedDevices.isEmpty()) //Checks for paired bluetooth devices
+            {
+                Toast.makeText(getApplicationContext(), "Please pair the device first", Toast.LENGTH_SHORT).show();
+            }
+            else {
+                for (BluetoothDevice iterator : bondedDevices) {
+                    Toast.makeText(this,"The paired mac --  is "+ iterator.getAddress(),Toast.LENGTH_LONG).show();
+
+                    if (iterator.getAddress().equals(DEVICE_ADDRESS)) {
+                        device = iterator;
+                        Toast.makeText(this,"The paired mac --  is "+ device.getAddress(),Toast.LENGTH_LONG).show();
+                        found = true;
+                        break;
+                    }
+                }
+            }
+        }
+
+        return found;
+    }
+
+    public boolean BTconnect()
+    {
+        boolean connected = true;
+
+        try
+        {
+            socket = device.createRfcommSocketToServiceRecord(PORT_UUID); //Creates a socket to handle the outgoing connection
+            socket.connect();
+
+            Toast.makeText(getApplicationContext(),
+                    "Connection to bluetooth device successful", Toast.LENGTH_LONG).show();
+        }
+        catch(IOException e)
+        {
+            e.printStackTrace();
+            connected = false;
+        }
+
+        if(connected)
+        {
+            try
+            {
+                //TODO
+                outputStream = socket.getOutputStream(); //gets the output stream of the socket
+            }
+            catch(IOException e)
+            {
+                e.printStackTrace();
+            }
+        }
+
+        return connected;
+    }
+    private char findCommand(int angle, int strength) {
+        if((angle >= 0 && angle < 10) || (angle >= 350 && angle <= 360)){
+            return '1';
+        }
+        else if((angle >= 10) && (angle < 30)){
+            return '2';
+        }
+        else if((angle >= 30) && (angle < 60)){
+            return '3';
+
+        }
+        else if((angle >= 60) && (angle < 80)){
+            return '4';
+
+        }
+        else if((angle >= 80) && (angle < 100)){
+            return '5';
+
+        }
+        else if((angle >= 100) && (angle < 130)){
+            return '6';
+
+        }
+        else if((angle >= 130) && (angle < 150)){
+            return '7';
+
+        }
+        else if((angle >= 150) && (angle < 170)){
+            return '8';
+
+        }
+        else if((angle >= 170) && (angle < 190)){
+            return '9';
+
+        }
+        else if((angle >= 190) && (angle < 210)){
+            return '0';
+
+        }
+        else if((angle >= 210) && (angle < 230)){
+            return 'a';
+
+        }
+        else if((angle >= 230) && (angle < 250)){
+            return 'b';
+
+        }
+        else if((angle >= 250) && (angle < 270)){
+            return 'c';
+
+        }
+        else if((angle >= 270) && (angle < 290)){
+            return 'd';
+
+        }
+        else if((angle >= 290) && (angle < 310)){
+            return 'e';
+
+        }
+        else if((angle >= 310) && (angle < 330)){
+            return 'f';
+
+        }
+        else if((angle >= 330) && (angle < 350)){
+            return 'g';
+
+        }
+        else{
+            return 'h';
+        }
+
+    }
+
+    //TODO - change to real values, consider using strength etc..
+    private char findCommandServo(int angle, int strength) {
+        if((angle > 0 && angle < 10) || (angle >= 350 && angle <= 360)){
+            return 'A';
+        }
+        else if((angle >= 10) && (angle < 30)){
+            return 'B';
+        }
+        else if((angle >= 30) && (angle < 60)){
+            return 'C';
+
+        }
+        else if((angle >= 60) && (angle < 80)){
+            return 'D';
+
+        }
+        else if((angle >= 80) && (angle < 100)){
+            return 'E';
+
+        }
+        else if((angle >= 100) && (angle < 130)){
+            return 'F';
+
+        }
+        else if((angle >= 130) && (angle < 170)){
+            return 'G';
+
+        }
+        else if((angle >= 170) && (angle < 190)){
+            return 'H';
+
+        }
+        else if((angle >= 190) && (angle < 220)){
+            return 'I';
+
+        }
+        else if((angle >= 220) && (angle < 260)){
+            return 'J';
+
+        }
+        else if((angle >= 260) && (angle < 280)){
+            return 'K';
+
+        }
+        else if((angle >= 280) && (angle < 320)){
+            return 'L';
+
+        }
+        else if((angle >= 320) && (angle < 350)){
+            return 'M';
+
+        }
+        else{
+            return 'N';
+        }
+
+    }
+
+
+    public void changeScreen(Class screen){
+        Intent intent = new Intent(GameScreenActivity.this, screen);
+        startActivity(intent);
+    }
 
 }
 

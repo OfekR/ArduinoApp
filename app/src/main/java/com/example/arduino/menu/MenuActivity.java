@@ -25,6 +25,9 @@ import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.FirebaseFirestoreException;
 
 import android.app.AlertDialog;
+import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.BluetoothDevice;
+import android.bluetooth.BluetoothSocket;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
@@ -33,8 +36,12 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
 
+import java.io.IOException;
+import java.io.OutputStream;
 import java.util.HashMap;
 import java.util.Objects;
+import java.util.Set;
+import java.util.UUID;
 
 public class MenuActivity extends AppCompatActivity {
     private static final String TAG = LogDefs.tagMenu;
@@ -44,21 +51,38 @@ public class MenuActivity extends AppCompatActivity {
     Button startButton;
     Button statBtn;
     Button logOut;
+    Button moveBt;
     private FirebaseAuth.AuthStateListener mAuthStateListener;
     private DatabaseReference mDatabase;
+    private BluetoothSocket bluetoothSocket;
+    private final String DEVICE_ADDRESS = "98:D3:51:FD:D9:45"; //MAC Address of Bluetooth Module
+    private final UUID PORT_UUID = UUID.fromString("00001101-0000-1000-8000-00805f9b34fb");
+
+    private BluetoothDevice device;
+    private BluetoothSocket socket;
+    private OutputStream outputStream;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_menu);
+        moveBt = findViewById(R.id.controller);
         mDatabase = FirebaseDatabase.getInstance().getReference();
         startButton = findViewById(R.id.start_btn);
+        moveBt.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                changeScreen(ControllerActvivty.class);
+            }
+        });
         startButton.setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick(View v) {
                 changeScreen(InitGameActivity.class);
+
             }
         });
+
 
         logOut = findViewById(R.id.logout_btn);
         logOut.setOnClickListener(new View.OnClickListener(){
@@ -220,5 +244,88 @@ public class MenuActivity extends AppCompatActivity {
         Intent intent = new Intent(this, screen);
         startActivity(intent);
     }
+
+    //Initializes bluetooth module
+    public boolean BTinit()
+    {
+        boolean found = false;
+
+        BluetoothAdapter bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+
+        if(bluetoothAdapter == null) //Checks if the device supports bluetooth
+        {
+            Toast.makeText(getApplicationContext(), "Device doesn't support bluetooth", Toast.LENGTH_SHORT).show();
+        }
+
+        if(!bluetoothAdapter.isEnabled()) //Checks if bluetooth is enabled. If not, the program will ask permission from the user to enable it
+        {
+            Intent enableAdapter = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
+            startActivityForResult(enableAdapter,0);
+
+            try
+            {
+                Thread.sleep(1000);
+            }
+            catch(InterruptedException e)
+            {
+                e.printStackTrace();
+            }
+        }
+
+        Set<BluetoothDevice> bondedDevices = bluetoothAdapter.getBondedDevices();
+
+        if(bondedDevices.isEmpty()) //Checks for paired bluetooth devices
+        {
+            Toast.makeText(getApplicationContext(), "Please pair the device first", Toast.LENGTH_SHORT).show();
+        }
+        else
+        {
+            for(BluetoothDevice iterator : bondedDevices)
+            {
+                if(iterator.getAddress().equals(DEVICE_ADDRESS))
+                {
+                    device = iterator;
+                    found = true;
+                    break;
+                }
+            }
+        }
+
+        return found;
+    }
+
+    public boolean BTconnect()
+    {
+        boolean connected = true;
+
+        try
+        {
+            socket = device.createRfcommSocketToServiceRecord(PORT_UUID); //Creates a socket to handle the outgoing connection
+            socket.connect();
+
+            Toast.makeText(getApplicationContext(),
+                    "Connection to bluetooth device successful", Toast.LENGTH_LONG).show();
+        }
+        catch(IOException e)
+        {
+            e.printStackTrace();
+            connected = false;
+        }
+
+        if(connected)
+        {
+            try
+            {
+                outputStream = socket.getOutputStream(); //gets the output stream of the socket
+            }
+            catch(IOException e)
+            {
+                e.printStackTrace();
+            }
+        }
+
+        return connected;
+    }
+
 
 }
