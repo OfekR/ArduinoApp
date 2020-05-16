@@ -66,9 +66,11 @@ public class MenuActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_menu);
+        //Set all buttons listener
         moveBt = findViewById(R.id.controller);
         mDatabase = FirebaseDatabase.getInstance().getReference();
         startButton = findViewById(R.id.start_btn);
+        //TODO - remove moveBt (only to debug controller)
         moveBt.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -79,7 +81,6 @@ public class MenuActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 changeScreen(InitGameActivity.class);
-
             }
         });
 
@@ -128,13 +129,17 @@ public class MenuActivity extends AppCompatActivity {
                     }
                     // you can join game
                     else if (valid_join.equals("NO-ONE-IS-WAITING")) {
+                        // update "waitToJoin" field
                         HttpHelper httpHelper = new HttpHelper();
                         httpHelper.HttpRequestForLooby("WAITING", "https://us-central1-arduino-a5968.cloudfunctions.net/addJoin");
+                        // set the logged in user uid for player 2 and sync to firebase(to be able to identifty him later)
                         HashMap<String,Object> hashMap = new HashMap<>();
                         hashMap.put("playerId2",FirebaseAuth.getInstance().getUid());
                         mDatabase.child("GameSettings").updateChildren(hashMap);
+                        //go to lobby screen and wait for to start
                         Intent intent = new Intent(getApplicationContext(),LobyActivity.class);
                         intent.putExtra("Classifier", "Join");
+                        //TODO ASK AMIT - do you need here flag FLAG_ACTIVITY_NO_HISTORY like on initGame? what is the purpose anyway?
                         startActivity(intent);
                     }
                     // check for athoer senrio if we want 3 state
@@ -245,8 +250,9 @@ public class MenuActivity extends AppCompatActivity {
         startActivity(intent);
     }
 
+    //TODO - delete this if not required
     //Initializes bluetooth module
-    public boolean BTinit()
+    /*public boolean BTinit()
     {
         boolean found = false;
 
@@ -327,5 +333,5 @@ public class MenuActivity extends AppCompatActivity {
         return connected;
     }
 
-
+*/
 }

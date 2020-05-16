@@ -1,14 +1,28 @@
 package com.example.arduino.gameScreen;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
 
+import android.Manifest;
+import android.app.AlertDialog;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.IntentFilter;
+import android.net.ConnectivityManager;
+import android.net.Network;
+import android.net.NetworkInfo;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.CountDownTimer;
+import android.os.Handler;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -17,12 +31,14 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.arduino.R;
+import com.example.arduino.defines.LogDefs;
 import com.example.arduino.initGame.Member;
 import com.example.arduino.loby.PopWindow;
 import com.example.arduino.utilities.HttpHelper;
 import com.example.arduino.utilities.MediaPlayerWrapper;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
+import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -30,14 +46,20 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.EventListener;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.FirebaseFirestoreException;
 import com.google.firebase.firestore.ListenerRegistration;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.util.HashMap;
 import java.util.Locale;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import io.github.controlwear.virtual.joystick.android.JoystickView;
 
@@ -49,16 +71,19 @@ TODO : add the auth with the game for change the field in the database
  */
 
 public class GameScreenActivity extends AppCompatActivity {
-    private static final long START_TIME_IN_MILLIS = 600000 ;
+    private static final String TAG = LogDefs.tagGameScreen;
+
+    private static final long START_TIME_IN_MILLIS = 600000;
     private ValueEventListener registration;
-    private DatabaseReference  mDatabase;
+    private ValueEventListener gameStartRegistration;
+    private DatabaseReference mDatabase;
     private Game game;
     private DatabaseReference gamedocRef;
     private ProgressBar pbLife;
     private TextView txtLife;
     private TextView txtAmmo;
     private TextView txtScore;
-    private  TextView txtKeys;
+    private TextView txtKeys;
     private TextView txtMines;
     private TextView txtDefuse;
     private Button btnShot;
@@ -67,15 +92,34 @@ public class GameScreenActivity extends AppCompatActivity {
     private boolean mTimerRunning;
     private long mTimeLeftInMils = START_TIME_IN_MILLIS;
     private MediaPlayerWrapper mySong;
-    private final String DEVICE_ADDRESS = "98:D3:51:FD:D9:45"; //MAC Address of Bluetooth Module
-    private final UUID PORT_UUID = UUID.fromString("00001101-0000-1000-8000-00805f9b34fb");
+    private JoystickView joystickCar;
+    private JoystickView joystickServo;
+    //BT variables
+    //TODO - set the real ones, for now the first is the tank second is the car (for now set both to the same
+    //private final String DEVICE_ADDRESS_P1 = "98:D3:51:FD:D9:45";
+    private final String DEVICE_ADDRESS_P1 = "98:D3:61:F5:E7:3C";
+    private final String DEVICE_ADDRESS_P2 = "98:D3:61:F5:E7:3C";
+    private final int laserShootLengthMS = 2000;
+    private static final String TAG_BT = LogDefs.tagBT;
+    private static final int REQUEST_ENABLE_BT = 3; //just random value , 3 doesn't mean anything
 
+    private String DEVICE_ADDRESS; //MAC Address of Bluetooth Module
+    private final UUID PORT_UUID = UUID.fromString("00001101-0000-1000-8000-00805f9b34fb");
     private BluetoothDevice device;
     private BluetoothSocket socket;
     private OutputStream outputStream;
-    private String command ="";
+    private BluetoothAdapter mBluetoothAdapter;
 
+    //TODO bundle to struct
+    private AtomicBoolean _isBtConnected;
+    private AtomicBoolean _isInternetConnected;
+    private AtomicBoolean _isCarInPlace;
 
+    private String command = "";
+    private AtomicBoolean _isGameStarted;
+
+    AlertDialog waitDialog;
+    boolean doubleBackToExitPressedOnce = false;
 
 
     @Override
@@ -83,84 +127,326 @@ public class GameScreenActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         mDatabase = FirebaseDatabase.getInstance().getReference();
         setContentView(R.layout.activity_game_screen);
-        // Register bluetooth receiver
+
         findAllView();
+
+        initPreGameVariables();
+        initButtonsListeners();
+        showWaitScreen();
+
+        waitUntillGameReady();
         initBluetoothConnection();
+        initCarInPlace();
+        initInternetConnected();
+    }
+
+    /** ************************* General ************************* **/
+    @Override
+    public void onBackPressed() {
+        if (doubleBackToExitPressedOnce) {
+            //super.onBackPressed();
+            DialogInterface.OnClickListener dialogClickListener = new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int optionChoosen) {
+                    switch (optionChoosen){
+                        case DialogInterface.BUTTON_POSITIVE:
+                            //Yes button clicked
+                            forfeitMatch();
+                            dialog.dismiss();
+                            break;
+
+                        case DialogInterface.BUTTON_NEGATIVE:
+                            //No button clicked - nothing to do
+                            dialog.dismiss();
+                            break;
+                    }
+                }
+            };
+
+            final AlertDialog gameForfitDialog = new AlertDialog.Builder(this).setMessage("Are you sure you want to forfeit the match?")
+                    .setPositiveButton("Yes", dialogClickListener)
+                    .setNegativeButton("No", dialogClickListener)
+                    .create();
+            //this attributes to avoid user be able to remove dialog
+            gameForfitDialog.setCancelable(false);
+            gameForfitDialog.setCanceledOnTouchOutside(false);
+            gameForfitDialog.show();
+            return;
+        }
+
+        this.doubleBackToExitPressedOnce = true;
+        Toast.makeText(this, "Please click BACK again to forfeit", Toast.LENGTH_SHORT).show();
+
+        new Handler().postDelayed(new Runnable() {
+
+            @Override
+            public void run() {
+                doubleBackToExitPressedOnce=false;
+            }
+        }, 2000);
+    }
+
+    private void forfeitMatch()
+    {
+        //TODO IMPORTANT - pass param to indicate this user lost
+        checkForWin();
+    }
+
+    private void updateGameStartedField(boolean isReady)
+    {
+        Bundle bundle = getIntent().getExtras();
+        String message = bundle.getString("Classifier");
+        String key;
+        if (message.equals("Init")) {
+            //player 1
+            key = "P1_Ready";
+        }
+        else{
+            //player 2
+            //message.equals("Join")
+            key = "P2_Ready";
+        }
+        //update firebase with the updated value
+        HashMap<String,Object> hashMap = new HashMap<>();
+        hashMap.put(key, isReady);
+        mDatabase.child("GameStarted").updateChildren(hashMap);
+    }
+    /** ************************* PreGame Settings ************************* **/
+
+    /**
+     * wait screen , appear as long the game hasn't started yet
+     */
+    private void showWaitScreen() {
+        waitDialog = new AlertDialog.Builder(this).setMessage("waiting for both player to be ready to play").create();
+        //this attributes to avoid user be able to remove dialog
+        waitDialog.setCancelable(false);
+        waitDialog.setCanceledOnTouchOutside(false);
+        waitDialog.show();
+    }
+
+    /**
+     * starting game screen , appear for X seconds after both player are ready and game about to sttart
+     */
+    private void showStartingGameScreen()
+    {
+        final int waitingTimeSec = 3;
+        final AlertDialog gameStartingDialog = new AlertDialog.Builder(this).setMessage("Game Starting in " + waitingTimeSec + " seconds.....").create();
+        //this attributes to avoid user be able to remove dialog
+        gameStartingDialog.setCancelable(false);
+        gameStartingDialog.setCanceledOnTouchOutside(false);
+        gameStartingDialog.show();
+
+        // Hide after some seconds
+        final Handler handler  = new Handler();
+        final Runnable runnable = new Runnable() {
+            @Override
+            public void run() {
+                if (gameStartingDialog.isShowing()) {
+                    gameStartingDialog.dismiss();
+                }
+            }
+        };
+
+        gameStartingDialog.setOnDismissListener(new DialogInterface.OnDismissListener() {
+            @Override
+            public void onDismiss(DialogInterface dialog) {
+                handler.removeCallbacks(runnable);
+            }
+        });
+
+        handler.postDelayed(runnable, waitingTimeSec * 1000);
+    }
+
+    /**
+     * init all views
+     */
+    private void findAllView(){
+        btnShot = (Button) findViewById(R.id.btGameShoot);
+        pbLife = (ProgressBar) findViewById(R.id.progressBar2);
+        txtLife = (TextView) findViewById(R.id.txtLife);
+        txtAmmo = (TextView) findViewById(R.id.txtAmmouLeft);
+        txtScore = (TextView) findViewById(R.id.txtGamePoint);
+        txtKeys = (TextView) findViewById(R.id.txtGameKeys);
+        txtMines = (TextView) findViewById(R.id.txtGameMines);
+        txtDefuse = (TextView) findViewById(R.id.txtGameDefuse);
+        txtCountDown = (TextView) findViewById(R.id.txtCountdown);
+        joystickCar = (JoystickView) findViewById(R.id.joystickViewCarControl);
+        joystickServo = (JoystickView) findViewById(R.id.joystickViewTurretControl);
+
+    }
+
+    /**
+     * init all preGame variables
+     */
+    private void initPreGameVariables()
+    {
+        //disable buttons until game starting
+        disableEnableButtons(false);
         getDataFromSetting();
-        JoystickView joystick = (JoystickView) findViewById(R.id.joystickViewCarControl);
-        joystick.setOnMoveListener(new JoystickView.OnMoveListener() {
+        _isGameStarted = new AtomicBoolean(false);
+        _isInternetConnected = new AtomicBoolean(false);
+        _isCarInPlace = new AtomicBoolean(false);
+    }
+
+    /**
+     * init all listeners
+     */
+    private void initButtonsListeners()
+    {
+        joystickCar.setOnMoveListener(new JoystickView.OnMoveListener() {
             @Override
             public void onMove(int angle, int strength) {
                 try {
-                    char c = findCommand(angle,strength);
-                    System.out.println("The-JoyStick angle -------> " + angle+ "and the Char i send is ---> " + c);
+                    char c = findCommandCar(angle,strength);
+                    System.out.println("The-Car-JoyStick angle -------> " + angle+ "and the Char i send is ---> " + c);
                     outputStream.write(c); //transmits the value of command to the bluetooth
 
                 } catch (IOException e) {
                     e.printStackTrace();
+                    System.out.println("The-CarFail-JoyStick angle -------> " + angle+ "The- Strength--------->  "+strength);
                 }
-                System.out.println("The-JoyStick angle -------> " + angle+ "The- Strength--------->  "+strength);
             }
         });
         // Listen to the shot button and update val
-        JoystickView joystickServo = (JoystickView) findViewById(R.id.joystickViewTurretControl);
         joystickServo.setOnMoveListener(new JoystickView.OnMoveListener() {
             @Override
             public void onMove(int angle, int strength) {
                 try {
-                    char c = findCommandServo(angle,strength);
-                    System.out.println("The-JoyStick angle -------> " + angle+ "and the Char i send is ---> " + c);
-                    outputStream.write(c); //transmits the value of command to the bluetooth
+                    if(strength != 0)
+                    {
+                        char c = findCommandServo(angle,strength);
+                        System.out.println("The-Servo-JoyStick angle -------> " + angle+ "and the Char i send is ---> " + c);
+                        outputStream.write(c); //transmits the value of command to the bluetooth
+                    }
+                    //else - strength 0, nothing to move
+
 
                 } catch (IOException e) {
                     e.printStackTrace();
+                    System.out.println("The-ServoFail-JoyStick angle -------> " + angle+ "The- Strength--------->  "+strength);
                 }
-                System.out.println("The-JoyStick angle -------> " + angle+ "The- Strength--------->  "+strength);
             }
         });
 
         btnShot.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Integer num =game.getAmmuo() -1;
+                Integer numOfAmmoLeft =game.getAmmuo();
+                assert(numOfAmmoLeft >= 0);
+                if(numOfAmmoLeft == 0)
+                {
+                    //TODO OFEK restore this line once you handled lootbox (that when more ammo added, back to be enabled
+                    // Note - when bt lose connection and restore he enables all buttons
+                    //        btnShot.setEnabled(false);
+                    Toast.makeText(getApplicationContext(), "No Ammo", Toast.LENGTH_LONG).show();
+                    return;
+                }
+                SendCommandShotLaser();
+
                 game.raiseBy1TotalData("Shots");
-                if(num > 0 ){
-                    if(mySong !=  null) mySong.Destroy();
-                    mySong = new MediaPlayerWrapper(R.raw.goodgunshot,getApplicationContext());
-                    mySong.StartOrResume();
-                    game.setAmmuo(num);
-                    txtAmmo.setText("Ammuo: - " + (game.getAmmuo().toString()));
-                    //hit sound
-                   // checkForHit();
-                }
-                else{
+                if(mySong !=  null) mySong.Destroy();
+                mySong = new MediaPlayerWrapper(R.raw.goodgunshot,getApplicationContext());
+                mySong.StartOrResume();
+                game.setAmmuo(numOfAmmoLeft - 1);
+                txtAmmo.setText("Ammuo: - " + (game.getAmmuo().toString()));
+                //hit sound
+                // checkForHit();
+
+                if(numOfAmmoLeft - 1 == 0 ) {
                     txtAmmo.setText("NO- Ammuo - !!!!!!!!: - ");
+                    //TODO OFEK restore this line once you handled lootbox (that when more ammo added, back to be enabled
+                    // Note - when bt lose connection and restore he enables all buttons
+                    //        btnShot.setEnabled(false);
                 }
+
+            }
+        });
+    }
+
+    /**
+     * here game will be dispatched to start.
+     * does it by listening to GameStarted db which contain two boolean, one for each player.
+     * boolean are updated in checkIfPlayerReady function
+     */
+    private void waitUntillGameReady()
+    {
+        //wait untill all players joined
+        final FirebaseDatabase database = FirebaseDatabase.getInstance();
+        gamedocRef = database.getReference("GameStarted/");
+
+        gameStartRegistration = gamedocRef.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                if(!dataSnapshot.exists())
+                {
+                    System.out.println("GameStarted snapshot is empty");
+                    Log.e(TAG,LogDefs.gameStartingListenerFailed);
+                }
+                //get both ready values from FB and if both true initalize start game
+                boolean p1Ready = (boolean) dataSnapshot.child("P1_Ready").getValue();
+                boolean p2Ready = (boolean) dataSnapshot.child("P2_Ready").getValue();
+                System.out.println("P1 status is " + p1Ready + " P2 status is " + p2Ready  );
+                if(p1Ready && p2Ready){
+                    //Both players are all set, start the game
+                    Log.d(TAG, LogDefs.gameStarting);
+                    startGame();
+                    gamedocRef.removeEventListener(this);
+
+                }
+
+            }
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+                System.out.println("The read failed: " + databaseError.getCode());
             }
         });
 
-        startTimer();
+    }
+
+    /**
+     * checks if user car is in the right place
+     * does it by listening to /TODO/ db which contain boolean which indicate car in right place
+     * boolean is updated by cloud function called by arduino which RFID tag
+     */
+    private void initCarInPlace()
+    {
+        //TODO IMPL
+        _isCarInPlace.set(true);
+        checkIfPlayerReady();
+    }
+
+
+    /**
+     * called after every preGameBooleans is updated, and check if all of them were set
+     * if all set, update firebase - which indicate this player is ready to play
+     */
+    private void checkIfPlayerReady()
+    {
+        if(_isInternetConnected.get() && _isCarInPlace.get() && _isBtConnected.get())
+        {
+            //get correct key according to current player
+            updateGameStartedField(true);
+        }
+    }
+
+    /**
+     * called when both player are ready to play
+     * initalize all listener for in game and initalize additional final things (timer, buttons etc)
+     */
+    private void startGame()
+    {
+        waitDialog.dismiss();
+        showStartingGameScreen();
+
+        _isGameStarted.set(true);
+        disableEnableButtons(true);
+        //TODO - for now next line crash app
         ListnerForChangeInGame();
+
+        startTimer();
     }
 
-    private void initBluetoothConnection() {
-        // TODO: 1) block activity to allow safe connection (require few seconds to establish connection)
-        // TODO 2) retry to connect BT
-
-        if(BTinit()){
-            if(BTconnect()){
-              //  changeScreen(PopWindow.class);
-            }
-            else{
-                Toast.makeText(getApplicationContext(), "No-BlueTooth-Connection-Please restart", Toast.LENGTH_SHORT).show();
-
-            }
-        }
-        else{
-            Toast.makeText(getApplicationContext(), "Please pair the device first", Toast.LENGTH_SHORT).show();
-
-        }
-    }
+    /** ************************* In Game Settings ************************* **/
 
 
     /**
@@ -199,17 +485,6 @@ public class GameScreenActivity extends AppCompatActivity {
         mDatabase.child("Game").child("life"+game.getPlayerID()).setValue(hit.toString());
     }
 
-    private void findAllView(){
-        btnShot = (Button) findViewById(R.id.btGameShoot);
-        pbLife = (ProgressBar) findViewById(R.id.progressBar2);
-        txtLife = (TextView) findViewById(R.id.txtLife);
-        txtAmmo = (TextView) findViewById(R.id.txtAmmouLeft);
-        txtScore = (TextView) findViewById(R.id.txtGamePoint);
-        txtKeys = (TextView) findViewById(R.id.txtGameKeys);
-        txtMines = (TextView) findViewById(R.id.txtGameMines);
-        txtDefuse = (TextView) findViewById(R.id.txtGameDefuse);
-        txtCountDown = (TextView) findViewById(R.id.txtCountdown);
-    }
 
 
     private  void startTimer(){
@@ -244,6 +519,8 @@ public class GameScreenActivity extends AppCompatActivity {
         //if(endOfGameReason.equals(EndOfGameReason.FLAG)) Log.d("GAME-REASON-END-->","We Lost Because -  FLAG");
         //if(endOfGameReason.equals(EndOfGameReason.LIFE)) Log.d("GAME-REASON-END-->","We Lost Because -  LIFE");
         //if(endOfGameReason.equals(EndOfGameReason.TIME)) Log.d("GAME-REASON-END-->","We Lost Because -  TIME");
+
+
         gamedocRef.removeEventListener(registration);
         countDownTimer.cancel();
        gameOver();
@@ -534,10 +811,7 @@ public class GameScreenActivity extends AppCompatActivity {
 
     //TODO NEED to reset the flag in frst game
     public void resetValue(){
-        try {
-            socket.close();
-        }
-        catch (Exception e){}
+        terminateBT();
         HttpHelper httpHelper = new HttpHelper();
         HttpHelper httpHelper1 = new HttpHelper();
         ValuesShared vs = new ValuesShared();
@@ -545,207 +819,443 @@ public class GameScreenActivity extends AppCompatActivity {
         httpHelper.HttpRequestForLooby("NO-ONE-IS-WAITING", "https://us-central1-arduino-a5968.cloudfunctions.net/addJoin");
         httpHelper1.HttpRequestForLooby("GAME-NOT-READY","https://us-central1-arduino-a5968.cloudfunctions.net/setGameReady");
 
+        //update GameStarted
+        updateGameStartedField(false);
     }
 
 
-    //Initializes bluetooth module
-    public boolean BTinit()
+
+    // used to toggle status of buttons, in order to disbale buttons once coneection to BT is lost or game hasn't started yet
+    private void disableEnableButtons(boolean isEnable)
     {
-        boolean found = false;
+        btnShot.setEnabled(isEnable);
+        joystickCar.setEnabled(isEnable);
+        joystickServo.setEnabled(isEnable);
+    }
 
-        BluetoothAdapter bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
-
-        if(bluetoothAdapter == null) //Checks if the device supports bluetooth
+    /** ************************* Internet ************************* **/
+    /**
+     * checks if internet connection exist, if not prompt user to connect
+     */
+    private void initInternetConnected()
+    {
+        //TODO do a listener like bt maybe
+        boolean isInternetConnected = isConnectionAvaliable();
+        if(isInternetConnected)
         {
-            Toast.makeText(getApplicationContext(), "Device doesn't support bluetooth", Toast.LENGTH_SHORT).show();
+            _isInternetConnected.set(isInternetConnected);
         }
-
-        if(bluetoothAdapter.isEnabled()) //Checks if bluetooth is enabled. If not, the program will ask permission from the user to enable it
+        else
         {
+            AlertDialog.Builder builder = new AlertDialog.Builder(this);
 
-            Set<BluetoothDevice> bondedDevices = bluetoothAdapter.getBondedDevices();
+            DialogInterface.OnClickListener dialogClickListener = new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int optionChoosen) {
+                    switch (optionChoosen){
+                        case DialogInterface.BUTTON_POSITIVE:
+                            //Yes button clicked
+                            initInternetConnected();
+                            break;
 
-            if (bondedDevices.isEmpty()) //Checks for paired bluetooth devices
-            {
-                Toast.makeText(getApplicationContext(), "Please pair the device first", Toast.LENGTH_SHORT).show();
-            }
-            else {
-                for (BluetoothDevice iterator : bondedDevices) {
-                    Toast.makeText(this,"The paired mac --  is "+ iterator.getAddress(),Toast.LENGTH_LONG).show();
-
-                    if (iterator.getAddress().equals(DEVICE_ADDRESS)) {
-                        device = iterator;
-                        Toast.makeText(this,"The paired mac --  is "+ device.getAddress(),Toast.LENGTH_LONG).show();
-                        found = true;
-                        break;
                     }
+                }
+            };
+
+
+            builder.setMessage("No internet connection, Please connect to internet").setPositiveButton("Retry", dialogClickListener)
+                   .setCancelable(false).show();
+
+            return;
+        }
+        checkIfPlayerReady();
+    }
+
+
+
+    public boolean isInternetAvailable() {
+        try {
+            InetAddress address = InetAddress.getByName("www.google.com");
+            return !address.equals("");
+        } catch (UnknownHostException e) {
+            // Log error
+        }
+        return false;
+    }
+
+    public boolean isConnectionAvaliable()
+    {
+        boolean connected = false;
+        ConnectivityManager connectivityManager = (ConnectivityManager)getSystemService(Context.CONNECTIVITY_SERVICE);
+        if(connectivityManager.getNetworkInfo(ConnectivityManager.TYPE_MOBILE).getState() == NetworkInfo.State.CONNECTED ||
+                connectivityManager.getNetworkInfo(ConnectivityManager.TYPE_WIFI).getState() == NetworkInfo.State.CONNECTED) {
+            //we are connected to a network
+            connected = true;
+        }
+        else
+            connected = false;
+
+        return connected;
+    }
+
+/*
+    private void checkInternetConnection() {
+        IntentFilter intentFilter = new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION);
+        registerReceiver(wifiConnectionReceiver, intentFilter);
+    }
+    //TODO OFEK -maybe can merge this with the BT
+    private final BroadcastReceiver wifiConnectionReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            final String action = intent.getAction();
+
+            if (action.equals(ConnectivityManager.)) {
+                final int state = intent.getIntExtra(BluetoothAdapter.EXTRA_STATE,
+                        BluetoothAdapter.ERROR);
+                switch (state) {
+                    case BluetoothAdapter.STATE_OFF:
+                        break;
+                    case BluetoothAdapter.STATE_TURNING_OFF:
+                        Toast.makeText(getApplicationContext(), "lost connection to BT, trying to reconnect",Toast.LENGTH_LONG).show();
+                        disableEnableButtons(false);
+                        BtInitOfek();
+                        break;
+                    case BluetoothAdapter.STATE_ON:
+                        break;
+                    case BluetoothAdapter.STATE_TURNING_ON:
+                        break;
                 }
             }
         }
+    };
+*/
 
-        return found;
+    /** ************************* Bluetooth ************************* **/
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data)
+    {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        if(requestCode == REQUEST_ENABLE_BT)
+        {
+            if(resultCode == RESULT_OK)
+            {
+                Toast.makeText(this, "BT enabled successfully", Toast.LENGTH_LONG).show();
+                Log.d(TAG_BT, LogDefs.btEnabledSuccessfully);
+                BtInitOfek();
+            }
+            else
+            {
+                Toast.makeText(this, "BT enabled failed, please enable it manually", Toast.LENGTH_LONG).show();
+                Log.d(TAG_BT, LogDefs.btEnabledFailed);
+            }
+        }
     }
 
-    public boolean BTconnect()
-    {
-        boolean connected = true;
 
+
+    public boolean BtInitOfek()
+    {
+        if (mBluetoothAdapter == null )
+        {
+            Toast.makeText(this, "Device doesn't support BT", Toast.LENGTH_SHORT).show();
+            Log.e(TAG_BT,LogDefs.btDeviceNotSupported);
+            return false;
+        }
+
+        if (mBluetoothAdapter.isEnabled()) //Checks if bluetooth is enabled. If not, the program will ask permission from the user to enable it
+        {
+
+            BtInitAfterEnable();
+
+        }
+        else
+        {
+            Log.d(TAG_BT,LogDefs.btWasDisabled);
+            Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
+            startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT);
+        }
+
+        return true;
+    }
+
+    private void initBluetoothConnection() {
+        _isBtConnected = new AtomicBoolean(false);
+        setBtMacAddress();
+        IntentFilter filter = new IntentFilter(BluetoothDevice.ACTION_FOUND);
+        this.registerReceiver(broadcastReceiver, filter);
+        IntentFilter filterChange = new IntentFilter(BluetoothAdapter.ACTION_STATE_CHANGED);
+        registerReceiver(btConnectionLostReceiver, filterChange);
+
+        mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+        BtInitOfek();
+    }
+
+
+    protected void BtInitAfterEnable()
+    {
+        if(queryPairedDevice())
+        {
+            Log.d(TAG_BT,LogDefs.btQueryPairedDeviceSuc);
+            for(int numAttempts = 1; numAttempts < 4; ++numAttempts)
+            {
+                Toast.makeText(this, "Trying to connect to BT attempt: "
+                        + numAttempts + "/" + "3", Toast.LENGTH_LONG).show();
+                BTconnect();
+                if(_isBtConnected.get())
+                {
+                    //connected successfully
+                    Log.d(TAG_BT, LogDefs.btConnectedSuccessfully);
+                    return;
+                }
+            }
+
+            Log.d(TAG_BT, LogDefs.btConnectedFailed);
+            //Toast.makeText(this, "Failed to connect to BT , please exit and try again", Toast.LENGTH_LONG).show();
+            DialogInterface.OnClickListener dialogClickListener = new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    switch (which){
+                        case DialogInterface.BUTTON_POSITIVE:
+                            //Yes button clicked
+                            BtInitOfek();
+                            break;
+
+                        case DialogInterface.BUTTON_NEGATIVE:
+                            //No button clicked
+                            break;
+                    }
+                }
+            };
+
+            AlertDialog.Builder builder = new AlertDialog.Builder(this);
+            builder.setMessage("Fail to connect to BT, would you like to try again?").setPositiveButton("Yes", dialogClickListener)
+                    .setNegativeButton("No", dialogClickListener).show();
+
+
+        }
+        else
+        {
+            Log.d(TAG_BT,LogDefs.btQueryPairedDeviceFail);
+            Toast.makeText(this, "Fail to find paired device.\n " +
+                    "Trying to discover device", Toast.LENGTH_LONG).show();
+
+            discoverNewDevicePair();
+        }
+    }
+
+    protected boolean queryPairedDevice(){
+        Set<BluetoothDevice> pairedDevices = mBluetoothAdapter.getBondedDevices();
+        for (BluetoothDevice bt : pairedDevices) {
+            if (bt.getAddress().equals(DEVICE_ADDRESS)) {
+                device = bt;
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public void terminateBT()
+    {
+        try {
+            socket.close();
+        } catch (IOException e) {
+            Log.e(TAG_BT, "Could not close the client socket", e);
+        }    }
+
+
+    /***
+     * check if bt lost connection mid game, try to reastblish
+     */
+
+    private final BroadcastReceiver btConnectionLostReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            final String action = intent.getAction();
+
+            if (action.equals(BluetoothAdapter.ACTION_STATE_CHANGED)) {
+                final int state = intent.getIntExtra(BluetoothAdapter.EXTRA_STATE,
+                        BluetoothAdapter.ERROR);
+                switch (state) {
+                    case BluetoothAdapter.STATE_OFF:
+                        break;
+                    case BluetoothAdapter.STATE_TURNING_OFF:
+                        Toast.makeText(getApplicationContext(), "lost connection to BT, trying to reconnect",Toast.LENGTH_LONG).show();
+                        disableEnableButtons(false);
+                        BtInitOfek();
+                        break;
+                    case BluetoothAdapter.STATE_ON:
+                        break;
+                    case BluetoothAdapter.STATE_TURNING_ON:
+                        break;
+                }
+            }
+        }
+    };
+
+    private void setBtMacAddress()
+    {
+        Bundle bundle = getIntent().getExtras();
+        String message = bundle.getString("Classifier");
+        if (message.equals("Init")) {
+            //player 1
+            DEVICE_ADDRESS = DEVICE_ADDRESS_P1;
+        }
+        else{
+            //player 2
+            //message.equals("Join")
+            DEVICE_ADDRESS = DEVICE_ADDRESS_P2;
+        }
+    }
+
+    //TODO OFEK - currently not working
+    protected void discoverNewDevicePair(){
+        int MY_PERMISSIONS_REQUEST_ACCESS_COARSE_LOCATION = 1;
+        ActivityCompat.requestPermissions(this,
+                new String[]{Manifest.permission.ACCESS_COARSE_LOCATION},
+                MY_PERMISSIONS_REQUEST_ACCESS_COARSE_LOCATION);
+
+        // To scan for remote Bluetooth devices
+        if(mBluetoothAdapter.isDiscovering())
+        {
+            //already discovering stop it first
+            mBluetoothAdapter.cancelDiscovery();
+        }
+
+
+        if (mBluetoothAdapter.startDiscovery()) {
+            setProgressBarIndeterminateVisibility(true);
+            setTitle("Scanning for arduino bt...");
+            Toast.makeText(getApplicationContext(), "Discovering other bluetooth devices...",
+                    Toast.LENGTH_SHORT).show();
+            Log.d(TAG_BT,LogDefs.btDiscoveryDevicesStartedSuc);
+        } else {
+            Toast.makeText(getApplicationContext(), "Discovery failed to start.",
+                    Toast.LENGTH_SHORT).show();
+            Log.d(TAG_BT,LogDefs.btDiscoveryDevicesStartedFail);
+
+        }
+    }
+
+    private final BroadcastReceiver broadcastReceiver = new BroadcastReceiver() {
+        public void onReceive(Context context, Intent intent) {
+            String action = intent.getAction();
+            // Whenever a remote Bluetooth device is found
+            if (BluetoothDevice.ACTION_FOUND.equals(action)) {
+                // Get the BluetoothDevice object from the Intent
+                BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
+                // Add the name and address to an array adapter to show in a ListView
+                if(device.getAddress() == DEVICE_ADDRESS)
+                {
+                    //adapter.add(device.getName() + "\n" + device.getAddress());
+                    setProgressBarIndeterminateVisibility(false);
+                    Toast.makeText(getApplicationContext(), "Found arduino bt device",Toast.LENGTH_SHORT).show();
+                    mBluetoothAdapter.cancelDiscovery();
+                    BtInitAfterEnable();
+                }
+            }
+            else if(mBluetoothAdapter.ACTION_DISCOVERY_FINISHED.equals(action))
+            {
+                Toast.makeText(getApplicationContext(), "Failed to Discover arduino BT"
+                        + "Make sure arduino is on and try again",Toast.LENGTH_LONG).show();
+                setProgressBarIndeterminateVisibility(false);
+
+                //TODO OFEK - add pop up box, once pressed ok, try again
+                Log.e(TAG_BT, LogDefs.btFailedToDiscoverArduino);
+            }
+        }
+    };
+
+
+
+    /** ************************* Handle Arduino Bluetooth Commands ************************* **/
+    private char findCommandServo(int angle, int strength) {
+        return (char)('A' + ((int)(angle / 45) * 2) + (strength > 50 ? 1 : 0));
+    }
+
+
+    private char findCommandCar(int angle, int strength) {
+        if (strength == 0)
+        {
+            return '!';
+        }
+        return (char)('Q' + ((int)(angle / 22.5) * 2) + (strength > 50 ? 1 : 0));
+    }
+
+    private void SendCommandShotLaser()
+    {
+        btnShot.setEnabled(false);
+        try {
+            outputStream.write('#');
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        Handler handler = new Handler();
+        handler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    outputStream.write('$');
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                btnShot.setEnabled(true);
+
+            }
+        }, laserShootLengthMS);
+    }
+
+
+
+
+
+    public void BTconnect()
+    {
         try
         {
+            mBluetoothAdapter.cancelDiscovery();
             socket = device.createRfcommSocketToServiceRecord(PORT_UUID); //Creates a socket to handle the outgoing connection
             socket.connect();
-
+            _isBtConnected.set(true);
             Toast.makeText(getApplicationContext(),
                     "Connection to bluetooth device successful", Toast.LENGTH_LONG).show();
+
         }
         catch(IOException e)
         {
             e.printStackTrace();
-            connected = false;
+            _isBtConnected.set(false);
         }
 
-        if(connected)
+        if(_isBtConnected.get())
         {
             try
             {
-                //TODO
                 outputStream = socket.getOutputStream(); //gets the output stream of the socket
+                //TODO NOTE - if in the end we want input stream
+                //inputStream = socket.getInputStream();
             }
             catch(IOException e)
             {
+                //TODO OFEK handle error here?
                 e.printStackTrace();
             }
-        }
 
-        return connected;
-    }
-    private char findCommand(int angle, int strength) {
-        if((angle >= 0 && angle < 10) || (angle >= 350 && angle <= 360)){
-            return '1';
-        }
-        else if((angle >= 10) && (angle < 30)){
-            return '2';
-        }
-        else if((angle >= 30) && (angle < 60)){
-            return '3';
 
-        }
-        else if((angle >= 60) && (angle < 80)){
-            return '4';
 
-        }
-        else if((angle >= 80) && (angle < 100)){
-            return '5';
-
-        }
-        else if((angle >= 100) && (angle < 130)){
-            return '6';
-
-        }
-        else if((angle >= 130) && (angle < 150)){
-            return '7';
-
-        }
-        else if((angle >= 150) && (angle < 170)){
-            return '8';
-
-        }
-        else if((angle >= 170) && (angle < 190)){
-            return '9';
-
-        }
-        else if((angle >= 190) && (angle < 210)){
-            return '0';
-
-        }
-        else if((angle >= 210) && (angle < 230)){
-            return 'a';
-
-        }
-        else if((angle >= 230) && (angle < 250)){
-            return 'b';
-
-        }
-        else if((angle >= 250) && (angle < 270)){
-            return 'c';
-
-        }
-        else if((angle >= 270) && (angle < 290)){
-            return 'd';
-
-        }
-        else if((angle >= 290) && (angle < 310)){
-            return 'e';
-
-        }
-        else if((angle >= 310) && (angle < 330)){
-            return 'f';
-
-        }
-        else if((angle >= 330) && (angle < 350)){
-            return 'g';
-
-        }
-        else{
-            return 'h';
-        }
-
-    }
-
-    //TODO - change to real values, consider using strength etc..
-    private char findCommandServo(int angle, int strength) {
-        if((angle > 0 && angle < 10) || (angle >= 350 && angle <= 360)){
-            return 'A';
-        }
-        else if((angle >= 10) && (angle < 30)){
-            return 'B';
-        }
-        else if((angle >= 30) && (angle < 60)){
-            return 'C';
-
-        }
-        else if((angle >= 60) && (angle < 80)){
-            return 'D';
-
-        }
-        else if((angle >= 80) && (angle < 100)){
-            return 'E';
-
-        }
-        else if((angle >= 100) && (angle < 130)){
-            return 'F';
-
-        }
-        else if((angle >= 130) && (angle < 170)){
-            return 'G';
-
-        }
-        else if((angle >= 170) && (angle < 190)){
-            return 'H';
-
-        }
-        else if((angle >= 190) && (angle < 220)){
-            return 'I';
-
-        }
-        else if((angle >= 220) && (angle < 260)){
-            return 'J';
-
-        }
-        else if((angle >= 260) && (angle < 280)){
-            return 'K';
-
-        }
-        else if((angle >= 280) && (angle < 320)){
-            return 'L';
-
-        }
-        else if((angle >= 320) && (angle < 350)){
-            return 'M';
-
-        }
-        else{
-            return 'N';
+            _isBtConnected.set(true);
+            if(_isGameStarted.get())
+            {
+                //in case game already started we got here because we lost connection, so restore user control
+                disableEnableButtons(true);
+            }
+            else
+            {
+                //game didn't start yet, check if bt was the only hold up
+                checkIfPlayerReady();
+            }
         }
 
     }

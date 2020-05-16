@@ -213,12 +213,16 @@ public class InitGameActivity extends AppCompatActivity {
                     }
                     // you can start a game
                     else  if(valid_join.equals("GAME-NOT-READY")){
+                        //update all game setting AND uid of player 1
                         GameSetting gameSetting = new GameSetting((String) member.getTime(),member.getKeys(),member.getMines(),(String) member.getNumberShot(),member.getType());
                        // mDatabase.child("GameSettings").setValue(gameSetting);
                         mDatabase.child("GameSettings").updateChildren(gameSetting.toHashMap());
 
+                        // update "gameReady" field
                         HttpHelper httpHelper = new HttpHelper();
                         httpHelper.HttpRequestForLooby("GAME-READY","https://us-central1-arduino-a5968.cloudfunctions.net/setGameReady");
+
+                        //
                         Intent intent = new Intent(getApplicationContext(),LobyActivity.class);
                         intent.putExtra("Classifier", "Init");
                         startActivity(intent.addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY));

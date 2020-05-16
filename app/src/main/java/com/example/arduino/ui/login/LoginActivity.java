@@ -3,8 +3,12 @@ package com.example.arduino.ui.login;
 
 import androidx.annotation.NonNull;
 
+import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.Bundle;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -29,6 +33,9 @@ import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthException;
 import com.google.firebase.auth.FirebaseUser;
+
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 
 public class LoginActivity extends AppCompatActivity {
 
@@ -68,7 +75,7 @@ public class LoginActivity extends AppCompatActivity {
     //add stats document for new registered user
     static public void CreateStatsDocument(FirebaseUser user) {
         PlayerStats emptyStats = new PlayerStats();
-        PlayerStats.writeStats(user.getUid(),emptyStats);
+        PlayerStats.writeStats(user.getUid(), emptyStats);
     }
 
     @Override
@@ -97,7 +104,7 @@ public class LoginActivity extends AppCompatActivity {
                     usernameEditText.setError(email);
                     return;
                 }
-                if(!ValidatePassword(LoginActivity.this,password)) {
+                if (!ValidatePassword(LoginActivity.this, password)) {
                     passwordEditText.setError(password);
                     return;
                 }
@@ -137,7 +144,7 @@ public class LoginActivity extends AppCompatActivity {
                     usernameEditText.setError(email);
                     return;
                 }
-                if(!ValidatePassword(LoginActivity.this,password)) {
+                if (!ValidatePassword(LoginActivity.this, password)) {
                     passwordEditText.setError(password);
                     return;
                 }
@@ -150,7 +157,7 @@ public class LoginActivity extends AppCompatActivity {
                                     // Sign in success, update UI with the signed-in user's information
                                     Log.d(TAG, LogDefs.emailRegisterSucMsg);
                                     FirebaseUser user = mAuth.getCurrentUser();
-                                    assert(user != null);
+                                    assert (user != null);
                                     CreateStatsDocument(user);
                                     updateUI(user);
                                 } else {
@@ -158,7 +165,7 @@ public class LoginActivity extends AppCompatActivity {
 
                                     Log.w(TAG, LogDefs.emailRegisterFailMsg, task.getException());
                                     String errorMsg = LoginErrorCodeConvert(task.getException());
-                                    Toast.makeText(LoginActivity.this, errorMsg ,
+                                    Toast.makeText(LoginActivity.this, errorMsg,
                                             Toast.LENGTH_SHORT).show();
                                     updateUI(null);
 
@@ -172,44 +179,44 @@ public class LoginActivity extends AppCompatActivity {
         ///End of Register part
 
 
+        initInternetConnected();
     }
 
     @Override
     public void onBackPressed() {
-        if (timeBackPressed + TIME_INTERVAL > System.currentTimeMillis())
-        {
+        if (timeBackPressed + TIME_INTERVAL > System.currentTimeMillis()) {
             super.onBackPressed();
             finish();
             return;
+        } else {
+            Toast.makeText(getBaseContext(), "Tap back button in order to close app", Toast.LENGTH_SHORT).show();
         }
-        else { Toast.makeText(getBaseContext(), "Tap back button in order to close app", Toast.LENGTH_SHORT).show(); }
 
         timeBackPressed = System.currentTimeMillis();
     }
 
 
-private void UpdateButtonsVisibility(Boolean isHideButtons) {
-    if(isHideButtons) {
-        loadingProgressBar.setVisibility(View.VISIBLE);
-        registerButton.setVisibility(View.INVISIBLE);
-        loginButton.setVisibility(View.INVISIBLE);
+    private void UpdateButtonsVisibility(Boolean isHideButtons) {
+        if (isHideButtons) {
+            loadingProgressBar.setVisibility(View.VISIBLE);
+            registerButton.setVisibility(View.INVISIBLE);
+            loginButton.setVisibility(View.INVISIBLE);
+        } else {
+            loadingProgressBar.setVisibility(View.INVISIBLE);
+            registerButton.setVisibility(View.VISIBLE);
+            loginButton.setVisibility(View.VISIBLE);
+        }
     }
-    else {
-        loadingProgressBar.setVisibility(View.INVISIBLE);
-        registerButton.setVisibility(View.VISIBLE);
-        loginButton.setVisibility(View.VISIBLE);
-    }
-}
 
-/******************* Utilities methods *******************/
+    /******************* Utilities methods *******************/
 //TODO  - change this method to utility file for reusable across files
-private void changeScreen(Class screen){
-    Intent intent = new Intent(this, screen);
-    startActivity(intent);
-}
-    static public Boolean ValidateEmail(Context context, String email)
-    {
-        if( TextUtils.isEmpty(email) ) {
+    private void changeScreen(Class screen) {
+        Intent intent = new Intent(this, screen);
+        startActivity(intent);
+    }
+
+    static public Boolean ValidateEmail(Context context, String email) {
+        if (TextUtils.isEmpty(email)) {
             Toast.makeText(context, "email field is empty", Toast.LENGTH_LONG).show();
             Log.e(TAG, LogDefs.emailInvalidlMsg);
             return false;
@@ -224,7 +231,7 @@ private void changeScreen(Class screen){
     }
 
     static public Boolean ValidatePassword(Context context, String password) {
-        if (TextUtils.isEmpty(password) ) {
+        if (TextUtils.isEmpty(password)) {
             Toast.makeText(context, "password field is empty", Toast.LENGTH_LONG).show();
             Log.e(TAG, LogDefs.passwordInvalidlMsg);
             return false;
@@ -240,7 +247,7 @@ private void changeScreen(Class screen){
     }
 
     static public String LoginErrorCodeConvert(Exception exception) {
-        String errorCode = ((FirebaseAuthException)(exception)).getErrorCode();
+        String errorCode = ((FirebaseAuthException) (exception)).getErrorCode();
         String errorResult;
         switch (errorCode) {
 
@@ -258,5 +265,60 @@ private void changeScreen(Class screen){
         }
 
         return errorResult;
+    }
+
+
+    /** ************************* Internet ************************* **/
+    /**
+     * checks if internet connection exist, if not prompt user to connect
+     */
+    private void initInternetConnected() {
+        boolean isInternetConnected = isConnectionAvaliable();
+        if (!isInternetConnected) {
+            AlertDialog.Builder builder = new AlertDialog.Builder(this);
+
+            DialogInterface.OnClickListener dialogClickListener = new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int optionChoosen) {
+                    switch (optionChoosen) {
+                        case DialogInterface.BUTTON_POSITIVE:
+                            //Yes button clicked
+                            initInternetConnected();
+                            break;
+
+                    }
+                }
+            };
+
+
+            builder.setMessage("No internet connection, Please connect to internet").setPositiveButton("Retry", dialogClickListener)
+                    .setCancelable(false).show();
+
+            return;
+        }
+    }
+
+
+    public boolean isInternetAvailable() {
+        try {
+            InetAddress address = InetAddress.getByName("www.google.com");
+            return !address.equals("");
+        } catch (UnknownHostException e) {
+            // Log error
+        }
+        return false;
+    }
+
+    public boolean isConnectionAvaliable() {
+        boolean connected = false;
+        ConnectivityManager connectivityManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+        if (connectivityManager.getNetworkInfo(ConnectivityManager.TYPE_MOBILE).getState() == NetworkInfo.State.CONNECTED ||
+                connectivityManager.getNetworkInfo(ConnectivityManager.TYPE_WIFI).getState() == NetworkInfo.State.CONNECTED) {
+            //we are connected to a network
+            connected = true;
+        } else
+            connected = false;
+
+        return connected;
     }
 }

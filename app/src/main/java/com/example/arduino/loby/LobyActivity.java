@@ -21,6 +21,8 @@ import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.FirebaseFirestoreException;
 import com.google.firebase.firestore.ListenerRegistration;
 
+import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.media.MediaPlayer;
 import android.media.MediaRouter;
@@ -58,18 +60,7 @@ public class LobyActivity extends AppCompatActivity {
         btBack.setOnClickListener(new View.OnClickListener(){
             @Override
             public  void onClick(View v){
-                Bundle bundle = getIntent().getExtras();
-                String message = bundle.getString("Classifier");
-                if (message.equals("Init")) {
-                    HttpHelper httpHelper = new HttpHelper();
-                    httpHelper.HttpRequestForLooby("GAME-NOT-READY", "https://us-central1-arduino-a5968.cloudfunctions.net/setGameReady");
-                }
-                else{
-                    HttpHelper httpHelper = new HttpHelper();
-                    httpHelper.HttpRequestForLooby("NO-ONE-IS-WAITING", "https://us-central1-arduino-a5968.cloudfunctions.net/addJoin");
-                }
-                Intent intent = new Intent(getApplicationContext(), MenuActivity.class);
-                startActivity(intent.addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY));
+                exitLobbyToMainMenu();
             }
         });
         initiliazeVideo();
@@ -113,7 +104,7 @@ public class LobyActivity extends AppCompatActivity {
                     //Both players are in - Start game
                     System.out.println("Inside::::The ---- valid Game is " + valid_game + " The ---- valid Join is " +valid_join );
                     Log.v("LOBY-CLASS","Game-is strating" );
-                    // Retrive game setting from firebase
+                    // Retrive game setting from firebase and switch to game screen
                     listnerForread();
                 }
             }
@@ -140,12 +131,57 @@ public class LobyActivity extends AppCompatActivity {
         ref.addListenerForSingleValueEvent(valueEventListener);
     }
 
+    private void exitLobbyToMainMenu()
+    {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+
+        DialogInterface.OnClickListener dialogClickListener = new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int optionChoosen) {
+                switch (optionChoosen){
+                    case DialogInterface.BUTTON_POSITIVE:
+                        //Yes button clicked
+                        exitLobbyToMainMenuAux();
+                        break;
+
+                    case DialogInterface.BUTTON_NEGATIVE:
+                        //No button clicked - nothing to do
+                        break;
+                }
+            }
+        };
+
+
+        builder.setMessage("Are you sure you want to exit lobby back to main menu?").setPositiveButton("Yes", dialogClickListener)
+                .setNegativeButton("No", dialogClickListener).show();
+
+    }
+
+    private void exitLobbyToMainMenuAux()
+    {
+        Bundle bundle = getIntent().getExtras();
+        String message = bundle.getString("Classifier");
+        if (message.equals("Init")) {
+            HttpHelper httpHelper = new HttpHelper();
+            httpHelper.HttpRequestForLooby("GAME-NOT-READY", "https://us-central1-arduino-a5968.cloudfunctions.net/setGameReady");
+        }
+        else{
+            //message.equals("Join")
+            HttpHelper httpHelper = new HttpHelper();
+            httpHelper.HttpRequestForLooby("NO-ONE-IS-WAITING", "https://us-central1-arduino-a5968.cloudfunctions.net/addJoin");
+        }
+        Intent intent = new Intent(getApplicationContext(), MenuActivity.class);
+        startActivity(intent.addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY));
+    }
 
     private void ChangeScreenToGameLayout() {
         Intent intentGame = new Intent(getApplicationContext(), GameScreenActivity.class);
         //TODO - convert to gamesetting
         Member member = new Member(gameSetting);
+        // send to next activity the game setting data, in order to initalize the first state - ammo, mines and etc
         intentGame.putExtra("MyMember", member);
+        // send also classifier , which indicate if this is player 1 or player 2 (in order to set correct BT)
+        intentGame.putExtra("Classifier" ,getIntent().getExtras().getString("Classifier"));
         changescreen(intentGame);
     }
 
@@ -194,4 +230,9 @@ public class LobyActivity extends AppCompatActivity {
         }
     }
 
+    @Override
+    public void onBackPressed() {
+        exitLobbyToMainMenu();
+
+    }
 }
