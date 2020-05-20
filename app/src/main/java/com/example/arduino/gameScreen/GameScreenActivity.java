@@ -57,6 +57,7 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.HashMap;
 import java.util.Locale;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -687,7 +688,7 @@ public class GameScreenActivity extends AppCompatActivity {
         registration = gamedocRef.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
-                Integer my_life_left,opp_flag,my_flag,opp_life_left,my_hit,opp_hit,opp_points;
+                Integer my_life_left,opp_flag,my_flag,opp_life_left,my_hit,opp_hit,my_points,opp_points,my_mine,my_keys,my_defuse;
                 ValuesShared values = dataSnapshot.getValue(ValuesShared.class);
                 game.setValuesShared(values);
                 assert values != null;
@@ -698,7 +699,12 @@ public class GameScreenActivity extends AppCompatActivity {
                     opp_life_left = Integer.parseInt(values.getLife2());
                     my_hit = Integer.parseInt(values.getValid1());
                     opp_hit = Integer.parseInt(values.getValid2());
+                    my_points =Integer.parseInt(values.getPoints1());
                     opp_points =Integer.parseInt(values.getPoints2());
+                    my_mine =Integer.parseInt(values.getMine1());
+                    my_keys =Integer.parseInt(values.getKeys1());
+                    my_defuse =Integer.parseInt(values.getDefuse1());
+
                 }
                 else{
                      my_life_left = Integer.parseInt(values.getLife2());
@@ -707,11 +713,45 @@ public class GameScreenActivity extends AppCompatActivity {
                      opp_life_left = Integer.parseInt(values.getLife1());
                      opp_hit = Integer.parseInt(values.getValid1());
                      my_hit = Integer.parseInt(values.getValid2());
+                    my_points =Integer.parseInt(values.getPoints2());
                     opp_points =Integer.parseInt(values.getPoints1());
+                    my_mine =Integer.parseInt(values.getMine2());
+                    my_keys =Integer.parseInt(values.getKeys2());
+                    my_defuse =Integer.parseInt(values.getDefuse2());
                 }
+                if(!game.getDefuse().equals(my_defuse)){
+                    if(game.getDefuse() < my_defuse)
+                        Toast.makeText(getApplicationContext(), "You gat from the lot box - Defuse ",Toast.LENGTH_LONG).show();
+                    else{
+                        Toast.makeText(getApplicationContext(), "Bomb has been defused ",Toast.LENGTH_LONG).show();
+                    }
+                }
+                if(game.getPoint()+100 == my_points){
+                    Toast.makeText(getApplicationContext(), "You gat from the lot box - Points ",Toast.LENGTH_LONG).show();
+                }
+                if(!game.getKeys().equals(my_keys)){
+                    if(game.getKeys() < my_keys)
+                        Toast.makeText(getApplicationContext(), "You gat from the lot box - Key ",Toast.LENGTH_LONG).show();
+                    else{
+                        Toast.makeText(getApplicationContext(), "Gate is now opening ",Toast.LENGTH_LONG).show();
+                    }
+                }
+                if(!game.getMines().equals(my_mine)){
+                    if(game.getMines() < my_mine)
+                        Toast.makeText(getApplicationContext(), "You gat from the lot box -  Mine ",Toast.LENGTH_LONG).show();
+                    else{
+                        Toast.makeText(getApplicationContext(), "Mine has been set ",Toast.LENGTH_LONG).show();
+                    }
+                }
+                if(my_life_left+5 == game.getLife()){
+                    Toast.makeText(getApplicationContext(), "You gat hit from a mine  ",Toast.LENGTH_LONG).show();
+                }
+                game.setDefuse(my_defuse);
+                game.setKeys(my_keys);
+                game.setMines(my_mine);
                 game.setFlag(my_flag);
                 game.setLife(my_life_left);
-
+                game.setPoint(my_points);
                 //update number hit
                 assert(my_hit >= game.getNum_hits());
                 if(my_hit > game.getNum_hits()){
@@ -721,12 +761,15 @@ public class GameScreenActivity extends AppCompatActivity {
                     opp_points = opp_points+10;
                     mDatabase.child("Game").child("points"+game.getOppID()).setValue(opp_points.toString());
                 }
-                if(my_life_left == 0 || opp_life_left == 0 ||  my_flag ==  1 || opp_flag == 1 ) {
+                if(my_life_left <= 0 || opp_life_left <= 0 ||  my_flag ==  1 || opp_flag == 1 ) {
                     checkForWin();
                 }
                 pbLife.setProgress(my_life_left);
                 txtLife.setText("LIFE: - " +my_life_left);
                 txtScore.setText(("SCORE- ")+game.getPoint().toString());
+                txtKeys.setText("KEYS - "+ game.getKeys().toString());
+                txtMines.setText("MINES - " + game.getMines().toString());
+                txtDefuse.setText("DEFUSE - " + game.getDefuse().toString());
 
             }
             @Override
@@ -887,8 +930,9 @@ public class GameScreenActivity extends AppCompatActivity {
     {
         boolean connected = false;
         ConnectivityManager connectivityManager = (ConnectivityManager)getSystemService(Context.CONNECTIVITY_SERVICE);
-        if(connectivityManager.getNetworkInfo(ConnectivityManager.TYPE_MOBILE).getState() == NetworkInfo.State.CONNECTED ||
-                connectivityManager.getNetworkInfo(ConnectivityManager.TYPE_WIFI).getState() == NetworkInfo.State.CONNECTED) {
+        if(connectivityManager == null) return false;
+        if(Objects.requireNonNull(connectivityManager.getNetworkInfo(ConnectivityManager.TYPE_MOBILE)).getState() == NetworkInfo.State.CONNECTED ||
+                Objects.requireNonNull(connectivityManager.getNetworkInfo(ConnectivityManager.TYPE_WIFI)).getState() == NetworkInfo.State.CONNECTED) {
             //we are connected to a network
             connected = true;
         }
@@ -1058,6 +1102,10 @@ public class GameScreenActivity extends AppCompatActivity {
 
     public void terminateBT()
     {
+        if(socket == null ){
+            Log.d(TAG_BT, "The Socket never opened before");
+            return;
+        }
         try {
             socket.close();
         } catch (IOException e) {

@@ -6,7 +6,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class ValuesShared {
-    private  String life1, life2, flag1, flag2, valid1, valid2, points1, points2;
+    private  String life1, life2, flag1, flag2, valid1, valid2, points1, points2,defuse1,defuse2,mine1,mine2,keys1,keys2;
 
     public ValuesShared(){}
 
@@ -14,11 +14,22 @@ public class ValuesShared {
         return valid1;
     }
 
+    public String getDefuse1() {
+        return defuse1;
+    }
+
+    public String getDefuse2() {
+        return defuse2;
+    }
+
     public String getValid2() {
         return valid2;
     }
 
-    public ValuesShared(String life1, String life2, String flag1, String flag2, String valid1, String valid2, String points1, String points2) {
+
+    public ValuesShared(String life1, String life2, String flag1, String flag2, String valid1, String valid2,
+                        String points1, String points2, String defuse1, String defuse2, String mine1,
+                        String mine2, String keys1, String keys2) {
         this.life1 = life1;
         this.life2 = life2;
         this.flag1 = flag1;
@@ -27,7 +38,14 @@ public class ValuesShared {
         this.valid2 = valid2;
         this.points1 = points1;
         this.points2 = points2;
+        this.defuse1 = defuse1;
+        this.defuse2 = defuse2;
+        this.mine1 = mine1;
+        this.mine2 = mine2;
+        this.keys1 = keys1;
+        this.keys2 = keys2;
     }
+
     public String getLife1() {
         return life1;
     }
@@ -47,6 +65,21 @@ public class ValuesShared {
         return flag2;
     }
 
+    public String getMine1() {
+        return mine1;
+    }
+
+    public String getMine2() {
+        return mine2;
+    }
+
+    public String getKeys1() {
+        return keys1;
+    }
+
+    public String getKeys2() {
+        return keys2;
+    }
 
     public String getPoints1() {
         return points1;
@@ -67,6 +100,12 @@ public class ValuesShared {
         map.put("life2","20");
         map.put("valid1","0");
         map.put("valid2","0");
+        map.put("defuse1","0");
+        map.put("defuse2","0");
+        map.put("keys1","0");
+        map.put("keys2","0");
+        map.put("mine1","0");
+        map.put("mine2","0");
         return map;
     }
 }
