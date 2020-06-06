@@ -40,7 +40,8 @@ public class InitGameActivity extends AppCompatActivity {
     private SeekBar seekBarShots;
     private SeekBar seekBarLevel;
     private FirebaseFirestore db;
-    private Member member;
+    //private Member member;
+    private GameSetting gameSetting;
     private Button sendDt,backmenu;
     private TextView txtMines;
     private TextView txtKeys;
@@ -68,7 +69,8 @@ public class InitGameActivity extends AppCompatActivity {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
                 txtShots.setText("" + String.valueOf(progress));
-                member.setNumberShot(String.valueOf(progress));
+                gameSetting.setNumberShots(String.valueOf(progress));
+                //member.setNumberShot(String.valueOf(progress));
             }
 
             @Override
@@ -85,7 +87,8 @@ public class InitGameActivity extends AppCompatActivity {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
                 textView.setText("" + String.valueOf(progress) + " Min");
-                member.setTime(String.valueOf(progress));
+                gameSetting.setDuration(String.valueOf(progress));
+                //member.setTime(String.valueOf(progress));
             }
 
             @Override
@@ -104,7 +107,8 @@ public class InitGameActivity extends AppCompatActivity {
                 if(progress == 0)  textLevel.setText("CAPTURE-THE-FLAG");
                 if(progress == 1)  textLevel.setText("HIGH-SCORE");
                 if(progress == 2)  textLevel.setText("LAST-TANK-REMAINING");
-                member.setGameType(String.valueOf(progress+1));
+                gameSetting.setType(String.valueOf(progress+1));
+                //member.setGameType(String.valueOf(progress+1));
             }
 
             @Override
@@ -121,7 +125,8 @@ public class InitGameActivity extends AppCompatActivity {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
                 txtMines.setText("Mines - " + String.valueOf(progress));
-                member.setMines(String.valueOf(progress));
+                gameSetting.setMine(String.valueOf(progress));
+                 //member.setMines(String.valueOf(progress));
             }
 
             @Override
@@ -138,7 +143,9 @@ public class InitGameActivity extends AppCompatActivity {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
                 txtKeys.setText("Keys - " + String.valueOf(progress));
-                member.setKeys(String.valueOf(progress));
+                gameSetting.setKeys(String.valueOf(progress));
+                //member.setKeys(String.valueOf(progress));
+
             }
 
             @Override
@@ -161,7 +168,8 @@ public class InitGameActivity extends AppCompatActivity {
     }
     //associate fields and buttons from XML
    private void priviteInitButton(){
-       member = new Member();
+       //member = new Member();
+       gameSetting = new GameSetting();
        db = FirebaseFirestore.getInstance();
        sendDt = (Button) findViewById(R.id.sendData);
        textView =(TextView) findViewById(R.id.txtMin);
@@ -181,7 +189,8 @@ public class InitGameActivity extends AppCompatActivity {
 
     private void sendData(){
         //db.collection("GameSettings").document("doucment1").update(member.getMap());
-        Toast.makeText(getApplicationContext(), "insert data",Toast.LENGTH_LONG ).show();
+        //TODO - Miki - do we need this toast? It interferes with "someone already started a game" toast
+  //      Toast.makeText(getApplicationContext(), "insert data",Toast.LENGTH_LONG ).show();
         //TODO - implement CheckIfDataValid - it should check if all compents are ready to play - tanks are right pos
         //TODO check - maybe lower barrier down
         if(checkIfDataValid()){
@@ -206,15 +215,13 @@ public class InitGameActivity extends AppCompatActivity {
                     if (valid_join.equals("GAME-READY")) {
                         Log.v("MENU-CLASS", "SOMEONE IS ALREADY START A GAME");
                         Log.v("MENU-CLASS",valid_join);
-                        Toast.makeText(InitGameActivity.this, "SOMEONE IS ALREADY START A GAME",
+                        Toast.makeText(InitGameActivity.this, "SOMEONE ALREADY STARTED A GAME",
                                 Toast.LENGTH_SHORT).show();
-
-
                     }
                     // you can start a game
                     else  if(valid_join.equals("GAME-NOT-READY")){
                         //update all game setting AND uid of player 1
-                        GameSetting gameSetting = new GameSetting((String) member.getTime(),member.getKeys(),member.getMines(),(String) member.getNumberShot(),member.getType());
+                        //GameSetting gameSetting = new GameSetting((String) member.getTime(),member.getKeys(),member.getMines(),(String) member.getNumberShot(),member.getType());
                        // mDatabase.child("GameSettings").setValue(gameSetting);
                         mDatabase.child("GameSettings").updateChildren(gameSetting.toHashMap());
 

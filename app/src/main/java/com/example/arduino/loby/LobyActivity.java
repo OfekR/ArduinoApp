@@ -109,8 +109,6 @@ public class LobyActivity extends AppCompatActivity {
                 }
             }
         });
-
-
     }
 
     private void listnerForread() {
@@ -177,9 +175,10 @@ public class LobyActivity extends AppCompatActivity {
     private void ChangeScreenToGameLayout() {
         Intent intentGame = new Intent(getApplicationContext(), GameScreenActivity.class);
         //TODO - convert to gamesetting
-        Member member = new Member(gameSetting);
+      //  Member member = new Member(gameSetting);
         // send to next activity the game setting data, in order to initalize the first state - ammo, mines and etc
-        intentGame.putExtra("MyMember", member);
+       // intentGame.putExtra("MyMember", member);
+        intentGame.putExtra("GameSettings", gameSetting);
         // send also classifier , which indicate if this is player 1 or player 2 (in order to set correct BT)
         intentGame.putExtra("Classifier" ,getIntent().getExtras().getString("Classifier"));
         changescreen(intentGame);

@@ -32,6 +32,7 @@ import android.widget.Toast;
 
 import com.example.arduino.R;
 import com.example.arduino.defines.LogDefs;
+import com.example.arduino.initGame.GameSetting;
 import com.example.arduino.initGame.Member;
 import com.example.arduino.loby.PopWindow;
 import com.example.arduino.utilities.HttpHelper;
@@ -136,9 +137,10 @@ public class GameScreenActivity extends AppCompatActivity {
         showWaitScreen();
 
         waitUntillGameReady();
-        initBluetoothConnection();
-        initCarInPlace();
-        initInternetConnected();
+        //TODO - Miki - uncomment
+//        initBluetoothConnection();
+//        initCarInPlace();
+//        initInternetConnected();
     }
 
     /** ************************* General ************************* **/
@@ -342,7 +344,8 @@ public class GameScreenActivity extends AppCompatActivity {
                     Toast.makeText(getApplicationContext(), "No Ammo", Toast.LENGTH_LONG).show();
                     return;
                 }
-                SendCommandShotLaser();
+                //TODO:: Miki - uncomment
+  //              SendCommandShotLaser();
 
                 game.raiseBy1TotalData("Shots");
                 if(mySong !=  null) mySong.Destroy();
@@ -667,9 +670,12 @@ public class GameScreenActivity extends AppCompatActivity {
     private void getDataFromSetting(){
         Bundle data = getIntent().getExtras();
         assert data != null;
-        Member member = (Member) data.getParcelable("MyMember");
-        assert member != null;
-        game = new Game(member);
+//        Member member = (Member) data.getParcelable("MyMember");
+//        assert member != null;
+//        game = new Game(member);
+        GameSetting gameSetting = (GameSetting) data.getParcelable("GameSettings");
+        assert gameSetting != null;
+        game = new Game(gameSetting);
         game.setPoint(0);
         txtAmmo.setText("Ammuo Left:" + game.getAmmuo().toString());
         txtLife.setText("LIFE- 100"); // TODO set to 100

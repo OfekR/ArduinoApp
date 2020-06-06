@@ -2,6 +2,7 @@ package com.example.arduino.gameScreen;
 
 import android.util.Log;
 
+import com.example.arduino.initGame.GameSetting;
 import com.example.arduino.initGame.Member;
 
 import com.google.firebase.auth.FirebaseAuth;
@@ -106,15 +107,14 @@ public class Game {
         this.num_hits = num_hits;
     }
 
-    public Game(Member meb) {
-
-        this.time =  Integer.parseInt((String)meb.getTime());
-        this.Ammuo =  Integer.parseInt((String)meb.getNumberShot());
-        this.type = Integer.parseInt((String)meb.getGameType());
-        this.keys =  Integer.parseInt(meb.getKeys());
-        this.mines = Integer.parseInt(meb.getMines());
-        this.playerID = (String) meb.getPlayer1();
-        this.oppID = (String) meb.getPlayer2();
+    public Game(GameSetting gameSetting){
+          this.time =  Integer.parseInt((String)gameSetting.getDuration());
+        this.Ammuo =  Integer.parseInt((String)gameSetting.getShots());
+        this.type = Integer.parseInt((String)gameSetting.getType());
+        this.keys =  Integer.parseInt(gameSetting.getKeys());
+        this.mines = Integer.parseInt(gameSetting.getMines());
+        this.playerID = (String) gameSetting.getPlayerId1();
+        this.oppID = (String) gameSetting.getPlayerId2();
         this.defuse = 0;
         this.life = 20;
         this.flag = 0;
@@ -127,6 +127,28 @@ public class Game {
         checkValidId();
         statusEndofGame = StatusGame.DRAW;
     }
+
+//    public Game(Member meb) {
+//
+//        this.time =  Integer.parseInt((String)meb.getTime());
+//        this.Ammuo =  Integer.parseInt((String)meb.getNumberShot());
+//        this.type = Integer.parseInt((String)meb.getGameType());
+//        this.keys =  Integer.parseInt(meb.getKeys());
+//        this.mines = Integer.parseInt(meb.getMines());
+//        this.playerID = (String) meb.getPlayer1();
+//        this.oppID = (String) meb.getPlayer2();
+//        this.defuse = 0;
+//        this.life = 20;
+//        this.flag = 0;
+//        this.num_hits =0;   // num of hits i gat from opp
+//        this.totalData = new Long[3];
+//        for(int i=0; i<3;i++){
+//            totalData[i] = Long.valueOf(0);
+//        }
+//        valuesShared = new ValuesShared("20","20","0","0","0","0","0","0","0","0","0","0","0","0");
+//        checkValidId();
+//        statusEndofGame = StatusGame.DRAW;
+//    }
 
     public String getOppID() {
         return oppID;
