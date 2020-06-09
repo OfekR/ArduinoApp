@@ -70,6 +70,9 @@ exports.setGameReady = functions.https.onRequest((req, res) => {
         life= life -1;
         points = points + 10;
         tmp = tmp +1;
+        life= life.toString();
+        tmp= tmp.toString();
+        points= points.toString();
         admin.database().ref("/Game/").update({life1:life,points2:points,valid1:tmp})
         return res.status(200).send(`${tmp}`);
         })
@@ -88,6 +91,9 @@ exports.setGameReady = functions.https.onRequest((req, res) => {
         life= life -1;
         points = points + 10;
         tmp = tmp +1;
+        life= life.toString();
+        tmp= tmp.toString();
+        points= points.toString();
         admin.database().ref("/Game/").update({life2:life,points1:points,valid2:tmp})
         return res.status(200).send(`${tmp}`);
         })
@@ -186,28 +192,21 @@ exports.endOfGameSendder = functions.https.onRequest((req, res) => {
         });
 
 
-        
-      exports.rfidHandlerForCar1 = functions.https.onRequest((req, res) => {
-        let card_id = req.query.cardId;
-        let promise = admin.database().ref("Gates/card1/").once('value');
+      exports.gateRequest = functions.https.onRequest((req, res) => {
+        let id = req.query.id;
+        var i=0;
+        var dict ={};
+        let promise = admin.database().ref("Gates/card"+id+"/").once('value');
         promise.then(function(snapshot) {
         snapshot.forEach(function(childSnaphot){
+            i = i+1;
             var data = childSnaphot.val().value;
-            var idKey = childSnaphot.val().id;
-            var gate = childSnaphot.key;
+            //var gate = childSnaphot.key;
             console.log( childSnaphot.val());
-            if(idKey === card_id){
-                // no aprove to open the gate 
-                if(data === '0'){
-                return res.status(200).send('0');
-                }
-                else{
-                    admin.database().ref("/Gates/card1/"+gate).update({value:'0'})
-                    return res.status(200).send('1');
-                }
-            }
+            dict[i] = data;
+
         })
-        return 2;
+        return res.status(200).send(dict);
         })
         .catch(error => {
             console.log(error);
@@ -215,8 +214,79 @@ exports.endOfGameSendder = functions.https.onRequest((req, res) => {
       })
       });
 
+      exports.resetGate = functions.https.onRequest((req, res) => {
+        let id = req.query.id;
+        let num = req.query.num;
+        admin.database().ref("Gates/card"+id+"/"+num+"/").update({value:"0"});
+        return res.status(200).send(0);
+        });
 
 
+      /*
+      exports.gateHandler = functions.https.onRequest((req, res) => {
+        let card_id = req.query.cardId;
+        var i=0;
+        var dict ={};
+        let promise = admin.database().ref("Gates/card1/").once('value');
+        promise.then(function(snapshot) {
+        snapshot.forEach(function(childSnaphot){
+            i = i+1;
+            var data = childSnaphot.val().value;
+            //var gate = childSnaphot.key;
+            console.log( childSnaphot.val());
+            dict[i] = data;
+
+        })
+        return res.status(200).send(dict);
+        })
+        .catch(error => {
+            console.log(error);
+            return res.status(500).send(error);
+      })
+      });
+      */
+
+exports.handleGate = functions.https.onRequest((req, res) => {
+    let id = Number(req.query.id);
+    let gate_num = req.query.gate_num;
+    let promise = admin.database().ref('Game').once('value');
+    promise.then(function(snapshot) {
+        var key ,name;
+        var dict ={}
+        //player1
+        if(id === 1){
+            key =Number(snapshot.val().keys1);
+            name = "keys1";
+        }
+        //player 2
+        else{
+            key =Number(snapshot.val().keys2);
+            name = "keys2";
+        }
+        if( key > 0){
+            var gate_name = "gate"+gate_num;
+            key = key-1;
+            dict[`${name}`] = key.toString()
+            admin.database().ref("/Gates/card1/"+gate_name).update({value:"1"});
+            admin.database().ref("/Game/").update(dict);
+            return res.status(200).send("good");
+        }
+        // no primition
+        else{
+            return res.status(200).send("bad");
+        }
+    })
+    .catch(error => {
+        console.log(error);
+        return res.status(500).send(error);
+  })
+  });
+
+      /*
+      this function do all the handle of the rfid chip 
+      she can handle Mines or Lotbox 
+      maybe to break her apart for litlle jobs
+      */
       exports.handleRfid = functions.https.onRequest((req, res) => {
         let id = Number(req.query.id);
         let param = req.query.param;
@@ -396,7 +466,7 @@ exports.endOfGameSendder = functions.https.onRequest((req, res) => {
                     return res.status(500).send(error);
                     });
                   //  throw error("bad place");
-            return res.status(200).send("end-need-to-fix");  
+            return ;
             }).catch(error => {
             console.log(error);
             return res.status(500).send(error);

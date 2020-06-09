@@ -22,14 +22,18 @@ import com.example.arduino.utilities.HttpHelper;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 
 import com.example.arduino.R;
 
+import java.util.HashMap;
 import java.util.Objects;
 
 public class InitGameActivity extends AppCompatActivity {
@@ -49,6 +53,8 @@ public class InitGameActivity extends AppCompatActivity {
     private SeekBar seekBarKeys;
     private DatabaseReference mDatabase;
     private Intent intent;
+    DatabaseReference gamedocRef;
+    ValueEventListener registration;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -202,6 +208,47 @@ public class InitGameActivity extends AppCompatActivity {
         }
     }
 
+
+    private void checkForGameReady(){
+        final FirebaseDatabase database = FirebaseDatabase.getInstance();
+        gamedocRef = database.getReference("ValueForStart/");
+        registration = gamedocRef.addValueEventListener(new ValueEventListener(){
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                String create = (String) dataSnapshot.child("create").getValue();
+                if(create.equals("1")){
+                    Log.v("MENU-CLASS", "SOMEONE IS ALREADY START A GAME");
+                    Toast.makeText(InitGameActivity.this, "SOMEONE ALREADY STARTED A GAME",
+                            Toast.LENGTH_SHORT).show();
+                }
+                else{
+                    // update "waitToJoin" field
+                    //HttpHelper httpHelper = new HttpHelper();
+                    //httpHelper.HttpRequestForLooby("WAITING", "https://us-central1-arduino-a5968.cloudfunctions.net/addJoin");
+                    mDatabase.child("ValueForStart").child("create").setValue("1");
+                    //update all game setting AND uid of player 1
+                    //GameSetting gameSetting = new GameSetting((String) member.getTime(),member.getKeys(),member.getMines(),(String) member.getNumberShot(),member.getType());
+                    // mDatabase.child("GameSettings").setValue(gameSetting);
+                    mDatabase.child("GameSettings").updateChildren(gameSetting.toHashMap());
+
+                    // update "gameReady" field
+                  //  HttpHelper httpHelper = new HttpHelper();
+                 //   httpHelper.HttpRequestForLooby("GAME-READY","https://us-central1-arduino-a5968.cloudfunctions.net/setGameReady");
+
+                    //
+                    Intent intent = new Intent(getApplicationContext(),LobyActivity.class);
+                    intent.putExtra("Classifier", "Init");
+                    gamedocRef.removeEventListener(registration);
+                    startActivity(intent.addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY));
+                }
+            }
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+                System.out.println("The read failed: " + databaseError.getCode());
+            }
+        });
+    }
+    /**
     private void checkForGameReady() {
         FirebaseFirestore fstore = FirebaseFirestore.getInstance();
         DocumentReference docRef = fstore.collection("Appending").document("Append1");
@@ -238,6 +285,7 @@ public class InitGameActivity extends AppCompatActivity {
             }
         });
     }
+     **/
 
     private boolean checkIfDataValid() {
         return true;

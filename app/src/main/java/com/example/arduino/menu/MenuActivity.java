@@ -16,8 +16,11 @@ import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.EventListener;
@@ -52,6 +55,8 @@ public class MenuActivity extends AppCompatActivity {
     Button statBtn;
     Button logOut;
     Button moveBt;
+    DatabaseReference gamedocRef;
+    ValueEventListener registration;
     private FirebaseAuth.AuthStateListener mAuthStateListener;
     private DatabaseReference mDatabase;
     private BluetoothSocket bluetoothSocket;
@@ -110,6 +115,45 @@ public class MenuActivity extends AppCompatActivity {
 
     }
 
+    private void checkforJoin(){
+        final FirebaseDatabase database = FirebaseDatabase.getInstance();
+        gamedocRef = database.getReference("ValueForStart/");
+        registration = gamedocRef.addValueEventListener(new ValueEventListener(){
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                String join = (String) dataSnapshot.child("join").getValue();
+                if(join.equals("1")){
+                    Log.v("MENU-CLASS", "SOMEONE - IS ALREADY WAITS");
+                    Toast.makeText(MenuActivity.this, "SOMEONE - IS ALREADY WAITS",
+                            Toast.LENGTH_SHORT).show();
+                }
+                else{
+                    // update "waitToJoin" field
+                    //HttpHelper httpHelper = new HttpHelper();
+                    //httpHelper.HttpRequestForLooby("WAITING", "https://us-central1-arduino-a5968.cloudfunctions.net/addJoin");
+                    mDatabase.child("ValueForStart").child("join").setValue("1");
+                    // set the logged in user uid for player 2 and sync to firebase(to be able to identifty him later)
+                    HashMap<String,Object> hashMap = new HashMap<>();
+                    hashMap.put("playerId2",FirebaseAuth.getInstance().getUid());
+                    mDatabase.child("GameSettings").updateChildren(hashMap);
+                    //go to lobby screen and wait for to start
+                    gamedocRef.removeEventListener(registration);
+                    Intent intent = new Intent(getApplicationContext(),LobyActivity.class);
+
+                    intent.putExtra("Classifier", "Join");
+                    //TODO ASK AMIT - do you need here flag FLAG_ACTIVITY_NO_HISTORY like on initGame? what is the purpose anyway?
+                    startActivity(intent);
+                }
+            }
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+                System.out.println("The read failed: " + databaseError.getCode());
+            }
+        });
+
+    }
+
+    /**
     private void checkforJoin() {
         FirebaseFirestore fstore = FirebaseFirestore.getInstance();
         DocumentReference docRef = fstore.collection("Appending").document("Append1");
@@ -150,6 +194,7 @@ public class MenuActivity extends AppCompatActivity {
             }
         });
     }
+     **/
 
     @Override
     protected void onPause() {

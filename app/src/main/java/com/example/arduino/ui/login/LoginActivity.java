@@ -310,6 +310,8 @@ public class LoginActivity extends AppCompatActivity {
     }
 
     public boolean isConnectionAvaliable() {
+        return true;
+       /*
         boolean connected = false;
         ConnectivityManager connectivityManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
         if (connectivityManager.getNetworkInfo(ConnectivityManager.TYPE_MOBILE).getState() == NetworkInfo.State.CONNECTED ||
@@ -320,5 +322,6 @@ public class LoginActivity extends AppCompatActivity {
             connected = false;
 
         return connected;
+        */
     }
 }

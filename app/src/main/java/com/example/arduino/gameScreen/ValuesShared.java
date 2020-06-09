@@ -6,7 +6,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class ValuesShared {
-    private  String life1, life2, flag1, flag2, valid1, valid2, points1, points2,defuse1,defuse2,mine1,mine2,keys1,keys2;
+    private  String ammo1,ammo2,life1, life2, flag1, flag2, valid1, valid2, points1, points2,defuse1,defuse2,mine1,mine2,keys1,keys2,specialKey1,specialKey2;
 
     public ValuesShared(){}
 
@@ -27,9 +27,10 @@ public class ValuesShared {
     }
 
 
-    public ValuesShared(String life1, String life2, String flag1, String flag2, String valid1, String valid2,
-                        String points1, String points2, String defuse1, String defuse2, String mine1,
-                        String mine2, String keys1, String keys2) {
+
+    public ValuesShared(String ammo1, String ammo2, String life1, String life2, String flag1, String flag2, String valid1, String valid2, String points1, String points2, String defuse1, String defuse2, String mine1, String mine2, String keys1, String keys2, String specialKey1, String specialKey2) {
+        this.ammo1 = ammo1;
+        this.ammo2 = ammo2;
         this.life1 = life1;
         this.life2 = life2;
         this.flag1 = flag1;
@@ -44,6 +45,24 @@ public class ValuesShared {
         this.mine2 = mine2;
         this.keys1 = keys1;
         this.keys2 = keys2;
+        this.specialKey1 = specialKey1;
+        this.specialKey2 = specialKey2;
+    }
+
+    public String getAmmo1() {
+        return ammo1;
+    }
+
+    public String getAmmo2() {
+        return ammo2;
+    }
+
+    public String getSpecialKey1() {
+        return specialKey1;
+    }
+
+    public String getSpecialKey2() {
+        return specialKey2;
     }
 
     public String getLife1() {
@@ -106,6 +125,12 @@ public class ValuesShared {
         map.put("keys2","0");
         map.put("mine1","0");
         map.put("mine2","0");
+        map.put("specialKey1","0");
+        map.put("specialKey2","0");
+        map.put("ammo1","0");
+        map.put("ammo2","0");
+
+
         return map;
     }
 }

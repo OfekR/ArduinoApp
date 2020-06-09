@@ -9,6 +9,7 @@ import com.example.arduino.initGame.Member;
 import com.example.arduino.menu.MenuActivity;
 import com.example.arduino.utilities.HttpHelper;
 import com.example.arduino.utilities.MediaPlayerWrapper;
+import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -33,6 +34,7 @@ import android.view.View;
 import android.view.Window;
 import android.widget.Button;
 import android.widget.MediaController;
+import android.widget.Toast;
 import android.widget.VideoView;
 
 import java.util.HashMap;
@@ -49,7 +51,8 @@ public class LobyActivity extends AppCompatActivity {
     private DatabaseReference gamedocRef;
     private int flag =0;
     GameSetting gameSetting;
-    private ListenerRegistration registration1;
+    private ValueEventListener registration3;
+    private DatabaseReference gamedocRef1;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -86,7 +89,7 @@ public class LobyActivity extends AppCompatActivity {
         videoBG.setVideoURI(uri);
         videoBG.start();
     }
-
+/*
     private void waitForStartingGame() {
         //wait untill all players joined
         FirebaseFirestore fstore = FirebaseFirestore.getInstance();
@@ -110,9 +113,31 @@ public class LobyActivity extends AppCompatActivity {
             }
         });
     }
+*/
+    private void waitForStartingGame(){
+        final FirebaseDatabase database = FirebaseDatabase.getInstance();
+        gamedocRef1 = database.getReference("ValueForStart/");
+        registration3 = gamedocRef1.addValueEventListener(new ValueEventListener(){
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                String join = (String) dataSnapshot.child("join").getValue();
+                String create = (String) dataSnapshot.child("create").getValue();
+                if(join.equals("1")  && create.equals("1")){
+                    Log.v("LOBY-CLASS","Game-is strating" );
+                    // Retrive game setting from firebase and switch to game screen
+                    gamedocRef1.removeEventListener(registration3);
+                    listnerForread();
+                }
+            }
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+                System.out.println("The read failed: " + databaseError.getCode());
+            }
+        });
+
+    }
 
     private void listnerForread() {
-        registration.remove();
         final DatabaseReference database = FirebaseDatabase.getInstance().getReference();
         DatabaseReference ref = database.child("GameSettings/");
         ValueEventListener valueEventListener = new ValueEventListener() {
@@ -157,16 +182,21 @@ public class LobyActivity extends AppCompatActivity {
 
     private void exitLobbyToMainMenuAux()
     {
+        final DatabaseReference database = FirebaseDatabase.getInstance().getReference();
         Bundle bundle = getIntent().getExtras();
         String message = bundle.getString("Classifier");
         if (message.equals("Init")) {
-            HttpHelper httpHelper = new HttpHelper();
-            httpHelper.HttpRequestForLooby("GAME-NOT-READY", "https://us-central1-arduino-a5968.cloudfunctions.net/setGameReady");
+            database.child("ValueForStart").child("create").setValue("0");
+
+            //HttpHelper httpHelper = new HttpHelper();
+           // httpHelper.HttpRequestForLooby("GAME-NOT-READY", "https://us-central1-arduino-a5968.cloudfunctions.net/setGameReady");
         }
         else{
             //message.equals("Join")
-            HttpHelper httpHelper = new HttpHelper();
-            httpHelper.HttpRequestForLooby("NO-ONE-IS-WAITING", "https://us-central1-arduino-a5968.cloudfunctions.net/addJoin");
+            database.child("ValueForStart").child("join").setValue("0");
+
+           // HttpHelper httpHelper = new HttpHelper();
+            //httpHelper.HttpRequestForLooby("NO-ONE-IS-WAITING", "https://us-central1-arduino-a5968.cloudfunctions.net/addJoin");
         }
         Intent intent = new Intent(getApplicationContext(), MenuActivity.class);
         startActivity(intent.addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY));

@@ -24,6 +24,8 @@ import android.os.Bundle;
 import android.os.CountDownTimer;
 import android.os.Handler;
 import android.util.Log;
+import android.view.Gravity;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ProgressBar;
@@ -98,8 +100,8 @@ public class GameScreenActivity extends AppCompatActivity {
     private JoystickView joystickServo;
     //BT variables
     //TODO - set the real ones, for now the first is the tank second is the car (for now set both to the same
-    //private final String DEVICE_ADDRESS_P1 = "98:D3:51:FD:D9:45";
-    private final String DEVICE_ADDRESS_P1 = "98:D3:61:F5:E7:3C";
+    private final String DEVICE_ADDRESS_P1 = "98:D3:51:FD:D9:45";
+    //private final String DEVICE_ADDRESS_P1 = "98:D3:61:F5:E7:3C";
     private final String DEVICE_ADDRESS_P2 = "98:D3:61:F5:E7:3C";
     private final int laserShootLengthMS = 2000;
     private static final String TAG_BT = LogDefs.tagBT;
@@ -138,9 +140,9 @@ public class GameScreenActivity extends AppCompatActivity {
 
         waitUntillGameReady();
         //TODO - Miki - uncomment
-//        initBluetoothConnection();
-//        initCarInPlace();
-//        initInternetConnected();
+        initBluetoothConnection();
+        initCarInPlace();
+        initInternetConnected();
     }
 
     /** ************************* General ************************* **/
@@ -220,6 +222,7 @@ public class GameScreenActivity extends AppCompatActivity {
      * wait screen , appear as long the game hasn't started yet
      */
     private void showWaitScreen() {
+        Toast.makeText(getApplicationContext(),"player number -- "+game.getPlayerID(),Toast.LENGTH_LONG).show();
         waitDialog = new AlertDialog.Builder(this).setMessage("waiting for both player to be ready to play").create();
         //this attributes to avoid user be able to remove dialog
         waitDialog.setCancelable(false);
@@ -694,7 +697,7 @@ public class GameScreenActivity extends AppCompatActivity {
         registration = gamedocRef.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
-                Integer my_life_left,opp_flag,my_flag,opp_life_left,my_hit,opp_hit,my_points,opp_points,my_mine,my_keys,my_defuse;
+                Integer my_life_left,opp_flag,my_flag,opp_life_left,my_hit,opp_hit,my_points,opp_points,my_mine,my_keys,my_defuse,my_spkey,opp_spkey;
                 ValuesShared values = dataSnapshot.getValue(ValuesShared.class);
                 game.setValuesShared(values);
                 assert values != null;
@@ -710,6 +713,7 @@ public class GameScreenActivity extends AppCompatActivity {
                     my_mine =Integer.parseInt(values.getMine1());
                     my_keys =Integer.parseInt(values.getKeys1());
                     my_defuse =Integer.parseInt(values.getDefuse1());
+                    my_spkey =Integer.parseInt(values.getDefuse1());
 
                 }
                 else{
@@ -761,6 +765,7 @@ public class GameScreenActivity extends AppCompatActivity {
                 //update number hit
                 assert(my_hit >= game.getNum_hits());
                 if(my_hit > game.getNum_hits()){
+                    makeToast();
                     game.setNum_hits(game.getNum_hits()+1);
                     gatHit();
                     //TODO - add field to Game firbase field which indicate hit, and change the point calc to oppenet side
@@ -865,8 +870,11 @@ public class GameScreenActivity extends AppCompatActivity {
         HttpHelper httpHelper1 = new HttpHelper();
         ValuesShared vs = new ValuesShared();
         mDatabase.child("Game").setValue(vs.resetObject());
-        httpHelper.HttpRequestForLooby("NO-ONE-IS-WAITING", "https://us-central1-arduino-a5968.cloudfunctions.net/addJoin");
-        httpHelper1.HttpRequestForLooby("GAME-NOT-READY","https://us-central1-arduino-a5968.cloudfunctions.net/setGameReady");
+        mDatabase.child("ValueForStart").child("create").setValue("0");
+        mDatabase.child("ValueForStart").child("join").setValue("0");
+
+       // httpHelper.HttpRequestForLooby("NO-ONE-IS-WAITING", "https://us-central1-arduino-a5968.cloudfunctions.net/addJoin");
+        //httpHelper1.HttpRequestForLooby("GAME-NOT-READY","https://us-central1-arduino-a5968.cloudfunctions.net/setGameReady");
 
         //update GameStarted
         updateGameStartedField(false);
@@ -934,6 +942,8 @@ public class GameScreenActivity extends AppCompatActivity {
 
     public boolean isConnectionAvaliable()
     {
+        return true;
+        /*
         boolean connected = false;
         ConnectivityManager connectivityManager = (ConnectivityManager)getSystemService(Context.CONNECTIVITY_SERVICE);
         if(connectivityManager == null) return false;
@@ -946,6 +956,7 @@ public class GameScreenActivity extends AppCompatActivity {
             connected = false;
 
         return connected;
+         */
     }
 
 /*
@@ -1152,6 +1163,7 @@ public class GameScreenActivity extends AppCompatActivity {
     {
         Bundle bundle = getIntent().getExtras();
         String message = bundle.getString("Classifier");
+        Toast.makeText(getApplicationContext(),"player number -- "+game.getPlayerID(),Toast.LENGTH_LONG).show();
         if (message.equals("Init")) {
             //player 1
             DEVICE_ADDRESS = DEVICE_ADDRESS_P1;
@@ -1318,6 +1330,17 @@ public class GameScreenActivity extends AppCompatActivity {
     public void changeScreen(Class screen){
         Intent intent = new Intent(GameScreenActivity.this, screen);
         startActivity(intent);
+    }
+
+
+    public void makeToast(){
+        LayoutInflater inflater = getLayoutInflater();
+        View view = inflater.inflate(R.layout.toastlayout,null);
+        Toast toast = new Toast(this);
+        toast.setView(view);
+        toast.setDuration(Toast.LENGTH_LONG);
+        toast.setGravity(Gravity.CENTER_VERTICAL | Gravity.CENTER_HORIZONTAL,0,0);
+        toast.show();
     }
 
 }
