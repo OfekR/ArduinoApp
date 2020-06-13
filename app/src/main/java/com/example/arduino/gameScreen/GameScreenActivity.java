@@ -42,6 +42,7 @@ import com.example.arduino.utilities.MediaPlayerWrapper;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -90,7 +91,11 @@ public class GameScreenActivity extends AppCompatActivity {
     private TextView txtKeys;
     private TextView txtMines;
     private TextView txtDefuse;
+    private TextView txtSpeicalKey;
+
     private Button btnShot;
+    private Button btnKey;
+    private Button btnMine;
     private TextView txtCountDown;
     private CountDownTimer countDownTimer;
     private boolean mTimerRunning;
@@ -100,8 +105,8 @@ public class GameScreenActivity extends AppCompatActivity {
     private JoystickView joystickServo;
     //BT variables
     //TODO - set the real ones, for now the first is the tank second is the car (for now set both to the same
-    private final String DEVICE_ADDRESS_P1 = "98:D3:51:FD:D9:45";
-    //private final String DEVICE_ADDRESS_P1 = "98:D3:61:F5:E7:3C";
+    //private final String DEVICE_ADDRESS_P1 = "98:D3:51:FD:D9:45";
+    private final String DEVICE_ADDRESS_P1 = "98:D3:61:F5:E7:3C";
     private final String DEVICE_ADDRESS_P2 = "98:D3:61:F5:E7:3C";
     private final int laserShootLengthMS = 2000;
     private static final String TAG_BT = LogDefs.tagBT;
@@ -119,11 +124,17 @@ public class GameScreenActivity extends AppCompatActivity {
     private AtomicBoolean _isInternetConnected;
     private AtomicBoolean _isCarInPlace;
 
+    private Integer _playerId;
+
     private String command = "";
     private AtomicBoolean _isGameStarted;
 
     AlertDialog waitDialog;
     boolean doubleBackToExitPressedOnce = false;
+
+    //Aux classes
+    private RfidHandler _rfidHandler;
+    private LiveGameInfo _liveGameInfo;
 
 
     @Override
@@ -139,10 +150,13 @@ public class GameScreenActivity extends AppCompatActivity {
         showWaitScreen();
 
         waitUntillGameReady();
-        //TODO - Miki - uncomment
+        //TODO OFEK DEBUG
+        /*
         initBluetoothConnection();
         initCarInPlace();
         initInternetConnected();
+        */
+
     }
 
     /** ************************* General ************************* **/
@@ -199,10 +213,8 @@ public class GameScreenActivity extends AppCompatActivity {
 
     private void updateGameStartedField(boolean isReady)
     {
-        Bundle bundle = getIntent().getExtras();
-        String message = bundle.getString("Classifier");
         String key;
-        if (message.equals("Init")) {
+        if (_playerId.equals(1)) {
             //player 1
             key = "P1_Ready";
         }
@@ -268,6 +280,8 @@ public class GameScreenActivity extends AppCompatActivity {
      */
     private void findAllView(){
         btnShot = (Button) findViewById(R.id.btGameShoot);
+        btnKey = (Button) findViewById(R.id.btGameKeys);
+        btnMine = (Button) findViewById(R.id.btGameMines);
         pbLife = (ProgressBar) findViewById(R.id.progressBar2);
         txtLife = (TextView) findViewById(R.id.txtLife);
         txtAmmo = (TextView) findViewById(R.id.txtAmmouLeft);
@@ -275,6 +289,7 @@ public class GameScreenActivity extends AppCompatActivity {
         txtKeys = (TextView) findViewById(R.id.txtGameKeys);
         txtMines = (TextView) findViewById(R.id.txtGameMines);
         txtDefuse = (TextView) findViewById(R.id.txtGameDefuse);
+        txtSpeicalKey =  (TextView) findViewById(R.id.txtGameSpecialKeys);
         txtCountDown = (TextView) findViewById(R.id.txtCountdown);
         joystickCar = (JoystickView) findViewById(R.id.joystickViewCarControl);
         joystickServo = (JoystickView) findViewById(R.id.joystickViewTurretControl);
@@ -292,6 +307,16 @@ public class GameScreenActivity extends AppCompatActivity {
         _isGameStarted = new AtomicBoolean(false);
         _isInternetConnected = new AtomicBoolean(false);
         _isCarInPlace = new AtomicBoolean(false);
+
+        //check which player is it
+        Bundle bundle = getIntent().getExtras();
+        String message = bundle.getString("Classifier");
+        _playerId = (message.equals("Init")) ? 1 : 2;
+        _liveGameInfo = new LiveGameInfo(this, mDatabase, _playerId, btnShot, txtLife, txtAmmo, txtScore, txtKeys, txtMines, txtDefuse, txtSpeicalKey);
+        _liveGameInfo.initLivePlayerInfoFromSettings();
+
+        _rfidHandler = new RfidHandler(this, mDatabase ,_playerId,btnMine,btnKey,btnShot,joystickCar,joystickServo, _liveGameInfo);
+
     }
 
     /**
@@ -337,6 +362,18 @@ public class GameScreenActivity extends AppCompatActivity {
         btnShot.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                if(mySong !=  null) mySong.Destroy();
+                mySong = new MediaPlayerWrapper(R.raw.goodgunshot,getApplicationContext());
+                mySong.StartOrResume();
+
+                _liveGameInfo.updateFieldRelativeValue(LiveGameInfoField.AMMO,-1);
+                //TODO OFEK DEBUG
+                //SendCommandShotLaser();
+
+                //TODO - add delay , so can't shot multiple time (laser already on for X Sec)
+
+
+/*
                 Integer numOfAmmoLeft =game.getAmmuo();
                 assert(numOfAmmoLeft >= 0);
                 if(numOfAmmoLeft == 0)
@@ -362,12 +399,57 @@ public class GameScreenActivity extends AppCompatActivity {
                 if(numOfAmmoLeft - 1 == 0 ) {
                     txtAmmo.setText("NO- Ammuo - !!!!!!!!: - ");
                     //TODO OFEK restore this line once you handled lootbox (that when more ammo added, back to be enabled
+                    // OR - just listen to number of ammo and then update accordingly
+                    // Note - when bt lose connection and restore he enables all buttons
+                    //        btnShot.setEnabled(false);
+                }*/
+            }
+        });
+
+        /*final String playerIdStr = (_playerId.equals(1)) ? ""
+        btnMine.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                mDatabase.child("Game").child(_playerIdStr).child("LootBox").child("PickedSpecialLootbox").setValue(0);
+
+
+
+                Integer numOfAmmoLeft =game.getAmmuo();
+                assert(numOfAmmoLeft >= 0);
+                if(numOfAmmoLeft == 0)
+                {
+                    //TODO OFEK restore this line once you handled lootbox (that when more ammo added, back to be enabled
+                    // Note - when bt lose connection and restore he enables all buttons
+                    //        btnShot.setEnabled(false);
+                    Toast.makeText(getApplicationContext(), "No Ammo", Toast.LENGTH_LONG).show();
+                    return;
+                }
+                //TODO:: Miki - uncomment
+                //              SendCommandShotLaser();
+
+                game.raiseBy1TotalData("Shots");
+                if(mySong !=  null) mySong.Destroy();
+                mySong = new MediaPlayerWrapper(R.raw.goodgunshot,getApplicationContext());
+                mySong.StartOrResume();
+                game.setAmmuo(numOfAmmoLeft - 1);
+                txtAmmo.setText("Ammuo: - " + (game.getAmmuo().toString()));
+                //hit sound
+                // checkForHit();
+
+                if(numOfAmmoLeft - 1 == 0 ) {
+                    txtAmmo.setText("NO- Ammuo - !!!!!!!!: - ");
+                    //TODO OFEK restore this line once you handled lootbox (that when more ammo added, back to be enabled
+                    // OR - just listen to number of ammo and then update accordingly
                     // Note - when bt lose connection and restore he enables all buttons
                     //        btnShot.setEnabled(false);
                 }
-
             }
-        });
+        });*/
+    }
+
+    private void startRfidListeners()
+    {
+        _rfidHandler.startListeners();
     }
 
     /**
@@ -447,8 +529,10 @@ public class GameScreenActivity extends AppCompatActivity {
 
         _isGameStarted.set(true);
         disableEnableButtons(true);
-        //TODO - for now next line crash app
-        ListnerForChangeInGame();
+        startRfidListeners();
+        //TODO OFEK DEBUG#$#@
+        _liveGameInfo.startListeners();
+        //ListnerForChangeInGame();
 
         startTimer();
     }
@@ -480,11 +564,11 @@ public class GameScreenActivity extends AppCompatActivity {
     private  void gatHit(){
         Integer hit;
         if(game.getPlayerID().equals("1")){
-            hit = Integer.parseInt(game.getValuesShared().getLife1()) -1;
+            hit = game.getValuesShared().getLife1() -1;
         }
         // player 2
         else{
-            hit = Integer.parseInt(game.getValuesShared().getLife2())  -1;
+            hit = game.getValuesShared().getLife2()  -1;
         }
         if(mySong !=  null) mySong.Destroy();
         mySong = new MediaPlayerWrapper(R.raw.boom,getApplicationContext());
@@ -690,6 +774,7 @@ public class GameScreenActivity extends AppCompatActivity {
     }
 
     // All game manegement
+    //TODO OFEK NOW - change this function
     private void ListnerForChangeInGame(){
         final FirebaseDatabase database = FirebaseDatabase.getInstance();
         gamedocRef = database.getReference("Game/");
@@ -697,37 +782,39 @@ public class GameScreenActivity extends AppCompatActivity {
         registration = gamedocRef.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
+                //TODO OFEK - update this to all values...
                 Integer my_life_left,opp_flag,my_flag,opp_life_left,my_hit,opp_hit,my_points,opp_points,my_mine,my_keys,my_defuse,my_spkey,opp_spkey;
                 ValuesShared values = dataSnapshot.getValue(ValuesShared.class);
                 game.setValuesShared(values);
                 assert values != null;
                 if(game.getPlayerID().equals("1")){
-                    my_life_left = Integer.parseInt(values.getLife1());
-                    my_flag = Integer.parseInt(values.getFlag1());
-                    opp_flag = Integer.parseInt(values.getFlag2());
-                    opp_life_left = Integer.parseInt(values.getLife2());
-                    my_hit = Integer.parseInt(values.getValid1());
-                    opp_hit = Integer.parseInt(values.getValid2());
-                    my_points =Integer.parseInt(values.getPoints1());
-                    opp_points =Integer.parseInt(values.getPoints2());
-                    my_mine =Integer.parseInt(values.getMine1());
-                    my_keys =Integer.parseInt(values.getKeys1());
-                    my_defuse =Integer.parseInt(values.getDefuse1());
-                    my_spkey =Integer.parseInt(values.getDefuse1());
+                    my_life_left = values.getLife1();
+                    my_flag = values.getFlag1();
+                    opp_flag = values.getFlag2();
+                    opp_life_left = values.getLife2();
+                    my_hit = values.getValid1();
+                    opp_hit = values.getValid2();
+                    my_points =values.getPoints1();
+                    opp_points =values.getPoints2();
+                    my_mine =values.getMine1();
+                    my_keys =values.getKeys1();
+                    my_defuse =values.getDefuse1();
+                    my_spkey =values.getDefuse1();
 
                 }
                 else{
-                     my_life_left = Integer.parseInt(values.getLife2());
-                     my_flag = Integer.parseInt(values.getFlag2());
-                     opp_flag = Integer.parseInt(values.getFlag1());
-                     opp_life_left = Integer.parseInt(values.getLife1());
-                     opp_hit = Integer.parseInt(values.getValid1());
-                     my_hit = Integer.parseInt(values.getValid2());
-                    my_points =Integer.parseInt(values.getPoints2());
-                    opp_points =Integer.parseInt(values.getPoints1());
-                    my_mine =Integer.parseInt(values.getMine2());
-                    my_keys =Integer.parseInt(values.getKeys2());
-                    my_defuse =Integer.parseInt(values.getDefuse2());
+                     my_life_left = values.getLife2();
+                     my_flag = values.getFlag2();
+                     opp_flag = values.getFlag1();
+                     opp_life_left = values.getLife1();
+                     opp_hit = values.getValid1();
+                     my_hit = values.getValid2();
+                    my_points =values.getPoints2();
+                    opp_points =values.getPoints1();
+                    my_mine =values.getMine2();
+                    my_keys =values.getKeys2();
+                    my_defuse =values.getDefuse2();
+                    my_spkey =values.getDefuse1();
                 }
                 if(!game.getDefuse().equals(my_defuse)){
                     if(game.getDefuse() < my_defuse)
@@ -800,20 +887,20 @@ public class GameScreenActivity extends AppCompatActivity {
         Integer my_life_left,opp_flag,my_flag,opp_life_left,my_points,opp_points;
         ValuesShared values = game.getValuesShared();   // reading the val for help
         if(game.getPlayerID().equals("1")){
-            my_life_left = Integer.parseInt(values.getLife1());
-            my_flag = Integer.parseInt(values.getFlag1());
-            opp_flag = Integer.parseInt(values.getFlag2());
-            opp_life_left = Integer.parseInt(values.getLife2());
-            opp_points = Integer.parseInt(values.getPoints2());
-            my_points = Integer.parseInt(values.getPoints1());
+            my_life_left = values.getLife1();
+            my_flag = values.getFlag1();
+            opp_flag = values.getFlag2();
+            opp_life_left = values.getLife2();
+            opp_points = values.getPoints2();
+            my_points = values.getPoints1();
         }
         else{
-            my_life_left = Integer.parseInt(values.getLife2());
-            my_flag = Integer.parseInt(values.getFlag2());
-            opp_flag = Integer.parseInt(values.getFlag1());
-            opp_life_left = Integer.parseInt(values.getLife1());
-            opp_points = Integer.parseInt(values.getPoints1());
-            my_points = Integer.parseInt(values.getPoints2());
+            my_life_left = values.getLife2();
+            my_flag = values.getFlag2();
+            opp_flag = values.getFlag1();
+            opp_life_left = values.getLife1();
+            opp_points = values.getPoints1();
+            my_points = values.getPoints2();
         }
         resetValue(); //reset game setting value
         Log.v("GAME-CLASS", "GAME------------FINISHED");
@@ -1161,10 +1248,8 @@ public class GameScreenActivity extends AppCompatActivity {
 
     private void setBtMacAddress()
     {
-        Bundle bundle = getIntent().getExtras();
-        String message = bundle.getString("Classifier");
         Toast.makeText(getApplicationContext(),"player number -- "+game.getPlayerID(),Toast.LENGTH_LONG).show();
-        if (message.equals("Init")) {
+        if (_playerId == 1) {
             //player 1
             DEVICE_ADDRESS = DEVICE_ADDRESS_P1;
         }

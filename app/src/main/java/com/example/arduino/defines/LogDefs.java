@@ -11,7 +11,8 @@ public final class LogDefs {
     public static final String tagMenu = "MenuActivity";
     public static final String tagBT = "BtRelated";
     public static final String tagGameScreen = "GameScreen";
-
+    public static final String tagRFID = "Rfid";
+    public static final String tagLiveGameInfo = "LiveGameInfo";
     // login and register
     public static final String emailLoginSucMsg = "signInWithEmail:success";
     public static final String emailLoginFailMsg = "signInWithEmail:failure";
@@ -45,8 +46,28 @@ public final class LogDefs {
     //game screen
     public static final String gameStarting = "Game starting";
     public static final String gameStartingListenerFailed = "Game starting listener fail to read or empty db";
+    public static final String rfidStartingListenerFailed = "Rfid starting listener fail to read or empty db";
 
 
-
+    //RFID
+    //Barrier
+    public static final String OpenBarrierEnabled = "Got OpenBarrier enable of: ";
+    public static final String OpenBarrierDisabled = "Got OpenBarrier disabled of: ";
+    public static final String OpenBarrierNoKeys = "Got OpenBarrier with no keys";
+    public static final String OpenBarrierSpecial = "Opened special barrier";
+    public static final String OpenBarrierSpecialNoKeys = "Got OpenBarrierSpecial with no keys";
+    public static final String OpenBarrierSpecialOppents = "Got OpenBarrierSpecial of oppenet";
+    //Mine
+    public static final String PlaceMineEnabled = "Got PlaceMine enable of: ";
+    public static final String PlaceMineDisabled = "Got PlaceMine disabled of: ";
+    public static final String PlaceMineNoMines = "Got PlaceMine with no mines";
+    public static final String DisarmMines = "Mine was disarmed";
+    public static final String ExplodeMine = "Mine Exploded";
+    //LootBox
+    public static final String LootBoxGot = "Got From LootBox: ";
+    public static final String LootBoxUnavailable = "LootBox is unavailable ";
+    public static final String LootBoxSpecialGot = "Got Special Key";
+    public static final String LootBoxSpecialUnavailable = "Got LootBoxSpecial is unavailable ";
+    public static final String  LootBoxSpecialOppents = "Got LootBoxSpecial of oppenet";
 
 }

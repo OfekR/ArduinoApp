@@ -123,7 +123,7 @@ public class Game {
         for(int i=0; i<3;i++){
             totalData[i] = Long.valueOf(0);
         }
-        valuesShared = new ValuesShared("20","20","0","0","0","0","0","0","0","0","0","0","0","0","0","0","0","0");
+        valuesShared = new ValuesShared(0,0,20,20,0,0,0,0,0,0,0,0,0,0,0,0,0,0);
         checkValidId();
         statusEndofGame = StatusGame.DRAW;
     }

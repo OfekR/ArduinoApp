@@ -8,6 +8,7 @@
     android:background="#FB4359">
 
     <LinearLayout
+
         android:layout_width="409dp"
         android:layout_height="729dp"
         android:orientation="vertical"
@@ -17,6 +18,8 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
+
+
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -36,14 +39,14 @@
 
                     <ImageView
                         android:id="@+id/imageView7"
-                        android:layout_width="43dp"
-                        android:layout_height="27dp"
+                        android:layout_width="60dp"
+                        android:layout_height="40dp"
                         android:layout_marginStart="16dp"
                         android:layout_marginLeft="16dp"
                         android:layout_marginRight="16dp"
                         android:layout_marginBottom="16dp"
                         android:layout_weight="1"
-                        app:srcCompat="@drawable/defuse" />
+                        app:srcCompat="@drawable/points" />
 
                     <ImageView
                         android:id="@+id/imageView5"
@@ -56,7 +59,7 @@
                         android:layout_weight="1"
                         app:layout_constraintStart_toStartOf="parent"
                         app:layout_constraintTop_toTopOf="parent"
-                        app:srcCompat="@drawable/keys" />
+                        app:srcCompat="@drawable/golden_key" />
 
                     <ImageView
                         android:id="@+id/imageView6"
@@ -68,7 +71,7 @@
                         android:layout_marginBottom="16dp"
                         android:layout_weight="1"
                         app:layout_constraintEnd_toEndOf="parent"
-                        app:srcCompat="@drawable/mine" />
+                        app:srcCompat="@drawable/defuse" />
 
                 </LinearLayout>
 
@@ -78,6 +81,29 @@
                     android:orientation="vertical">
 
                     <TextView
+                        android:id="@+id/txtGamePoint"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:gravity="center"
+                        android:layout_marginTop="-5dp"
+
+                        android:text="Score:"
+                        android:paddingRight="20dp"
+                        android:textColor="@android:color/black"
+                        android:textSize="18sp" />
+
+                    <TextView
+                        android:id="@+id/txtGameSpecialKeys"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:gravity="center"
+                        android:text="Special Key:"
+                        android:textColor="@android:color/black"
+                        android:textSize="18sp" />
+
+                    <TextView
                         android:id="@+id/txtGameDefuse"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
@@ -85,26 +111,6 @@
                         android:gravity="center"
                         android:text="Defuse:"
                         android:paddingRight="20dp"
-                        android:textColor="@android:color/black"
-                        android:textSize="18sp" />
-
-                    <TextView
-                        android:id="@+id/txtGameKeys"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:gravity="center"
-                        android:text="Keys:"
-                        android:textColor="@android:color/black"
-                        android:textSize="18sp" />
-
-                    <TextView
-                        android:id="@+id/txtGameMines"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:gravity="center"
-                        android:text="Mines:"
                         android:textColor="@android:color/black"
                         android:textSize="18sp" />
 
@@ -120,6 +126,7 @@
                         android:layout_height="match_parent"
                         android:layout_weight="1"
                         android:orientation="vertical">
+
 
                         <ProgressBar
                             android:id="@+id/progressBar2"
@@ -155,43 +162,62 @@
 
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="90dp"
+            android:layout_height="70dp"
             android:orientation="horizontal">
 
-            <LinearLayout
-                android:layout_width="61dp"
-                android:layout_height="match_parent"
-                android:layout_weight="1"
-                android:orientation="vertical">
 
-                <ImageView
-                    android:id="@+id/imageView8"
-                    android:layout_width="73dp"
-                    android:layout_height="39dp"
-                    android:src="@drawable/ammuo" />
 
-                <TextView
-                    android:id="@+id/txtAmmouLeft"
-                    android:layout_width="match_parent"
-                    android:layout_height="36dp"
-                    android:gravity="center"
-                    android:text="Ammo Left:"
-                    android:textColor="@android:color/black"
-                    android:textSize="18sp" />
 
-            </LinearLayout>
 
-            <TextView
-                android:id="@+id/txtGamePoint"
-                android:layout_width="wrap_content"
-                android:layout_height="match_parent"
-                android:layout_weight="1"
-                android:gravity="center"
-                android:text="Score:"
-                android:textColor="@android:color/black"
-                android:textSize="24sp" />
+                <Button
+                    android:id="@+id/btGameKeys"
+                    android:layout_width="70dp"
+                    android:layout_height="70dp"
+                    android:layout_marginStart="80dp"
+                    android:background="@drawable/keys_btn_icon"
+
+                    />
+
+            <Button
+                android:id="@+id/btGameMines"
+                android:layout_width="70dp"
+                android:layout_height="70dp"
+                android:layout_marginStart="80dp"
+                android:background="@drawable/mine_btn_icon"
+                />
+
+
 
         </LinearLayout>
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="20dp"
+        android:orientation="horizontal">
+
+        <TextView
+            android:id="@+id/txtGameKeys"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginStart="25dp"
+
+            android:gravity="center"
+            android:text="Keys:"
+            android:textColor="@android:color/black"
+            android:textSize="18sp" />
+
+        <TextView
+            android:id="@+id/txtGameMines"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginStart="35dp"
+
+            android:text="Mines:"
+            android:textColor="@android:color/black"
+            android:textSize="18sp" />
+
+    </LinearLayout>
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -202,6 +228,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="203dp"
                 android:orientation="horizontal">
+
                 <io.github.controlwear.virtual.joystick.android.JoystickView
                     android:id="@+id/joystickViewTurretControl"
                     xmlns:custom="http://schemas.android.com/apk/res-auto"
@@ -259,12 +286,39 @@
                     android:id="@+id/btGameShoot"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
-                    android:background="#BFB9B9"
+                    android:background="@drawable/shoot_btn_icon"
                     android:text="Shoot"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintStart_toStartOf="parent" />
+
+
             </LinearLayout>
+
         </LinearLayout>
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:orientation="horizontal">
+        <ImageView
+            android:id="@+id/imageView8"
+            android:layout_gravity="start"
+            android:layout_width="73dp"
+            android:layout_height="39dp"
+            android:src="@drawable/ammuo" />
+
+        <TextView
+            android:id="@+id/txtAmmouLeft"
+            android:layout_width="150dp"
+            android:layout_height="36dp"
+            android:layout_gravity="center"
+            android:text="Ammo Left:"
+            android:textColor="@android:color/black"
+            android:textSize="18sp" />
+
+
+    </LinearLayout>
+
+
     </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

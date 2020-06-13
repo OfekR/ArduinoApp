@@ -114,6 +114,9 @@ public class ControllerActvivty extends AppCompatActivity {
         });
 
     }
+
+
+
     private char findCommandServo(int angle, int strength) {
         if((angle > 0 && angle < 10) || (angle >= 350 && angle <= 360)){
             return 'A';
