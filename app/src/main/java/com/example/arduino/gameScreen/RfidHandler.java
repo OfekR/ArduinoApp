@@ -33,6 +33,13 @@ public class RfidHandler {
     final String firebaseRfidPath;
 
     // Score change
+    final Integer AddPointDueMinePlace = 20;
+    final Integer AddPointDueMineDefusion = 50;
+    final Integer AddPointsDueBarrierOpen = 10;
+    final Integer AddPointsDueSpecialBarrierOpen = 10;
+    final Integer ReducePointDueExplosion = -40;
+    final Integer ReduceLifeDueExplosion = -5;
+
     //TODO - decide about score change and do it every where suing _liveGameInfo
 
     // rfid listeners
@@ -387,6 +394,9 @@ public class RfidHandler {
             }
         });
     }
+
+
+
 
 
 

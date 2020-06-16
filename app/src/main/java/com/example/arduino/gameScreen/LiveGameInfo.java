@@ -271,8 +271,9 @@ public class LiveGameInfo {
                 _livePlayerInfo.setLife(newLife);
                 _txtLife.setText("Life: " + newLife.toString());
 
-                if(newLife == 0) {
-                    //TODO now - end game?
+                if(newLife <= 0) {
+                    Integer endGameCode = 40 + ((_playerId == 1) ? 2 : 1);
+                    mDatabase.child("LiveGameinfo").child("gameEnd").setValue(endGameCode);
                 }
             }
 

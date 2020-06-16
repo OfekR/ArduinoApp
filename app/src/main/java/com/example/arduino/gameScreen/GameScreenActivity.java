@@ -81,9 +81,16 @@ public class GameScreenActivity extends AppCompatActivity {
     private static final long START_TIME_IN_MILLIS = 600000;
     private ValueEventListener registration;
     private ValueEventListener gameStartRegistration;
+    private ValueEventListener carInPlaceListener;
+    private ValueEventListener gameEndListener;
+    private DatabaseReference  gameEndDocRef;
+
+
     private DatabaseReference mDatabase;
     private Game game;
     private DatabaseReference gamedocRef;
+    private DatabaseReference carInPlaceDocRef;
+
     private ProgressBar pbLife;
     private TextView txtLife;
     private TextView txtAmmo;
@@ -125,6 +132,7 @@ public class GameScreenActivity extends AppCompatActivity {
     private AtomicBoolean _isCarInPlace;
 
     private Integer _playerId;
+    private String _playerIdStr;
 
     private String command = "";
     private AtomicBoolean _isGameStarted;
@@ -152,11 +160,13 @@ public class GameScreenActivity extends AppCompatActivity {
         waitUntillGameReady();
         //TODO OFEK DEBUG
         /*
+        //TODO Future - add pop up box which mark if each compenet was complete (meaning - listen to these 3 boolean
+        //TODO              and start with X for all, when ever boolean set to true - switch to V
+        //TODO          Or do thread which wake up every X seconds, and check what missing
         initBluetoothConnection();
         initCarInPlace();
         initInternetConnected();
         */
-
     }
 
     /** ************************* General ************************* **/
@@ -207,8 +217,8 @@ public class GameScreenActivity extends AppCompatActivity {
 
     private void forfeitMatch()
     {
-        //TODO IMPORTANT - pass param to indicate this user lost
-        checkForWin();
+        Integer endGameCode = 60 + ((_playerId == 1) ? 2 : 1);
+        mDatabase.child("LiveGameinfo").child("gameEnd").setValue(endGameCode);
     }
 
     private void updateGameStartedField(boolean isReady)
@@ -306,12 +316,15 @@ public class GameScreenActivity extends AppCompatActivity {
         getDataFromSetting();
         _isGameStarted = new AtomicBoolean(false);
         _isInternetConnected = new AtomicBoolean(false);
+        _isBtConnected =  new AtomicBoolean(false);
         _isCarInPlace = new AtomicBoolean(false);
 
         //check which player is it
         Bundle bundle = getIntent().getExtras();
         String message = bundle.getString("Classifier");
         _playerId = (message.equals("Init")) ? 1 : 2;
+        _playerIdStr = (_playerId == 1 ? "Player1" : "Player2");
+
         _liveGameInfo = new LiveGameInfo(this, mDatabase, _playerId, btnShot, txtLife, txtAmmo, txtScore, txtKeys, txtMines, txtDefuse, txtSpeicalKey);
         _liveGameInfo.initLivePlayerInfoFromSettings();
 
@@ -369,40 +382,6 @@ public class GameScreenActivity extends AppCompatActivity {
                 _liveGameInfo.updateFieldRelativeValue(LiveGameInfoField.AMMO,-1);
                 //TODO OFEK DEBUG
                 //SendCommandShotLaser();
-
-                //TODO - add delay , so can't shot multiple time (laser already on for X Sec)
-
-
-/*
-                Integer numOfAmmoLeft =game.getAmmuo();
-                assert(numOfAmmoLeft >= 0);
-                if(numOfAmmoLeft == 0)
-                {
-                    //TODO OFEK restore this line once you handled lootbox (that when more ammo added, back to be enabled
-                    // Note - when bt lose connection and restore he enables all buttons
-                    //        btnShot.setEnabled(false);
-                    Toast.makeText(getApplicationContext(), "No Ammo", Toast.LENGTH_LONG).show();
-                    return;
-                }
-                //TODO:: Miki - uncomment
-  //              SendCommandShotLaser();
-
-                game.raiseBy1TotalData("Shots");
-                if(mySong !=  null) mySong.Destroy();
-                mySong = new MediaPlayerWrapper(R.raw.goodgunshot,getApplicationContext());
-                mySong.StartOrResume();
-                game.setAmmuo(numOfAmmoLeft - 1);
-                txtAmmo.setText("Ammuo: - " + (game.getAmmuo().toString()));
-                //hit sound
-                // checkForHit();
-
-                if(numOfAmmoLeft - 1 == 0 ) {
-                    txtAmmo.setText("NO- Ammuo - !!!!!!!!: - ");
-                    //TODO OFEK restore this line once you handled lootbox (that when more ammo added, back to be enabled
-                    // OR - just listen to number of ammo and then update accordingly
-                    // Note - when bt lose connection and restore he enables all buttons
-                    //        btnShot.setEnabled(false);
-                }*/
             }
         });
 
@@ -499,9 +478,33 @@ public class GameScreenActivity extends AppCompatActivity {
      */
     private void initCarInPlace()
     {
-        //TODO IMPL
-        _isCarInPlace.set(true);
-        checkIfPlayerReady();
+        //wait untill car in starting position
+        final FirebaseDatabase database = FirebaseDatabase.getInstance();
+        String firebaseLiveGameInfoPath = "RfidReading/" + _playerIdStr + "/";
+
+        carInPlaceDocRef = database.getReference(firebaseLiveGameInfoPath + "Start");
+
+        carInPlaceListener = carInPlaceDocRef.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                assert(dataSnapshot.getKey().equals("Start"));
+                Integer startValue = dataSnapshot.getValue(Integer.class);
+                if(startValue == 1) {
+                    //car is in starting position
+                    _isCarInPlace.set(true);
+                    checkIfPlayerReady();
+                    carInPlaceDocRef.removeEventListener(this);
+                }
+                else {
+                    //TODO Future - can do else statment and check if car was moved after being placed in starting position
+                    Toast.makeText(getApplicationContext(), "Please place car in starting position", Toast.LENGTH_LONG).show();
+                }
+            }
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+                System.out.println("The read failed: " + databaseError.getCode());
+            }
+        });
     }
 
 
@@ -532,6 +535,7 @@ public class GameScreenActivity extends AppCompatActivity {
         startRfidListeners();
         //TODO OFEK DEBUG#$#@
         _liveGameInfo.startListeners();
+        listenToGameEnd();
         //ListnerForChangeInGame();
 
         startTimer();
@@ -539,6 +543,46 @@ public class GameScreenActivity extends AppCompatActivity {
 
     /** ************************* In Game Settings ************************* **/
 
+    private void listenToGameEnd()
+    {
+        //wait untill car in starting position
+        final FirebaseDatabase database = FirebaseDatabase.getInstance();
+        String firebaseLiveGameInfoPath = "LiveGameinfo/";
+
+        gameEndDocRef = database.getReference(firebaseLiveGameInfoPath + "gameEnd");
+
+        gameEndListener = gameEndDocRef.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                assert(dataSnapshot.getKey().equals("gameEnd"));
+                Integer finishCode = dataSnapshot.getValue(Integer.class);
+                if(finishCode != 0) {
+                    Integer winner_player_id = finishCode % 10;
+                    Integer winner_cause = finishCode / 10;
+                    finishGame(winner_player_id,winner_cause);
+                    gameEndDocRef.removeEventListener(this);
+                }
+            }
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+                System.out.println("The read failed: " + databaseError.getCode());
+            }
+        });
+    }
+
+    //finish the game for the player
+    private void finishGame(Integer winner_player_id, Integer winner_cause) {
+        _liveGameInfo.stopListeners();
+        _rfidHandler.stopListeners();
+        //TODO - stop all other lsiteners
+
+        // winner_cause dic:
+        // 3 - player reached end tag
+        // 4 - player died
+        // 5 - time limit reached
+        // 6 - player forfeit
+        //TODO OFEK NOW - implement like gameOver.  (all this causes should write to firebase (didn't test) )
+    }
 
     /**
      * check if the other player hit by getting data from arduino sensor
@@ -595,6 +639,27 @@ public class GameScreenActivity extends AppCompatActivity {
 
                 @Override
                 public void onFinish() {
+                    //TODO - test this
+                    //indicate game is over, but only player 1 to avoid both player update it
+                    if(_playerId == 1) {
+                        final FirebaseDatabase database = FirebaseDatabase.getInstance();
+                        database.getReference("LiveGameinfo").addListenerForSingleValueEvent(new ValueEventListener() {
+                            @Override
+                            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                                Integer player1Points = dataSnapshot.child("Player1").child("score").getValue(Integer.class);
+                                Integer player2Points = dataSnapshot.child("Player2").child("score").getValue(Integer.class);
+                                Integer winner_player_id = (player1Points > player2Points) ? 1 : 2;
+                                Integer endGameCode = winner_player_id + 50;
+                                mDatabase.child("LiveGameinfo").child("gameEnd").setValue(endGameCode);
+                            }
+
+                            @Override
+                            public void onCancelled(@NonNull DatabaseError databaseError) {
+                                System.out.println("The read failed: " + databaseError.getCode());
+                            }
+                        });
+                    }
+
                     checkForWin();
                 }
             }.start();
@@ -1129,7 +1194,6 @@ public class GameScreenActivity extends AppCompatActivity {
     }
 
     private void initBluetoothConnection() {
-        _isBtConnected = new AtomicBoolean(false);
         setBtMacAddress();
         IntentFilter filter = new IntentFilter(BluetoothDevice.ACTION_FOUND);
         this.registerReceiver(broadcastReceiver, filter);
