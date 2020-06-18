@@ -33,6 +33,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.arduino.R;
+import com.example.arduino.defines.InGameConstants;
 import com.example.arduino.defines.LogDefs;
 import com.example.arduino.initGame.GameSetting;
 import com.example.arduino.initGame.Member;
@@ -115,7 +116,6 @@ public class GameScreenActivity extends AppCompatActivity {
     //private final String DEVICE_ADDRESS_P1 = "98:D3:51:FD:D9:45";
     private final String DEVICE_ADDRESS_P1 = "98:D3:61:F5:E7:3C";
     private final String DEVICE_ADDRESS_P2 = "98:D3:61:F5:E7:3C";
-    private final int laserShootLengthMS = 2000;
     private static final String TAG_BT = LogDefs.tagBT;
     private static final int REQUEST_ENABLE_BT = 3; //just random value , 3 doesn't mean anything
 
@@ -217,22 +217,13 @@ public class GameScreenActivity extends AppCompatActivity {
 
     private void forfeitMatch()
     {
-        Integer endGameCode = 60 + ((_playerId == 1) ? 2 : 1);
+        Integer endGameCode = (InGameConstants.winnerCauseReachPlayerForfeit * 10) + ((_playerId == 1) ? 2 : 1);
         mDatabase.child("LiveGameinfo").child("gameEnd").setValue(endGameCode);
     }
 
     private void updateGameStartedField(boolean isReady)
     {
-        String key;
-        if (_playerId.equals(1)) {
-            //player 1
-            key = "P1_Ready";
-        }
-        else{
-            //player 2
-            //message.equals("Join")
-            key = "P2_Ready";
-        }
+        String key = "P" + _playerId.toString() + "_Ready";
         //update firebase with the updated value
         HashMap<String,Object> hashMap = new HashMap<>();
         hashMap.put(key, isReady);
@@ -327,9 +318,17 @@ public class GameScreenActivity extends AppCompatActivity {
 
         _liveGameInfo = new LiveGameInfo(this, mDatabase, _playerId, btnShot, txtLife, txtAmmo, txtScore, txtKeys, txtMines, txtDefuse, txtSpeicalKey);
         _liveGameInfo.initLivePlayerInfoFromSettings();
+        _liveGameInfo.resetEnemyInjuredFirebase();
 
         _rfidHandler = new RfidHandler(this, mDatabase ,_playerId,btnMine,btnKey,btnShot,joystickCar,joystickServo, _liveGameInfo);
+        _rfidHandler.resetAllRfidValues();
 
+
+        if (_playerId == 1)
+        {
+            //avoid both player update this
+            resetAllGameLayoutVariables();
+        }
     }
 
     /**
@@ -373,57 +372,46 @@ public class GameScreenActivity extends AppCompatActivity {
         });
 
         btnShot.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if(mySong !=  null) mySong.Destroy();
-                mySong = new MediaPlayerWrapper(R.raw.goodgunshot,getApplicationContext());
-                mySong.StartOrResume();
+        @Override
+        public void onClick(View v) {
+            if(mySong !=  null) mySong.Destroy();
+            mySong = new MediaPlayerWrapper(R.raw.lasershoot,getApplicationContext());
+            mySong.StartOrResume();
 
-                _liveGameInfo.updateFieldRelativeValue(LiveGameInfoField.AMMO,-1);
-                //TODO OFEK DEBUG
-                //SendCommandShotLaser();
-            }
-        });
-
-        /*final String playerIdStr = (_playerId.equals(1)) ? ""
+            _liveGameInfo.updateFieldRelativeValue(LiveGameInfoField.AMMO,-1);
+            _liveGameInfo.addSingleShotFired();
+            //TODO OFEK DEBUG
+            //SendCommandShotLaser();
+        }
+    });
         btnMine.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                mDatabase.child("Game").child(_playerIdStr).child("LootBox").child("PickedSpecialLootbox").setValue(0);
-
-
-
-                Integer numOfAmmoLeft =game.getAmmuo();
-                assert(numOfAmmoLeft >= 0);
-                if(numOfAmmoLeft == 0)
-                {
-                    //TODO OFEK restore this line once you handled lootbox (that when more ammo added, back to be enabled
-                    // Note - when bt lose connection and restore he enables all buttons
-                    //        btnShot.setEnabled(false);
-                    Toast.makeText(getApplicationContext(), "No Ammo", Toast.LENGTH_LONG).show();
-                    return;
-                }
-                //TODO:: Miki - uncomment
-                //              SendCommandShotLaser();
-
-                game.raiseBy1TotalData("Shots");
-                if(mySong !=  null) mySong.Destroy();
-                mySong = new MediaPlayerWrapper(R.raw.goodgunshot,getApplicationContext());
-                mySong.StartOrResume();
-                game.setAmmuo(numOfAmmoLeft - 1);
-                txtAmmo.setText("Ammuo: - " + (game.getAmmuo().toString()));
-                //hit sound
-                // checkForHit();
-
-                if(numOfAmmoLeft - 1 == 0 ) {
-                    txtAmmo.setText("NO- Ammuo - !!!!!!!!: - ");
-                    //TODO OFEK restore this line once you handled lootbox (that when more ammo added, back to be enabled
-                    // OR - just listen to number of ammo and then update accordingly
-                    // Note - when bt lose connection and restore he enables all buttons
-                    //        btnShot.setEnabled(false);
+                boolean planetSuccessfully = _rfidHandler.planetMineInCloud();
+                if(planetSuccessfully) {
+                    _liveGameInfo.updateFieldRelativeValue(LiveGameInfoField.MINES,-1);
+                    _liveGameInfo.updateFieldRelativeValue(LiveGameInfoField.SCORE,InGameConstants.AddPointDueMinePlace);
+                    _liveGameInfo.addMinePlanted();
                 }
             }
-        });*/
+        });
+
+        btnKey.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                boolean openSuccessfully = _rfidHandler.openBarrierInCloud();
+                if(openSuccessfully) {
+                    if(mySong !=  null) mySong.Destroy();
+                    mySong = new MediaPlayerWrapper(R.raw.barrieropen,getApplicationContext());
+                    mySong.StartOrResume();
+
+                    _liveGameInfo.updateFieldRelativeValue(LiveGameInfoField.KEYS,-1);
+                    _liveGameInfo.updateFieldRelativeValue(LiveGameInfoField.SCORE,InGameConstants.AddPointsDueBarrierOpen);
+
+                    _liveGameInfo.addKeyUsed();
+                }
+            }
+        });
     }
 
     private void startRfidListeners()
@@ -473,7 +461,7 @@ public class GameScreenActivity extends AppCompatActivity {
 
     /**
      * checks if user car is in the right place
-     * does it by listening to /TODO/ db which contain boolean which indicate car in right place
+     * does it by listening to db which contain boolean which indicate car in right place
      * boolean is updated by cloud function called by arduino which RFID tag
      */
     private void initCarInPlace()
@@ -541,6 +529,42 @@ public class GameScreenActivity extends AppCompatActivity {
         startTimer();
     }
 
+    /**
+     * called by one player, to put all firebase Barrier, Mines and lootbox on starting position
+     *
+     */
+    private void resetAllGameLayoutVariables() {
+        HashMap<String,Object> hashMap = new HashMap<>();
+
+        HashMap<String,Object> hashMapMines = new HashMap<>();
+        HashMap<String,Object> hashMapBarrier = new HashMap<>();
+        HashMap<String,Object> hashMapLootbox = new HashMap<>();
+
+        final Integer numberOfMines = 6;
+        final Integer numberOfBarriers = 8;
+        final Integer numberOfLootbox = 6;
+
+
+        for(Integer i=0; i<numberOfMines; ++i) {
+            String curName = "Mines/M" + i.toString() + "/status";
+            //handle mine which are armed on start
+            Integer value = (i==3 || i==4) ? 1 : 0;
+            hashMap.put(curName, value);
+        }
+
+        for(Integer i=0; i<numberOfBarriers; ++i) {
+            String curName = "Barriers/B" + i.toString() + "/status";
+            hashMap.put(curName, 0);
+        }
+
+        for(Integer i=0; i<numberOfLootbox; ++i) {
+            String curName = "Lootbox/L" + i.toString() + "/status";
+            hashMap.put(curName, 0);
+        }
+
+        mDatabase.updateChildren(hashMap);
+    }
+
     /** ************************* In Game Settings ************************* **/
 
     private void listenToGameEnd()
@@ -574,15 +598,123 @@ public class GameScreenActivity extends AppCompatActivity {
     private void finishGame(Integer winner_player_id, Integer winner_cause) {
         _liveGameInfo.stopListeners();
         _rfidHandler.stopListeners();
-        //TODO - stop all other lsiteners
 
         // winner_cause dic:
         // 3 - player reached end tag
         // 4 - player died
         // 5 - time limit reached
         // 6 - player forfeit
-        //TODO OFEK NOW - implement like gameOver.  (all this causes should write to firebase (didn't test) )
+        resetValue();
+        Log.v("GAME-CLASS", "GAME------------FINISHED");
+        collectStatsAndPopFinalGameScreen(winner_player_id, winner_cause);
     }
+
+    //TODO Generally - copy pasta of original game over, verify all fields are logged and maybe need to add idk
+    //TODO - use winner cause more (like present it or log it) today only used little in toMap function
+    private void collectStatsAndPopFinalGameScreen(Integer winner_player_id, Integer winner_cause) {
+        FirebaseFirestore db =FirebaseFirestore.getInstance();
+        final String uid = FirebaseAuth.getInstance().getCurrentUser().getUid();
+        final boolean isWinner = winner_player_id.equals(_playerId);
+        db.collection("Logs").document(uid).set(_liveGameInfo.toMap(isWinner,mTimeLeftInMils,uid, winner_cause));
+        FirebaseFirestore fstore = FirebaseFirestore.getInstance();
+        final DocumentReference documentReference = fstore.collection("PlayerStats").document(uid);
+        documentReference.get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
+            @Override
+            public void onComplete(@NonNull Task<DocumentSnapshot> task) {
+                // before
+                DocumentSnapshot documentSnapshot= task.getResult();
+                assert documentSnapshot != null;
+                Long _bestTime = (Long) documentSnapshot.get("bestTime");
+                Long _gamesLost = (Long) documentSnapshot.get("gamesLost");
+                Long _gamesPlayed = (Long) documentSnapshot.get("gamesPlayed");
+                Long _gamesWon = (Long) documentSnapshot.get("gamesWon");
+                Long _hitsPercentage = (Long) documentSnapshot.get("hitsPercentage");
+                Long _mostBombHits = (Long) documentSnapshot.get("mostBombHits");
+                Long _mostLaserHits = (Long) documentSnapshot.get("mostLaserHits");
+                Long _totalBombHits = (Long) documentSnapshot.get("totalBombHits");
+                Long _totalHits = (Long) documentSnapshot.get("totalHits");
+                Long _totalPoints = (Long) documentSnapshot.get("totalPoints");
+                Long _totalShots = (Long) documentSnapshot.get("totalShots");
+                Long _flags = (Long) documentSnapshot.get("flags");
+                Long _numPlayedflags = (Long) documentSnapshot.get("numPlayedflags");
+                Long _numPlayedtime = (Long) documentSnapshot.get("numPlayedtime");
+                Long _numPlayedhighscore = (Long) documentSnapshot.get("numPlayedhighscore");
+
+                assert(_bestTime != null);
+                assert _gamesLost != null;
+                assert _gamesPlayed != null;
+                assert _gamesWon != null;
+                assert _hitsPercentage != null;
+                assert _mostBombHits != null;
+                assert _mostLaserHits != null;
+                assert _totalBombHits != null;
+                assert _totalHits != null;
+                assert _totalPoints != null;
+                assert _totalShots != null;
+                assert(_flags != null);
+                assert  _numPlayedflags != null;
+                assert  _numPlayedtime != null;
+                assert _numPlayedhighscore != null;
+                //TODO - need to add more fields and maybe fix existing, check all _total...
+                Long totalshots = _liveGameInfo.totalShotsFired.longValue();
+                Long totalbomb = _liveGameInfo.totalMinePlanted.longValue();
+                Long totalhits = _liveGameInfo.totalShotsHits.longValue();
+                if (_bestTime < mTimeLeftInMils) {
+                    _bestTime = mTimeLeftInMils;
+                }
+                if (_mostBombHits < totalbomb) {
+                    _mostBombHits = totalbomb;
+                }
+                if (_mostLaserHits < totalhits) {
+                    _mostLaserHits = totalhits;
+                }
+                _gamesPlayed = _gamesPlayed + 1;
+                if (isWinner) {
+                    _gamesWon = _gamesWon + 1;
+                }
+                else  {
+                    _gamesLost = _gamesLost + 1;
+                }
+
+                if(_liveGameInfo.gameType == 1){
+                    _numPlayedflags = _numPlayedflags+1;
+                }
+                else if(_liveGameInfo.gameType == 2){
+                    _numPlayedhighscore = _numPlayedhighscore+1;
+                }
+                else{
+                    _numPlayedtime = _numPlayedtime+1;
+                }
+                _totalBombHits = _totalBombHits + totalbomb;
+                _totalHits = _totalHits + totalhits; //TODO fix it
+                _totalPoints = _totalPoints + _liveGameInfo.getScore();
+                _totalShots = _totalShots + totalshots;
+                if (_totalShots != 0) {
+                    _hitsPercentage = _totalHits / _totalShots;
+                }
+                DocumentMover documentMover = new DocumentMover(uid,_bestTime,_gamesLost,_gamesPlayed,_gamesWon,
+                        _hitsPercentage,_mostBombHits,_mostLaserHits,_totalBombHits,_totalHits,_totalPoints,_totalShots,_flags,_numPlayedflags,_numPlayedhighscore,_numPlayedtime);
+                Log.d("Writing to data cloud","-----> Moving to Pop window");
+                if(isWinner){
+                    Intent intent = new Intent(getApplicationContext(), PopWindowWin.class);
+                    intent.putExtra("DocumentPusher",documentMover);
+                    startActivity(intent.addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY));
+                }
+                else {
+                    Intent intent = new Intent(getApplicationContext(), PopWindowGameOver.class); // Todo change for the right screen
+                    intent.putExtra("DocumentPusher",documentMover);
+                    startActivity(intent.addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY));
+                }
+                /*else{
+                    Intent intent = new Intent(getApplicationContext(), PopWindowWin.class); // Todo change for the right screen
+                    intent.putExtra("DocumentPusher",documentMover);
+                    startActivity(intent.addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY));
+                }*/
+            }
+        });
+        // registration.remove();
+    }
+
 
     /**
      * check if the other player hit by getting data from arduino sensor
@@ -649,7 +781,7 @@ public class GameScreenActivity extends AppCompatActivity {
                                 Integer player1Points = dataSnapshot.child("Player1").child("score").getValue(Integer.class);
                                 Integer player2Points = dataSnapshot.child("Player2").child("score").getValue(Integer.class);
                                 Integer winner_player_id = (player1Points > player2Points) ? 1 : 2;
-                                Integer endGameCode = winner_player_id + 50;
+                                Integer endGameCode = winner_player_id + (InGameConstants.winnerCauseReachTimeLimit * 10);
                                 mDatabase.child("LiveGameinfo").child("gameEnd").setValue(endGameCode);
                             }
 
@@ -1024,6 +1156,14 @@ public class GameScreenActivity extends AppCompatActivity {
         mDatabase.child("Game").setValue(vs.resetObject());
         mDatabase.child("ValueForStart").child("create").setValue("0");
         mDatabase.child("ValueForStart").child("join").setValue("0");
+        _rfidHandler.resetAllRfidValues();
+        _liveGameInfo.resetEnemyInjuredFirebase();
+
+        if (_playerId == 1)
+        {
+            //avoid both player update this
+            resetAllGameLayoutVariables();
+        }
 
        // httpHelper.HttpRequestForLooby("NO-ONE-IS-WAITING", "https://us-central1-arduino-a5968.cloudfunctions.net/addJoin");
         //httpHelper1.HttpRequestForLooby("GAME-NOT-READY","https://us-central1-arduino-a5968.cloudfunctions.net/setGameReady");
@@ -1037,7 +1177,8 @@ public class GameScreenActivity extends AppCompatActivity {
     // used to toggle status of buttons, in order to disbale buttons once coneection to BT is lost or game hasn't started yet
     private void disableEnableButtons(boolean isEnable)
     {
-        btnShot.setEnabled(isEnable);
+        boolean isEnableShot = isEnable && _liveGameInfo.isShotBtnEnabled();
+        btnShot.setEnabled(isEnableShot);
         joystickCar.setEnabled(isEnable);
         joystickServo.setEnabled(isEnable);
     }
@@ -1419,7 +1560,7 @@ public class GameScreenActivity extends AppCompatActivity {
                 btnShot.setEnabled(true);
 
             }
-        }, laserShootLengthMS);
+        }, InGameConstants.LaserHitBtnDelay * 1000);
     }
 
 

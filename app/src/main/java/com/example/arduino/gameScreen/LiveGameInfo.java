@@ -1,11 +1,14 @@
 package com.example.arduino.gameScreen;
 
 import android.content.Context;
+import android.util.Log;
 import android.widget.Button;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 
+import com.example.arduino.defines.InGameConstants;
 import com.example.arduino.defines.LogDefs;
 import com.google.common.collect.ImmutableMap;
 import com.google.firebase.database.DataSnapshot;
@@ -14,6 +17,7 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
+import java.util.HashMap;
 import java.util.Map;
 
 enum LiveGameInfoField {
@@ -26,13 +30,16 @@ enum LiveGameInfoField {
     SPECIAL_KEYS
 }
 
-// Class manage all info related to the user when game is live
-// all update and retrieval of this info should be done via this class
+    /****Class manage all info related to the user when game is live
+     *     all update and retrieval of this info should be done via this class
+     *     Firebase responsible for: LiveGameInfo and EnemyInjured
+     */
+
 public class LiveGameInfo {
     private static final String TAG = LogDefs.tagRFID;
     DatabaseReference mDatabase;
     final String firebaseLiveGameInfoPath;
-
+    final String firebaseEnemyInjuredPath;
     static final Map<LiveGameInfoField, String> ENUM_TO_FIREBASE = ImmutableMap.<LiveGameInfoField, String>builder()
             .put(LiveGameInfoField.AMMO, "ammo")
             .put(LiveGameInfoField.DEFUSERS, "defusers")
@@ -76,7 +83,21 @@ public class LiveGameInfo {
     private DatabaseReference specialKeysRef;
 
     //
+    private ValueEventListener enemyInjuredListener;
+    private DatabaseReference enemyInjuredDocRef;
+
     private LivePlayerInfo _livePlayerInfo;
+    private boolean _isShootBtnEnabled;
+    // Statistics
+    //TODO - generally fact enemy explode doesn't mean my mine explode (might be his) but it's ok IO guess
+    public Integer totalMineHits;
+    public Integer totalMinePlanted;
+    public Integer totalMineInjured;
+    public Integer totalShotsHits;
+    public Integer totalShotsFired;
+    public Integer totalShotsInjured;
+    public Integer totalKeyUsed;
+    public Integer gameType;
 
     public LiveGameInfo(Context context, DatabaseReference mDatabaseRef, int playerId, Button btnShot,
     TextView txtLife, TextView txtAmmo, TextView txtScore, TextView txtKeys, TextView txtMines, TextView txtDefuse, TextView txtSpecialKey) {
@@ -93,9 +114,25 @@ public class LiveGameInfo {
         _playerIdStr = (_playerId == 1 ? "Player1" : "Player2");
         _context = context;
         firebaseLiveGameInfoPath = "LiveGameinfo/" + _playerIdStr + "/";
-
+        firebaseEnemyInjuredPath = "EnemyInjured/" + _playerIdStr + "/";
         mDatabase = mDatabaseRef;
         _livePlayerInfo = new LivePlayerInfo();
+        _isShootBtnEnabled = false;
+
+        // init stats
+        totalMineHits = 0;
+        totalMinePlanted = 0;
+        totalMineInjured = 0;
+        totalShotsHits = 0;
+        totalShotsFired = 0;
+        totalShotsInjured = 0;
+        totalKeyUsed = 0;
+        gameType = 0;
+
+
+
+
+
     }
 
     //TODO - need maybe to indicate finished updating setting (I guess 3 seconds count down should be enough..)
@@ -109,8 +146,12 @@ public class LiveGameInfo {
                 _livePlayerInfo.setAmmo(Integer.parseInt(dataSnapshot.child("shots").getValue(String.class)));
                 _livePlayerInfo.setKeys(Integer.parseInt(dataSnapshot.child("keys").getValue(String.class)));
                 _livePlayerInfo.setMines(Integer.parseInt(dataSnapshot.child("mines").getValue(String.class)));
-
+                gameType = Integer.parseInt(dataSnapshot.child("type").getValue(String.class));
                 mDatabase.child("LiveGameinfo").child(_playerIdStr).setValue(_livePlayerInfo);
+                if(_playerId == 1) {
+                    mDatabase.child("LiveGameinfo").child("gameEnd").setValue(0);
+
+                }
 
             }
 
@@ -120,6 +161,13 @@ public class LiveGameInfo {
 
             }
         });
+    }
+
+    public void resetEnemyInjuredFirebase() {
+        HashMap<String,Object> hashMap = new HashMap<>();
+        hashMap.put("enemyExplode", 0);
+        hashMap.put("enemyHit", 0);
+        mDatabase.child(firebaseEnemyInjuredPath).updateChildren(hashMap);
     }
 
     public Integer getFieldValue(LiveGameInfoField field) {
@@ -167,6 +215,7 @@ public class LiveGameInfo {
         startMinesListener();
         startScoreListener();
         startSpecialKeyListener();
+        startEnemyExplodeListener();
     }
     //TODO call this
 
@@ -185,7 +234,8 @@ public class LiveGameInfo {
             scoreDocRef.removeEventListener(scoreListener);
         if(specialKeysListener != null)
             specialKeysRef.removeEventListener(specialKeysListener);
-
+        if(enemyInjuredListener != null)
+            enemyInjuredDocRef.removeEventListener(enemyInjuredListener);
     }
 
     public void startAmmoListener() {
@@ -202,7 +252,8 @@ public class LiveGameInfo {
 
                 boolean isAmmoZero = newAmmo.equals(0);
                 // enable / disable shoot button according if there is any ammo left
-                _btnShot.setEnabled(!isAmmoZero);
+                _isShootBtnEnabled = !isAmmoZero;
+                _btnShot.setEnabled(_isShootBtnEnabled);
                 // update UI text
                 String newAmmoText = isAmmoZero ? "No Ammo left" : ("Ammo: - " + (newAmmo.toString()));
                 _txtAmmo.setText(newAmmoText);
@@ -272,7 +323,7 @@ public class LiveGameInfo {
                 _txtLife.setText("Life: " + newLife.toString());
 
                 if(newLife <= 0) {
-                    Integer endGameCode = 40 + ((_playerId == 1) ? 2 : 1);
+                    Integer endGameCode = (InGameConstants.winnerCauseReachPlayerDied) + ((_playerId == 1) ? 2 : 1);
                     mDatabase.child("LiveGameinfo").child("gameEnd").setValue(endGameCode);
                 }
             }
@@ -329,7 +380,7 @@ public class LiveGameInfo {
     public void startSpecialKeyListener() {
         final FirebaseDatabase database = FirebaseDatabase.getInstance();
         specialKeysRef = database.getReference(firebaseLiveGameInfoPath + "specialKeys");
-        scoreListener = specialKeysRef.addValueEventListener(new ValueEventListener() {
+        specialKeysListener = specialKeysRef.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                 assert(dataSnapshot.getKey().equals("specialKeys"));
@@ -347,4 +398,91 @@ public class LiveGameInfo {
         });
     }
 
+    /*********************** Stats Listeners ***********************/
+    public void startEnemyExplodeListener() {
+        final FirebaseDatabase database = FirebaseDatabase.getInstance();
+        enemyInjuredDocRef = database.getReference(firebaseEnemyInjuredPath);
+        enemyInjuredListener = enemyInjuredDocRef.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                String key = dataSnapshot.getKey();
+                if(key.equals("enemyExplode")) {
+                    mDatabase.child(firebaseEnemyInjuredPath).child("enemyExplode").setValue(0);
+                    Toast.makeText(_context, "Your enemy exploded", Toast.LENGTH_SHORT).show();
+                    updateFieldRelativeValue(LiveGameInfoField.SCORE, InGameConstants.addPointDueExplosion);
+                    totalMineHits++;
+                }
+                else if(key.equals("enemyHit")) {
+                    mDatabase.child(firebaseEnemyInjuredPath).child("enemyHit").setValue(0);
+                    Toast.makeText(_context, "Your hit the enemy, Nice shot comrade", Toast.LENGTH_SHORT).show();
+                    updateFieldRelativeValue(LiveGameInfoField.SCORE, InGameConstants.addPointDueHit);
+                    totalShotsHits++;
+                }
+                else {
+                    Log.e(TAG, "EnemyInjured have unknown child");
+                    assert(false);
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+                System.out.println("The read failed: " + databaseError.getCode());
+            }
+        });
+    }
+
+    /*********************** Stats updaters ***********************/
+    public void addSingleShotFired() {
+        totalShotsFired++;
+    }
+
+    public void addShotInjured() {
+        totalShotsInjured++;
+    }
+
+    public void addMinePlanted() {
+        totalMinePlanted++;
+    }
+
+    public void addMineInjured() {
+        totalMineInjured++;
+    }
+
+    public void addKeyUsed() {
+        totalKeyUsed++;
+    }
+
+    public Integer getScore() {
+        return _livePlayerInfo.getScore();
+    }
+
+    public boolean isShotBtnEnabled() {
+        return _isShootBtnEnabled;
+    }
+
+    /*********************** Finalize Game ***********************/
+
+    public Map<String, Object> toMap(boolean isWin, double timeleft, String playerUid, Integer winnerCause){
+        Map<String, Object> docData = new HashMap<>();
+        Double num = (timeleft)/1000;
+        docData.put("ID",playerUid);
+        StatusGame statusGame = isWin ? StatusGame.WIN : StatusGame.LOSE;
+        docData.put("STATUS-END-OF-GAME", statusGame);
+        docData.put("LIFE-END-OF-GAME", _livePlayerInfo.getLife());
+        docData.put("AMMO-END-OF-GAME", _livePlayerInfo.getAmmo());
+        docData.put("TIME-LEFT-IN-SEC",  num);
+        docData.put("TYPE-END-OF-GAME", gameType);
+        docData.put("POINTS-END-OF-GAME", _livePlayerInfo.getScore());
+        docData.put("MINES-END-OF-GAME", _livePlayerInfo.getMines());
+        docData.put("DEFUSE-END-OF-GAME", _livePlayerInfo.getDefuser());
+        docData.put("KEYS-END-OF-GAME", _livePlayerInfo.getKeys());
+        //TODO - need to add more fields and maybe fix existing, check all _total... update collectStatsAndPopFinalGameScreen also
+        docData.put("NUM-HITS-END-OF-GAME", totalShotsHits);
+        docData.put("NUM-SHOTS-END-OF-GAME", totalShotsFired);
+        docData.put("NUM-BOMB-END-OF-GAME", totalMinePlanted);
+
+        Integer reachedEnd = (isWin && winnerCause.equals(InGameConstants.winnerCauseReachEndTag)) ? 1 : 0;
+        docData.put("FLAG", reachedEnd);
+        return docData;
+    }
 }

@@ -14,7 +14,9 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import com.example.arduino.R;
+import com.example.arduino.defines.InGameConstants;
 import com.example.arduino.defines.LogDefs;
+import com.example.arduino.utilities.MediaPlayerWrapper;
 import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -26,34 +28,26 @@ import java.util.HashMap;
 
 import io.github.controlwear.virtual.joystick.android.JoystickView;
 
-//This class handle all the rfid reading from cloud - and also update game UI accordingly
+/****
+ * This class handle all the rfid reading from cloud - and also update game UI accordingly
+ * Firebase responsible for: RfidReading
+ */
 public class RfidHandler {
     // Constant
     private static final String TAG = LogDefs.tagRFID;
     final String firebaseRfidPath;
-
-    // Score change
-    final Integer AddPointDueMinePlace = 20;
-    final Integer AddPointDueMineDefusion = 50;
-    final Integer AddPointsDueBarrierOpen = 10;
-    final Integer AddPointsDueSpecialBarrierOpen = 10;
-    final Integer ReducePointDueExplosion = -40;
-    final Integer ReduceLifeDueExplosion = -5;
-
-    //TODO - decide about score change and do it every where suing _liveGameInfo
+    private MediaPlayerWrapper mySong;
 
     // rfid listeners
     private ChildEventListener barrierListener;
-    private ChildEventListener finishListener;
     private ChildEventListener lootBoxListener;
     private ChildEventListener mineListener;
-    private ChildEventListener startListener;
+    private ValueEventListener gotHitListener;
 
     private DatabaseReference barrierDocRef;
-    private DatabaseReference finishDocRef;
     private DatabaseReference lootBoxDocRef;
     private DatabaseReference mineDocRef;
-    private DatabaseReference startDocRef;
+    private DatabaseReference gotHitDocRef;
 
     // Game screen variables
     private Button _btnMine;
@@ -66,6 +60,7 @@ public class RfidHandler {
     private int _playerId;
     private String _playerIdStr;
     private Context _context;
+
 
     // current status
     public String currentBarrierName;
@@ -95,10 +90,28 @@ public class RfidHandler {
     }
 
 
+    public void resetAllRfidValues() {
+        HashMap<String,Object> hashMap = new HashMap<>();
+        hashMap.put("Barrier/OpenBarrier", "0");
+        hashMap.put("Barrier/OpenBarrierSpecial", 0);
+
+        hashMap.put("LootBox/PickedLootbox", "0");
+        hashMap.put("LootBox/PickedSpecialLootbox", 0);
+
+        hashMap.put("Mine/Disarm", 0);
+        hashMap.put("Mine/Explode", 0);
+        hashMap.put("Mine/PlaceMine", "0");
+
+        hashMap.put("gotHit", 0);
+
+        mDatabase.child(firebaseRfidPath).updateChildren(hashMap);
+    }
+
     public void startListeners() {
         startBarrierListener();
         startMineListener();
         startLootboxListener();
+        startGotHitListener();
     }
 
     //TODO - call this
@@ -109,6 +122,8 @@ public class RfidHandler {
             mineDocRef.removeEventListener(mineListener);
         if(lootBoxListener != null)
             lootBoxDocRef.removeEventListener(lootBoxListener);
+        if(gotHitListener != null)
+            gotHitDocRef.removeEventListener(gotHitListener);
     }
 
     private void startBarrierListener() {
@@ -153,7 +168,13 @@ public class RfidHandler {
                     Integer value = dataSnapshot.getValue(Integer.class);
                     if(value.equals(1)) {
                         Log.d(TAG,LogDefs.OpenBarrierSpecial);
+                        _liveGameInfo.updateFieldRelativeValue(LiveGameInfoField.SCORE, InGameConstants.AddPointsDueSpecialBarrierOpen);
                         Toast.makeText(_context, "Special Barrier Opened", Toast.LENGTH_SHORT).show();
+
+                        if(mySong !=  null) mySong.Destroy();
+                        mySong = new MediaPlayerWrapper(R.raw.special_barrier, _context);
+                        mySong.StartOrResume();
+
                     }
                     else if(value.equals(99)) {
                         Log.d(TAG,LogDefs.OpenBarrierSpecialNoKeys);
@@ -190,7 +211,11 @@ public class RfidHandler {
     private void disableEnableButtons(boolean isEnable)
     {
         //TODO OFEK - verify when joystick disabled, it's really disabled
-        _btnShot.setEnabled(isEnable);
+
+        // shouldn't enable shot automaticaly because maybe no shoots left
+        boolean isEnableShot = isEnable && _liveGameInfo.isShotBtnEnabled();
+
+        _btnShot.setEnabled(isEnableShot);
         _joystickCar.setEnabled(isEnable);
         _joystickServo.setEnabled(isEnable);
     }
@@ -212,7 +237,7 @@ public class RfidHandler {
                     currentMineName = dataSnapshot.getValue(String.class);
                     //set mine according to recieved value
                     if(currentMineName.equals("0")) {
-                        //disable barrier
+                        //disable mine button
                         Log.d(TAG,LogDefs.PlaceMineDisabled + oldName);
                         if(!oldName.equals("99"))
                         {
@@ -227,39 +252,50 @@ public class RfidHandler {
                         Toast.makeText(_context, "Mines required to place mines", Toast.LENGTH_SHORT).show();
                     }
                     else {
-                        Log.d(TAG,LogDefs.PlaceMineEnabled + currentBarrierName);
+                        Log.d(TAG,LogDefs.PlaceMineEnabled + currentMineName);
                         _btnMine.setEnabled(true);
                         Toast.makeText(_context, "Mine available to be placed", Toast.LENGTH_SHORT).show();
                     }
                 }
                 else if(key.equals("Disarm")) {
                     Integer value = dataSnapshot.getValue(Integer.class);
-                    assert(value.equals(1));
+                    if(value != 1) {
+                        return;
+                    }
                     Log.d(TAG,LogDefs.DisarmMines);
                     Toast.makeText(_context, "Mine was disarmed!!!", Toast.LENGTH_SHORT).show();
                     mDatabase.child("RfidReading").child(_playerIdStr).child("Mine").child("Disarm").setValue(0);
-                    //TODO OFEK - add points or maybe do it in cloud
-
+                    _liveGameInfo.updateFieldRelativeValue(LiveGameInfoField.SCORE, InGameConstants.AddPointDueMineDefusion);
                 }
                 else if(key.equals("Explode")) {
-                    final Integer waitTimeMs = 5000;
                     Integer value = dataSnapshot.getValue(Integer.class);
-                    assert(value.equals(1));
+                    if(value != 1) {
+                        return;
+                    }
+
                     Log.d(TAG,LogDefs.ExplodeMine);
-                    Toast.makeText(_context, "Mine exploded!!! Car is paralyzed for 5 seconds", Toast.LENGTH_LONG).show();
-                    //TODO OFEK - add points or maybe do it in cloud
-                    //TODO OFEK - cause car to blink (via BT or just let car listen to explode variable)
-                    disableEnableButtons(false);
+                    Toast.makeText(_context, "Mine exploded!!! Car is paralyzed for " + InGameConstants.ExplodeCarParalyzed.toString() + " seconds", Toast.LENGTH_LONG).show();
+                    if(mySong !=  null) mySong.Destroy();
+                    mySong = new MediaPlayerWrapper(R.raw.mineexplode, _context);
+                    mySong.StartOrResume();
+
+
+                    stopCar();
+                    // update stats
+                    _liveGameInfo.addMineInjured();
+                    _liveGameInfo.updateFieldRelativeValue(LiveGameInfoField.SCORE, InGameConstants.ReducePointDueExplosion);
+                    _liveGameInfo.updateFieldRelativeValue(LiveGameInfoField.LIFE, InGameConstants.ReduceLifeDueExplosion);
+
+                    //restore control after ExplodeCarDelay
                     final Handler handler = new Handler();
                     handler.postDelayed(new Runnable() {
                         @Override
                         public void run() {
-                            // Do something after waitTimeMs ms
-                            disableEnableButtons(true);
+                            restoreCar();
                             mDatabase.child("RfidReading").child(_playerIdStr).child("Mine").child("Explode").setValue(0);
                             Toast.makeText(_context, "Smoke is clear - car systems are back online", Toast.LENGTH_LONG).show();
                         }
-                    }, waitTimeMs);
+                    }, InGameConstants.ExplodeCarParalyzed * 1000);
 
                 }
                 else {
@@ -339,6 +375,12 @@ public class RfidHandler {
                         Toast.makeText(_context, "You found " + giftName + " in the loot box", Toast.LENGTH_SHORT).show();
                         //indicate lootbox was picked
                         mDatabase.child("RfidReading").child(_playerIdStr).child("LootBox").child("PickedLootbox").setValue("0");
+
+                        if(mySong !=  null) mySong.Destroy();
+                        mySong = new MediaPlayerWrapper(R.raw.lootbox, _context);
+                        mySong.StartOrResume();
+
+
                         //turn lootbox on again after delay
                         final String lootBoxName = giftCode.substring(1,3);
 
@@ -357,6 +399,10 @@ public class RfidHandler {
                     if(value.equals(1)) {
                         Log.d(TAG,LogDefs.LootBoxSpecialGot);
                         Toast.makeText(_context, "Special Key acquired, drive for your glorious victory!", Toast.LENGTH_SHORT).show();
+                        _liveGameInfo.updateFieldRelativeValue(LiveGameInfoField.SCORE, InGameConstants.AddPointDueSpecialKeyAcquire);
+                        if(mySong !=  null) mySong.Destroy();
+                        mySong = new MediaPlayerWrapper(R.raw.special_lootbox, _context);
+                        mySong.StartOrResume();
                     }
                     else if(value.equals(99)) {
                         Log.d(TAG,LogDefs.LootBoxSpecialUnavailable);
@@ -396,11 +442,105 @@ public class RfidHandler {
     }
 
 
+    public void startGotHitListener() {
+        final FirebaseDatabase database = FirebaseDatabase.getInstance();
+        gotHitDocRef = database.getReference(firebaseRfidPath + "gotHit");
+        gotHitListener = gotHitDocRef.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                assert(dataSnapshot.getKey().equals("gotHit"));
+                //Get new value
+                Integer hitValue = dataSnapshot.getValue(Integer.class);
+                if(hitValue == 1) {
+                    Log.d(TAG,LogDefs.gotHit);
+                    Toast.makeText(_context, "You got hit!!! Car is paralyzed for " + InGameConstants.LaserHitParalyzed.toString() + " seconds", Toast.LENGTH_LONG).show();
+                    if(mySong !=  null) mySong.Destroy();
+                    mySong = new MediaPlayerWrapper(R.raw.boom, _context);
+                    mySong.StartOrResume();
 
 
+                    stopCar();
+
+                    // update stats
+                    _liveGameInfo.addShotInjured();
+                    _liveGameInfo.updateFieldRelativeValue(LiveGameInfoField.SCORE, InGameConstants.ReducePointDueHit);
+                    _liveGameInfo.updateFieldRelativeValue(LiveGameInfoField.LIFE, InGameConstants.ReduceLifeDueHit);
+
+                    //restore control after ExplodeCarDelay
+                    final Handler handler = new Handler();
+                    handler.postDelayed(new Runnable() {
+                        @Override
+                        public void run() {
+                            // Do something after waitTimeMs ms
+                            restoreCar();
+                            mDatabase.child("RfidReading").child(_playerIdStr).child("gotHit").setValue(0);
+                            Toast.makeText(_context, "Car has recovered - car systems are back online", Toast.LENGTH_LONG).show();
+                        }
+                    }, InGameConstants.ExplodeCarParalyzed * 1000);
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+                System.out.println("The read failed: " + databaseError.getCode());
+            }
+        });
+    }
+
+    public boolean planetMineInCloud() {
+        // save value locally to avoid async race condition
+        final String currentMineNameFrezze = currentMineName;
+        if(currentMineNameFrezze.charAt(0) != 'M') {
+            Toast.makeText(_context, "Mine couldn't be placed, as you got away from mine pit", Toast.LENGTH_LONG).show();
+            return false;
+        }
+        Toast.makeText(_context, "Mine is placed, you have "+ InGameConstants.PlaceMineDelay.toString() + " seconds to run for your life", Toast.LENGTH_LONG).show();
+        currentMineName = "";
+        _btnMine.setEnabled(false);
+
+        // set a delay on mine setting to allow user to get away from mine
+        final Handler handler = new Handler();
+        handler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                // Do something after waitTimeMs ms
+                mDatabase.child("Mines").child(currentMineNameFrezze).child("status").setValue(1);
+                if(mySong !=  null) mySong.Destroy();
+                mySong = new MediaPlayerWrapper(R.raw.mineplanted, _context);
+                mySong.StartOrResume();
+                Toast.makeText(_context, "Mine has been planted", Toast.LENGTH_LONG).show();
+            }
+        }, InGameConstants.PlaceMineDelay);
+
+        return true;
+    }
+
+    public boolean openBarrierInCloud() {
+        // save value locally to avoid async race condition
+        final String currentBarrierNameFrezze = currentBarrierName;
+        if(currentBarrierNameFrezze.charAt(0) != 'B') {
+            Toast.makeText(_context, "Barrier couldn't be opened, as you got away from barrier", Toast.LENGTH_LONG).show();
+            return false;
+        }
+        Toast.makeText(_context, "Barrier is opening", Toast.LENGTH_SHORT).show();
+        mDatabase.child("Barriers").child(currentBarrierNameFrezze).child("status").setValue(1);
+
+        currentMineName = "";
+        _btnKey.setEnabled(false);
+        return true;
+    }
 
 
+    private void stopCar() {
+        //TODO - need to send BT command of stop car
+        //TODO Maybe - cause car to blink (via BT or just let car listen to explode variable)
 
-    //TODO handle start and finish
-    //TODO need to stop listeners? https://stackoverflow.com/questions/30378446/how-stop-listening-to-firebase-location-in-android
+        disableEnableButtons(false);
+    }
+
+    private void restoreCar() {
+        disableEnableButtons(true);
+    }
+
+
 }

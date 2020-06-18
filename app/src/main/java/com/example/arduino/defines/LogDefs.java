@@ -69,5 +69,7 @@ public final class LogDefs {
     public static final String LootBoxSpecialGot = "Got Special Key";
     public static final String LootBoxSpecialUnavailable = "Got LootBoxSpecial is unavailable ";
     public static final String  LootBoxSpecialOppents = "Got LootBoxSpecial of oppenet";
+    //Hit
+    public static final String gotHit = "Got hit by laser";
 
 }
