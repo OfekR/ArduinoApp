@@ -197,8 +197,6 @@ public class InitGameActivity extends AppCompatActivity {
         //db.collection("GameSettings").document("doucment1").update(member.getMap());
         //TODO - Miki - do we need this toast? It interferes with "someone already started a game" toast
   //      Toast.makeText(getApplicationContext(), "insert data",Toast.LENGTH_LONG ).show();
-        //TODO - implement CheckIfDataValid - it should check if all compents are ready to play - tanks are right pos
-        //TODO check - maybe lower barrier down
         if(checkIfDataValid()){
             // check if game can be started from firebase
             checkForGameReady();

@@ -24,6 +24,8 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
+import java.io.IOException;
+import java.io.OutputStream;
 import java.util.HashMap;
 
 import io.github.controlwear.virtual.joystick.android.JoystickView;
@@ -60,6 +62,9 @@ public class RfidHandler {
     private int _playerId;
     private String _playerIdStr;
     private Context _context;
+
+    //bt connection
+    private OutputStream outputStream;
 
 
     // current status
@@ -114,7 +119,10 @@ public class RfidHandler {
         startGotHitListener();
     }
 
-    //TODO - call this
+    public void setOutputStream(OutputStream outputStreamEx) {
+        outputStream = outputStreamEx;
+    }
+
     public void stopListeners() {
         if(barrierListener != null)
             barrierDocRef.removeEventListener(barrierListener);
@@ -518,6 +526,9 @@ public class RfidHandler {
     public boolean openBarrierInCloud() {
         // save value locally to avoid async race condition
         final String currentBarrierNameFrezze = currentBarrierName;
+        currentMineName = "";
+        _btnKey.setEnabled(false);
+
         if(currentBarrierNameFrezze.charAt(0) != 'B') {
             Toast.makeText(_context, "Barrier couldn't be opened, as you got away from barrier", Toast.LENGTH_LONG).show();
             return false;
@@ -525,16 +536,24 @@ public class RfidHandler {
         Toast.makeText(_context, "Barrier is opening", Toast.LENGTH_SHORT).show();
         mDatabase.child("Barriers").child(currentBarrierNameFrezze).child("status").setValue(1);
 
-        currentMineName = "";
-        _btnKey.setEnabled(false);
+        //handle special case of B5 and B6 indicate same barrier
+        if(currentBarrierNameFrezze.equals("B5")) {
+            mDatabase.child("Barriers").child("B6").child("status").setValue(1);
+        }
+        if(currentBarrierNameFrezze.equals("B6")) {
+            mDatabase.child("Barriers").child("B5").child("status").setValue(1);
+        }
+
         return true;
     }
 
 
-    private void stopCar() {
-        //TODO - need to send BT command of stop car
-        //TODO Maybe - cause car to blink (via BT or just let car listen to explode variable)
-
+    private void stopCar()  {
+        try {
+            outputStream.write('!');
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
         disableEnableButtons(false);
     }
 

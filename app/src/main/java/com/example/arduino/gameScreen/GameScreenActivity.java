@@ -126,7 +126,6 @@ public class GameScreenActivity extends AppCompatActivity {
     private OutputStream outputStream;
     private BluetoothAdapter mBluetoothAdapter;
 
-    //TODO bundle to struct
     private AtomicBoolean _isBtConnected;
     private AtomicBoolean _isInternetConnected;
     private AtomicBoolean _isCarInPlace;
@@ -158,15 +157,13 @@ public class GameScreenActivity extends AppCompatActivity {
         showWaitScreen();
 
         waitUntillGameReady();
-        //TODO OFEK DEBUG
-        /*
         //TODO Future - add pop up box which mark if each compenet was complete (meaning - listen to these 3 boolean
         //TODO              and start with X for all, when ever boolean set to true - switch to V
         //TODO          Or do thread which wake up every X seconds, and check what missing
         initBluetoothConnection();
         initCarInPlace();
         initInternetConnected();
-        */
+
     }
 
     /** ************************* General ************************* **/
@@ -380,8 +377,7 @@ public class GameScreenActivity extends AppCompatActivity {
 
             _liveGameInfo.updateFieldRelativeValue(LiveGameInfoField.AMMO,-1);
             _liveGameInfo.addSingleShotFired();
-            //TODO OFEK DEBUG
-            //SendCommandShotLaser();
+            SendCommandShotLaser();
         }
     });
         btnMine.setOnClickListener(new View.OnClickListener() {
@@ -521,10 +517,8 @@ public class GameScreenActivity extends AppCompatActivity {
         _isGameStarted.set(true);
         disableEnableButtons(true);
         startRfidListeners();
-        //TODO OFEK DEBUG#$#@
         _liveGameInfo.startListeners();
         listenToGameEnd();
-        //ListnerForChangeInGame();
 
         startTimer();
     }
@@ -535,10 +529,6 @@ public class GameScreenActivity extends AppCompatActivity {
      */
     private void resetAllGameLayoutVariables() {
         HashMap<String,Object> hashMap = new HashMap<>();
-
-        HashMap<String,Object> hashMapMines = new HashMap<>();
-        HashMap<String,Object> hashMapBarrier = new HashMap<>();
-        HashMap<String,Object> hashMapLootbox = new HashMap<>();
 
         final Integer numberOfMines = 6;
         final Integer numberOfBarriers = 8;
@@ -598,6 +588,7 @@ public class GameScreenActivity extends AppCompatActivity {
     private void finishGame(Integer winner_player_id, Integer winner_cause) {
         _liveGameInfo.stopListeners();
         _rfidHandler.stopListeners();
+        countDownTimer.cancel();
 
         // winner_cause dic:
         // 3 - player reached end tag
@@ -753,7 +744,7 @@ public class GameScreenActivity extends AppCompatActivity {
     }
 
 
-
+    //TODO - fix timer, it doesn't take the right time now
     private  void startTimer(){
         if(game.getType() == 3){
             txtCountDown.setText("NO-TIME-UNTIL-DEATH");
@@ -771,7 +762,7 @@ public class GameScreenActivity extends AppCompatActivity {
 
                 @Override
                 public void onFinish() {
-                    //TODO - test this
+                    //TODO - test this ending
                     //indicate game is over, but only player 1 to avoid both player update it
                     if(_playerId == 1) {
                         final FirebaseDatabase database = FirebaseDatabase.getInstance();
@@ -781,6 +772,7 @@ public class GameScreenActivity extends AppCompatActivity {
                                 Integer player1Points = dataSnapshot.child("Player1").child("score").getValue(Integer.class);
                                 Integer player2Points = dataSnapshot.child("Player2").child("score").getValue(Integer.class);
                                 Integer winner_player_id = (player1Points > player2Points) ? 1 : 2;
+                                //TODO - add tie breaker (in case points are equal)
                                 Integer endGameCode = winner_player_id + (InGameConstants.winnerCauseReachTimeLimit * 10);
                                 mDatabase.child("LiveGameinfo").child("gameEnd").setValue(endGameCode);
                             }
@@ -792,7 +784,7 @@ public class GameScreenActivity extends AppCompatActivity {
                         });
                     }
 
-                    checkForWin();
+                    //checkForWin();
                 }
             }.start();
             mTimerRunning = true;
@@ -803,7 +795,7 @@ public class GameScreenActivity extends AppCompatActivity {
      * check for win is wrap function for game over  close all the relvent audio and things that are opened
      * TODO need to send the data of what happened we gat in the  arggs
      */
-    private void checkForWin() {
+    /*private void checkForWin() {
         //if(endOfGameReason.equals(EndOfGameReason.FLAG)) Log.d("GAME-REASON-END-->","We Lost Because -  FLAG");
         //if(endOfGameReason.equals(EndOfGameReason.LIFE)) Log.d("GAME-REASON-END-->","We Lost Because -  LIFE");
         //if(endOfGameReason.equals(EndOfGameReason.TIME)) Log.d("GAME-REASON-END-->","We Lost Because -  TIME");
@@ -812,7 +804,7 @@ public class GameScreenActivity extends AppCompatActivity {
         gamedocRef.removeEventListener(registration);
         countDownTimer.cancel();
        gameOver();
-    }
+    }*/
 
     /**
      * write to data base when the game is ended Log of the game for statics (stats also update auto)
@@ -971,8 +963,7 @@ public class GameScreenActivity extends AppCompatActivity {
     }
 
     // All game manegement
-    //TODO OFEK NOW - change this function
-    private void ListnerForChangeInGame(){
+   /* private void ListnerForChangeInGame(){
         final FirebaseDatabase database = FirebaseDatabase.getInstance();
         gamedocRef = database.getReference("Game/");
 
@@ -1073,14 +1064,14 @@ public class GameScreenActivity extends AppCompatActivity {
             }
         });
     }
-
+*/
     /*
     TODO we should make here the win or lose by the type of the game the played
         1. capture the flag
         2. points
         3. life
      */
-    private void gameOver() {
+    /*private void gameOver() {
         Integer my_life_left,opp_flag,my_flag,opp_life_left,my_points,opp_points;
         ValuesShared values = game.getValuesShared();   // reading the val for help
         if(game.getPlayerID().equals("1")){
@@ -1141,7 +1132,7 @@ public class GameScreenActivity extends AppCompatActivity {
     private void sendDataTodataBase() {
         //create document to send the values at end of the game
     }
-
+*/
     /**
      * RESET input data in appending collection in firestore
      */
@@ -1233,6 +1224,7 @@ public class GameScreenActivity extends AppCompatActivity {
         return false;
     }
 
+    //TODO - debug why this didn't work or just remove interent check
     public boolean isConnectionAvaliable()
     {
         return true;
@@ -1590,6 +1582,7 @@ public class GameScreenActivity extends AppCompatActivity {
             try
             {
                 outputStream = socket.getOutputStream(); //gets the output stream of the socket
+                _rfidHandler.setOutputStream(outputStream);
                 //TODO NOTE - if in the end we want input stream
                 //inputStream = socket.getInputStream();
             }
