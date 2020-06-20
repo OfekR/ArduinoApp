@@ -191,7 +191,7 @@ exports.endOfGameSendder = functions.https.onRequest((req, res) => {
                 })
         });
 
-
+/*
       exports.gateRequest = functions.https.onRequest((req, res) => {
         let id = req.query.id;
         var i=0;
@@ -213,13 +213,64 @@ exports.endOfGameSendder = functions.https.onRequest((req, res) => {
             return res.status(500).send(error);
       })
       });
-
+*/
       exports.resetGate = functions.https.onRequest((req, res) => {
         let id = req.query.id;
         let num = req.query.num;
         admin.database().ref("Gates/card"+id+"/"+num+"/").update({value:"0"});
         return res.status(200).send(0);
         });
+
+        exports.mineRequest = functions.https.onRequest((req, res) => {
+          var dict ={};
+          let promise1 = admin.database().ref("Mines").once('value');
+          promise1.then(function(snapshot1) {
+            snapshot1.forEach(function(childSnaphot1){
+                var data1 = childSnaphot1.val().status;
+                dict[childSnaphot1.key] = data1;   
+            })
+            return res.status(200).send(dict);
+          })
+          .catch(error => {
+            console.log(error);
+            return res.status(500).send(error);
+            })
+        });
+
+
+    exports.gateRequest = functions.https.onRequest((req, res) => {
+        var dict ={};
+        let promise = admin.database().ref("Barriers").once('value');
+        promise.then(function(snapshot) {
+        snapshot.forEach(function(childSnaphot){
+            var data = childSnaphot.val().status;
+            dict[childSnaphot.key] = data;
+
+      })
+        return res.status(200).send(dict);
+      })
+      .catch(error => {
+        console.log(error);
+        return res.status(500).send(error);
+        })
+    });
+
+    exports.lootboxRequest = functions.https.onRequest((req, res) => {
+        var dict ={};
+        let promise = admin.database().ref("Lootbox").once('value');
+        promise.then(function(snapshot) {
+        snapshot.forEach(function(childSnaphot){
+            var data = childSnaphot.val().status;
+            dict[childSnaphot.key] = data;
+
+      })
+        return res.status(200).send(dict);
+      })
+      .catch(error => {
+        console.log(error);
+        return res.status(500).send(error);
+        })
+    });
 
 
       /*

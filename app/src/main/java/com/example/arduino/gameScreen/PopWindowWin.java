@@ -26,7 +26,7 @@ public class PopWindowWin extends AppCompatActivity {
         bt.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                pushData();
+             //   pushData();
             }
         });
     }

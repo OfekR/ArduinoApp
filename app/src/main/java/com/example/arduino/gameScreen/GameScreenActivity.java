@@ -347,6 +347,7 @@ public class GameScreenActivity extends AppCompatActivity {
                 }
             }
         });
+
         // Listen to the shot button and update val
         joystickServo.setOnMoveListener(new JoystickView.OnMoveListener() {
             @Override
@@ -588,7 +589,7 @@ public class GameScreenActivity extends AppCompatActivity {
     private void finishGame(Integer winner_player_id, Integer winner_cause) {
         _liveGameInfo.stopListeners();
         _rfidHandler.stopListeners();
-        countDownTimer.cancel();
+        if(countDownTimer != null) countDownTimer.cancel();
 
         // winner_cause dic:
         // 3 - player reached end tag
@@ -607,103 +608,15 @@ public class GameScreenActivity extends AppCompatActivity {
         final String uid = FirebaseAuth.getInstance().getCurrentUser().getUid();
         final boolean isWinner = winner_player_id.equals(_playerId);
         db.collection("Logs").document(uid).set(_liveGameInfo.toMap(isWinner,mTimeLeftInMils,uid, winner_cause));
-        FirebaseFirestore fstore = FirebaseFirestore.getInstance();
-        final DocumentReference documentReference = fstore.collection("PlayerStats").document(uid);
-        documentReference.get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
-            @Override
-            public void onComplete(@NonNull Task<DocumentSnapshot> task) {
-                // before
-                DocumentSnapshot documentSnapshot= task.getResult();
-                assert documentSnapshot != null;
-                Long _bestTime = (Long) documentSnapshot.get("bestTime");
-                Long _gamesLost = (Long) documentSnapshot.get("gamesLost");
-                Long _gamesPlayed = (Long) documentSnapshot.get("gamesPlayed");
-                Long _gamesWon = (Long) documentSnapshot.get("gamesWon");
-                Long _hitsPercentage = (Long) documentSnapshot.get("hitsPercentage");
-                Long _mostBombHits = (Long) documentSnapshot.get("mostBombHits");
-                Long _mostLaserHits = (Long) documentSnapshot.get("mostLaserHits");
-                Long _totalBombHits = (Long) documentSnapshot.get("totalBombHits");
-                Long _totalHits = (Long) documentSnapshot.get("totalHits");
-                Long _totalPoints = (Long) documentSnapshot.get("totalPoints");
-                Long _totalShots = (Long) documentSnapshot.get("totalShots");
-                Long _flags = (Long) documentSnapshot.get("flags");
-                Long _numPlayedflags = (Long) documentSnapshot.get("numPlayedflags");
-                Long _numPlayedtime = (Long) documentSnapshot.get("numPlayedtime");
-                Long _numPlayedhighscore = (Long) documentSnapshot.get("numPlayedhighscore");
-
-                assert(_bestTime != null);
-                assert _gamesLost != null;
-                assert _gamesPlayed != null;
-                assert _gamesWon != null;
-                assert _hitsPercentage != null;
-                assert _mostBombHits != null;
-                assert _mostLaserHits != null;
-                assert _totalBombHits != null;
-                assert _totalHits != null;
-                assert _totalPoints != null;
-                assert _totalShots != null;
-                assert(_flags != null);
-                assert  _numPlayedflags != null;
-                assert  _numPlayedtime != null;
-                assert _numPlayedhighscore != null;
-                //TODO - need to add more fields and maybe fix existing, check all _total...
-                Long totalshots = _liveGameInfo.totalShotsFired.longValue();
-                Long totalbomb = _liveGameInfo.totalMinePlanted.longValue();
-                Long totalhits = _liveGameInfo.totalShotsHits.longValue();
-                if (_bestTime < mTimeLeftInMils) {
-                    _bestTime = mTimeLeftInMils;
-                }
-                if (_mostBombHits < totalbomb) {
-                    _mostBombHits = totalbomb;
-                }
-                if (_mostLaserHits < totalhits) {
-                    _mostLaserHits = totalhits;
-                }
-                _gamesPlayed = _gamesPlayed + 1;
-                if (isWinner) {
-                    _gamesWon = _gamesWon + 1;
-                }
-                else  {
-                    _gamesLost = _gamesLost + 1;
-                }
-
-                if(_liveGameInfo.gameType == 1){
-                    _numPlayedflags = _numPlayedflags+1;
-                }
-                else if(_liveGameInfo.gameType == 2){
-                    _numPlayedhighscore = _numPlayedhighscore+1;
-                }
-                else{
-                    _numPlayedtime = _numPlayedtime+1;
-                }
-                _totalBombHits = _totalBombHits + totalbomb;
-                _totalHits = _totalHits + totalhits; //TODO fix it
-                _totalPoints = _totalPoints + _liveGameInfo.getScore();
-                _totalShots = _totalShots + totalshots;
-                if (_totalShots != 0) {
-                    _hitsPercentage = _totalHits / _totalShots;
-                }
-                DocumentMover documentMover = new DocumentMover(uid,_bestTime,_gamesLost,_gamesPlayed,_gamesWon,
-                        _hitsPercentage,_mostBombHits,_mostLaserHits,_totalBombHits,_totalHits,_totalPoints,_totalShots,_flags,_numPlayedflags,_numPlayedhighscore,_numPlayedtime);
-                Log.d("Writing to data cloud","-----> Moving to Pop window");
-                if(isWinner){
-                    Intent intent = new Intent(getApplicationContext(), PopWindowWin.class);
-                    intent.putExtra("DocumentPusher",documentMover);
-                    startActivity(intent.addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY));
-                }
-                else {
-                    Intent intent = new Intent(getApplicationContext(), PopWindowGameOver.class); // Todo change for the right screen
-                    intent.putExtra("DocumentPusher",documentMover);
-                    startActivity(intent.addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY));
-                }
-                /*else{
-                    Intent intent = new Intent(getApplicationContext(), PopWindowWin.class); // Todo change for the right screen
-                    intent.putExtra("DocumentPusher",documentMover);
-                    startActivity(intent.addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY));
-                }*/
-            }
-        });
-        // registration.remove();
+        _liveGameInfo.readMyStats((int) (mTimeLeftInMils/1000),isWinner);
+        if(isWinner){
+            Intent intent = new Intent(getApplicationContext(), PopWindowWin.class);
+            startActivity(intent.addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY));
+        }
+        else {
+            Intent intent = new Intent(getApplicationContext(), PopWindowGameOver.class); // Todo change for the right screen
+            startActivity(intent.addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY));
+        }
     }
 
 
@@ -791,127 +704,6 @@ public class GameScreenActivity extends AppCompatActivity {
         }
     }
 
-    /**
-     * check for win is wrap function for game over  close all the relvent audio and things that are opened
-     * TODO need to send the data of what happened we gat in the  arggs
-     */
-    /*private void checkForWin() {
-        //if(endOfGameReason.equals(EndOfGameReason.FLAG)) Log.d("GAME-REASON-END-->","We Lost Because -  FLAG");
-        //if(endOfGameReason.equals(EndOfGameReason.LIFE)) Log.d("GAME-REASON-END-->","We Lost Because -  LIFE");
-        //if(endOfGameReason.equals(EndOfGameReason.TIME)) Log.d("GAME-REASON-END-->","We Lost Because -  TIME");
-
-
-        gamedocRef.removeEventListener(registration);
-        countDownTimer.cancel();
-       gameOver();
-    }*/
-
-    /**
-     * write to data base when the game is ended Log of the game for statics (stats also update auto)
-     */
-
-    private void writeDataToCloud(final StatusGame statusGame) {
-        FirebaseFirestore db =FirebaseFirestore.getInstance();
-        String uid = game.getFirebaseId();
-        db.collection("Logs").document(uid).set(game.toMap(statusGame,mTimeLeftInMils));
-        FirebaseFirestore fstore = FirebaseFirestore.getInstance();
-        final DocumentReference documentReference = fstore.collection("PlayerStats").document(game.getFirebaseId());
-        documentReference.get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
-            @Override
-            public void onComplete(@NonNull Task<DocumentSnapshot> task) {
-                // before
-                DocumentSnapshot documentSnapshot= task.getResult();
-                assert documentSnapshot != null;
-                Long _bestTime = (Long) documentSnapshot.get("bestTime");
-                Long _gamesLost = (Long) documentSnapshot.get("gamesLost");
-                Long _gamesPlayed = (Long) documentSnapshot.get("gamesPlayed");
-                Long _gamesWon = (Long) documentSnapshot.get("gamesWon");
-                Long _hitsPercentage = (Long) documentSnapshot.get("hitsPercentage");
-                Long _mostBombHits = (Long) documentSnapshot.get("mostBombHits");
-                Long _mostLaserHits = (Long) documentSnapshot.get("mostLaserHits");
-                Long _totalBombHits = (Long) documentSnapshot.get("totalBombHits");
-                Long _totalHits = (Long) documentSnapshot.get("totalHits");
-                Long _totalPoints = (Long) documentSnapshot.get("totalPoints");
-                Long _totalShots = (Long) documentSnapshot.get("totalShots");
-                Long _flags = (Long) documentSnapshot.get("flags");
-                Long _numPlayedflags = (Long) documentSnapshot.get("numPlayedflags");
-                Long _numPlayedtime = (Long) documentSnapshot.get("numPlayedtime");
-                Long _numPlayedhighscore = (Long) documentSnapshot.get("numPlayedhighscore");
-
-                assert(_bestTime != null);
-                assert _gamesLost != null;
-                assert _gamesPlayed != null;
-                assert _gamesWon != null;
-                assert _hitsPercentage != null;
-                assert _mostBombHits != null;
-                assert _mostLaserHits != null;
-                assert _totalBombHits != null;
-                assert _totalHits != null;
-                assert _totalPoints != null;
-                assert _totalShots != null;
-                assert(_flags != null);
-                assert  _numPlayedflags != null;
-                assert  _numPlayedtime != null;
-                assert _numPlayedhighscore != null;
-                Long totalshots = game.getTotalData()[0];
-                Long totalbomb = game.getTotalData()[1];
-                Long totalhits = game.getTotalData()[2];
-                if (_bestTime < mTimeLeftInMils) {
-                    _bestTime = mTimeLeftInMils;
-                }
-                if (_mostBombHits < totalbomb) {
-                    _mostBombHits = totalbomb;
-                }
-                if (_mostLaserHits < totalhits) {
-                    _mostLaserHits = totalhits;
-                }
-                _gamesPlayed = _gamesPlayed + 1;
-                if (statusGame.equals(StatusGame.WIN)) {
-                    _gamesWon = _gamesWon + 1;
-
-                }
-                if (statusGame.equals(StatusGame.LOSE)) {
-                    _gamesLost = _gamesLost + 1;
-
-                }
-                if(game.getType() == 1){
-                    _numPlayedflags = _numPlayedflags+1;
-                }
-                else if(game.getType() == 2){
-                    _numPlayedhighscore = _numPlayedhighscore+1;
-                }
-                else{
-                    _numPlayedtime = _numPlayedtime+1;
-                }
-                _totalBombHits = _totalBombHits + totalbomb;
-                _totalHits = _totalHits + totalhits; //TODO fix it
-                _totalPoints = _totalPoints + game.getPoint();
-                _totalShots = _totalShots + totalshots;
-                if (_totalShots != 0) {
-                    _hitsPercentage = _totalHits / _totalShots;
-                }
-                DocumentMover documentMover = new DocumentMover(game.getFirebaseId(),_bestTime,_gamesLost,_gamesPlayed,_gamesWon,
-                        _hitsPercentage,_mostBombHits,_mostLaserHits,_totalBombHits,_totalHits,_totalPoints,_totalShots,_flags,_numPlayedflags,_numPlayedhighscore,_numPlayedtime);
-                Log.d("Writing to data cloud","-----> Moving to Pop window");
-                if(statusGame.equals(StatusGame.WIN)){
-                    Intent intent = new Intent(getApplicationContext(), PopWindowWin.class); // Todo change for the right screen
-                    intent.putExtra("DocumentPusher",documentMover);
-                    startActivity(intent.addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY));
-                }
-                else if (statusGame.equals(StatusGame.LOSE)){
-                    Intent intent = new Intent(getApplicationContext(), PopWindowGameOver.class); // Todo change for the right screen
-                    intent.putExtra("DocumentPusher",documentMover);
-                    startActivity(intent.addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY));
-                }
-                else{
-                    Intent intent = new Intent(getApplicationContext(), PopWindowWin.class); // Todo change for the right screen
-                    intent.putExtra("DocumentPusher",documentMover);
-                    startActivity(intent.addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY));
-                }
-            }
-        });
-       // registration.remove();
-    }
 
     /**
      * update the clock and check if the game is ended by time
@@ -962,177 +754,6 @@ public class GameScreenActivity extends AppCompatActivity {
 
     }
 
-    // All game manegement
-   /* private void ListnerForChangeInGame(){
-        final FirebaseDatabase database = FirebaseDatabase.getInstance();
-        gamedocRef = database.getReference("Game/");
-
-        registration = gamedocRef.addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
-                //TODO OFEK - update this to all values...
-                Integer my_life_left,opp_flag,my_flag,opp_life_left,my_hit,opp_hit,my_points,opp_points,my_mine,my_keys,my_defuse,my_spkey,opp_spkey;
-                ValuesShared values = dataSnapshot.getValue(ValuesShared.class);
-                game.setValuesShared(values);
-                assert values != null;
-                if(game.getPlayerID().equals("1")){
-                    my_life_left = values.getLife1();
-                    my_flag = values.getFlag1();
-                    opp_flag = values.getFlag2();
-                    opp_life_left = values.getLife2();
-                    my_hit = values.getValid1();
-                    opp_hit = values.getValid2();
-                    my_points =values.getPoints1();
-                    opp_points =values.getPoints2();
-                    my_mine =values.getMine1();
-                    my_keys =values.getKeys1();
-                    my_defuse =values.getDefuse1();
-                    my_spkey =values.getDefuse1();
-
-                }
-                else{
-                     my_life_left = values.getLife2();
-                     my_flag = values.getFlag2();
-                     opp_flag = values.getFlag1();
-                     opp_life_left = values.getLife1();
-                     opp_hit = values.getValid1();
-                     my_hit = values.getValid2();
-                    my_points =values.getPoints2();
-                    opp_points =values.getPoints1();
-                    my_mine =values.getMine2();
-                    my_keys =values.getKeys2();
-                    my_defuse =values.getDefuse2();
-                    my_spkey =values.getDefuse1();
-                }
-                if(!game.getDefuse().equals(my_defuse)){
-                    if(game.getDefuse() < my_defuse)
-                        Toast.makeText(getApplicationContext(), "You gat from the lot box - Defuse ",Toast.LENGTH_LONG).show();
-                    else{
-                        Toast.makeText(getApplicationContext(), "Bomb has been defused ",Toast.LENGTH_LONG).show();
-                    }
-                }
-                if(game.getPoint()+100 == my_points){
-                    Toast.makeText(getApplicationContext(), "You gat from the lot box - Points ",Toast.LENGTH_LONG).show();
-                }
-                if(!game.getKeys().equals(my_keys)){
-                    if(game.getKeys() < my_keys)
-                        Toast.makeText(getApplicationContext(), "You gat from the lot box - Key ",Toast.LENGTH_LONG).show();
-                    else{
-                        Toast.makeText(getApplicationContext(), "Gate is now opening ",Toast.LENGTH_LONG).show();
-                    }
-                }
-                if(!game.getMines().equals(my_mine)){
-                    if(game.getMines() < my_mine)
-                        Toast.makeText(getApplicationContext(), "You gat from the lot box -  Mine ",Toast.LENGTH_LONG).show();
-                    else{
-                        Toast.makeText(getApplicationContext(), "Mine has been set ",Toast.LENGTH_LONG).show();
-                    }
-                }
-                if(my_life_left+5 == game.getLife()){
-                    Toast.makeText(getApplicationContext(), "You gat hit from a mine  ",Toast.LENGTH_LONG).show();
-                }
-                game.setDefuse(my_defuse);
-                game.setKeys(my_keys);
-                game.setMines(my_mine);
-                game.setFlag(my_flag);
-                game.setLife(my_life_left);
-                game.setPoint(my_points);
-                //update number hit
-                assert(my_hit >= game.getNum_hits());
-                if(my_hit > game.getNum_hits()){
-                    makeToast();
-                    game.setNum_hits(game.getNum_hits()+1);
-                    gatHit();
-                    //TODO - add field to Game firbase field which indicate hit, and change the point calc to oppenet side
-                    opp_points = opp_points+10;
-                    mDatabase.child("Game").child("points"+game.getOppID()).setValue(opp_points.toString());
-                }
-                if(my_life_left <= 0 || opp_life_left <= 0 ||  my_flag ==  1 || opp_flag == 1 ) {
-                    checkForWin();
-                }
-                pbLife.setProgress(my_life_left);
-                txtLife.setText("LIFE: - " +my_life_left);
-                txtScore.setText(("SCORE- ")+game.getPoint().toString());
-                txtKeys.setText("KEYS - "+ game.getKeys().toString());
-                txtMines.setText("MINES - " + game.getMines().toString());
-                txtDefuse.setText("DEFUSE - " + game.getDefuse().toString());
-
-            }
-            @Override
-            public void onCancelled(DatabaseError databaseError) {
-                System.out.println("The read failed: " + databaseError.getCode());
-            }
-        });
-    }
-*/
-    /*
-    TODO we should make here the win or lose by the type of the game the played
-        1. capture the flag
-        2. points
-        3. life
-     */
-    /*private void gameOver() {
-        Integer my_life_left,opp_flag,my_flag,opp_life_left,my_points,opp_points;
-        ValuesShared values = game.getValuesShared();   // reading the val for help
-        if(game.getPlayerID().equals("1")){
-            my_life_left = values.getLife1();
-            my_flag = values.getFlag1();
-            opp_flag = values.getFlag2();
-            opp_life_left = values.getLife2();
-            opp_points = values.getPoints2();
-            my_points = values.getPoints1();
-        }
-        else{
-            my_life_left = values.getLife2();
-            my_flag = values.getFlag2();
-            opp_flag = values.getFlag1();
-            opp_life_left = values.getLife1();
-            opp_points = values.getPoints1();
-            my_points = values.getPoints2();
-        }
-        resetValue(); //reset game setting value
-        Log.v("GAME-CLASS", "GAME------------FINISHED");
-        if(game.getType() == 1 ){ // capture the flag
-            if(my_life_left == 0 ){
-                writeDataToCloud(StatusGame.LOSE);
-            }
-            if(my_flag == 0){  // I Won
-                writeDataToCloud(StatusGame.WIN);
-            }
-            else{   // Lost
-                writeDataToCloud(StatusGame.LOSE);
-            }
-        }
-        else if(game.getType() == 2){  // High score game
-            if(my_life_left == 0 ){
-                writeDataToCloud(StatusGame.LOSE);
-            }
-            if(my_points.equals(opp_points)){  // draw
-                writeDataToCloud(StatusGame.DRAW);
-            }
-            else if (my_points > opp_points){   // won
-                writeDataToCloud(StatusGame.WIN);
-            }
-            else{  // lost
-                writeDataToCloud(StatusGame.LOSE);
-            }
-
-        }
-        else{      // life last tank stand game
-            if(my_life_left >= opp_life_left){  // I Won
-                writeDataToCloud(StatusGame.WIN);
-            }
-            else{   // Lost
-                writeDataToCloud(StatusGame.LOSE);
-            }
-        }
-    }
-
-
-    private void sendDataTodataBase() {
-        //create document to send the values at end of the game
-    }
-*/
     /**
      * RESET input data in appending collection in firestore
      */

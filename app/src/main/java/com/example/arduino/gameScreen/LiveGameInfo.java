@@ -1,6 +1,7 @@
 package com.example.arduino.gameScreen;
 
 import android.content.Context;
+import android.content.Intent;
 import android.util.Log;
 import android.widget.Button;
 import android.widget.TextView;
@@ -10,15 +11,25 @@ import androidx.annotation.NonNull;
 
 import com.example.arduino.defines.InGameConstants;
 import com.example.arduino.defines.LogDefs;
+import com.example.arduino.stats.PlayerStats;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.gms.tasks.Task;
 import com.google.common.collect.ImmutableMap;
+import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
+import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.QuerySnapshot;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 enum LiveGameInfoField {
     AMMO,
@@ -485,4 +496,22 @@ public class LiveGameInfo {
         docData.put("FLAG", reachedEnd);
         return docData;
     }
-}
+
+    public void readMyStats(final Integer time, final boolean state){
+
+        final FirebaseFirestore db =FirebaseFirestore.getInstance();
+        final String uid = Objects.requireNonNull(FirebaseAuth.getInstance().getCurrentUser()).getUid();
+        final DocumentReference documentReference = db.collection("PlayerStats").document(uid);
+        documentReference.get().addOnSuccessListener(new OnSuccessListener<DocumentSnapshot>() {
+            @Override
+            public void onSuccess(DocumentSnapshot queryDocumentSnapshots) {
+                TransfromerData fromFirebase = queryDocumentSnapshots.toObject(TransfromerData.class);
+                fromFirebase.setparams(time,totalShotsHits,_livePlayerInfo.getScore(),totalShotsFired,state);
+                db.collection("PlayerStats").document(uid).set(fromFirebase.tomap());
+            }
+        });
+    }
+
+
+
+    }

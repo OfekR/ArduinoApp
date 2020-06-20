@@ -71,10 +71,6 @@ public class StatitacsActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.altrenative_stats_menu);
         listTop5Score = new ArrayList<HashMap<String,String>>();
-        listTop5Flag = new ArrayList<HashMap<String,String>>();
-        listTop5Time = new ArrayList<HashMap<String,String>>();
-
-
         sendDt= (Button) findViewById(R.id.backTomenu);
         sendDt.setOnClickListener(new View.OnClickListener(){
             @Override
@@ -88,14 +84,8 @@ public class StatitacsActivity extends AppCompatActivity {
         ratingBar = (RatingBar) findViewById(R.id.ratingBar);
         imageView = (ImageView) findViewById(R.id.imageStats);
         listView = (ListView) findViewById(R.id.listView1);
-        btTop5Flag = (Button) findViewById(R.id.btTopFlag);
         btTop5Score = (Button) findViewById(R.id.btTopScore);
-        bTtop5Time = (Button) findViewById(R.id.btTopTime);
         bTMystats = (Button) findViewById(R.id.btMystats);
-        sumTime = (TextView) findViewById(R.id.sctxtTime);
-        sumScore = (TextView) findViewById(R.id.sctxtScore);
-        sumgame = (TextView) findViewById(R.id.sctxtsumgame);
-        sumflag = (TextView) findViewById(R.id.scFlag);
 
 
         //PlayerStats.writeStats(userId, new PlayerStats(1,2,3,4,5,6,7,8,10,9));
@@ -109,22 +99,15 @@ public class StatitacsActivity extends AppCompatActivity {
                 gamesLost = task.getResult().getLong("gamesLost");
                 totalPoints = task.getResult().getLong("totalPoints");
                 bestTime = task.getResult().getLong("bestTime");
-                mostLaserHits = task.getResult().getLong("mostLaserHits");
-                mostBombHits = task.getResult().getLong("mostBombHits");
-                totalBombHits = task.getResult().getLong("totalBombHits");
                 totalShots = task.getResult().getLong("totalShots");
                 totalHits = task.getResult().getLong("totalHits");
                 hitPercentage = task.getResult().getLong("hitsPercentage");
-                flags = task.getResult().getLong("flags");
-                numPlayedflags = task.getResult().getLong("numPlayedflags");
-                numPlayedtime = task.getResult().getLong("numPlayedtime");
-                numPlayedhighscore = task.getResult().getLong("numPlayedhighscore");
 
-                PlayerStats stats = new PlayerStats(gamesPlayed, gamesWon, gamesLost, totalPoints, bestTime,
-                        mostLaserHits, mostBombHits, totalBombHits, totalShots, totalHits, flags, numPlayedflags, numPlayedtime, numPlayedhighscore);
+
+                PlayerStats stats = new PlayerStats(gamesPlayed, gamesWon, gamesLost, totalPoints, bestTime, totalShots, totalHits);
                 changeRateandPic();
                 getuserNameAcc();
-                setupChart();
+                //setupChart();
                 populateList(stats);
                 adapt();
             }
@@ -144,29 +127,6 @@ public class StatitacsActivity extends AppCompatActivity {
                 }
             }
         });
-        btTop5Flag.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if(!listTop5Flag.isEmpty()){
-                    activateList(listTop5Flag);
-                }
-                else{
-                    sendClicker("flags",listTop5Flag);
-
-                }
-            }
-        });
-        bTtop5Time.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if(!listTop5Time.isEmpty()){
-                    activateList(listTop5Time);
-                }
-                else{
-                    sendClicker("bestTime", listTop5Time);
-                }
-            }
-        });
         bTMystats.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -174,35 +134,6 @@ public class StatitacsActivity extends AppCompatActivity {
         });
     }
 
-    private void setupChart() {
-        List<PieEntry> pieEntries = new ArrayList<>();
-        pieEntries.add(new PieEntry(numPlayedflags));
-        pieEntries.add(new PieEntry(numPlayedhighscore));
-        pieEntries.add(new PieEntry(numPlayedtime));
-        PieDataSet dataset = new PieDataSet(pieEntries,"Games");
-        dataset.setColors(ColorTemplate.COLORFUL_COLORS);
-        PieData data = new PieData((dataset));
-        Long _tmpFlag =  numPlayedflags;
-        Long _tmpsum =  gamesPlayed;
-        Long _tmpscore =  numPlayedhighscore;
-        Long _tmptime =  numPlayedtime;
-
-        PieChart chart = (PieChart) findViewById(R.id.pieChart);
-        chart.setDrawMarkers(false); // To remove markers when click
-        chart.setDrawEntryLabels(false); // To remove labels from piece of pie
-        chart.setDrawMarkers(false);
-        chart.setDrawCenterText(false);
-        chart.getDescription().setEnabled(false); // To remove description of pie
-        chart.getLegend().setEnabled(false);
-
-        sumflag.setText("Flag-Game: " + _tmpFlag.toString());
-        sumgame.setText("Total-Game: " + _tmpsum.toString());
-        sumScore.setText("High-Score: " + _tmpscore.toString());
-        sumTime.setText("Last-Tank : " + _tmptime.toString());
-
-        chart.setData(data);
-        chart.invalidate();
-    }
 
 
     private  void sendClicker(final String field , final ArrayList<HashMap<String,String>> list){
@@ -294,17 +225,6 @@ public class StatitacsActivity extends AppCompatActivity {
         bestTimeRow.put(FIRST_COLUMN, "Best time:");
         bestTimeRow.put(SECOND_COLUMN,String.valueOf(stats.bestTime));
 
-        HashMap<String,String> mostLaserHitsRow = new HashMap<>();
-        mostLaserHitsRow.put(FIRST_COLUMN, "Most laser hits:");
-        mostLaserHitsRow.put(SECOND_COLUMN,String.valueOf(stats.mostLaserHits));
-
-        HashMap<String,String> mostBombHitsRow = new HashMap<>();
-        mostBombHitsRow.put(FIRST_COLUMN, "Most bomb hits:");
-        mostBombHitsRow.put(SECOND_COLUMN,String.valueOf(stats.mostBombHits));
-
-        HashMap<String,String> totalBombHitsRow = new HashMap<>();
-        totalBombHitsRow.put(FIRST_COLUMN, "Total bomb hits:");
-        totalBombHitsRow.put(SECOND_COLUMN,String.valueOf(stats.totalBombHits));
 
         HashMap<String,String> totalShotsRow = new HashMap<>();
         totalShotsRow.put(FIRST_COLUMN, "Total shots:");
@@ -318,39 +238,15 @@ public class StatitacsActivity extends AppCompatActivity {
         hitPercentageRow.put(FIRST_COLUMN, "Hit accuracy:");
         hitPercentageRow.put(SECOND_COLUMN,String.valueOf(stats.hitPercentage) + "%");
 
-        HashMap<String,String> numFlags = new HashMap<>();
-        numFlags.put(FIRST_COLUMN, "NumFlags:");
-        numFlags.put(SECOND_COLUMN,String.valueOf(stats.numFlags));
-
-        HashMap<String,String> totalPlayedFlags = new HashMap<>();
-        totalPlayedFlags.put(FIRST_COLUMN, "Total Played - Flags:");
-        totalPlayedFlags.put(SECOND_COLUMN,String.valueOf(stats.numPlayedFlags));
-
-        HashMap<String,String> totalPalyedScore = new HashMap<>();
-        totalPalyedScore.put(FIRST_COLUMN, "Total Played - Score:");
-        totalPalyedScore.put(SECOND_COLUMN,String.valueOf(stats.numPlayedHighScore));
-
-        HashMap<String,String> totalPlayedTime = new HashMap<>();
-        totalPlayedTime.put(FIRST_COLUMN, "Total Played - Time:");
-        totalPlayedTime.put(SECOND_COLUMN,String.valueOf(stats.numPlayedTime));
-
-
 
         list.add(gamesPlayedRow);
         list.add(gamesWonRow);
         list.add(gamesLostRow);
         list.add(totalPointsRow);
         list.add(bestTimeRow);
-        list.add(mostLaserHitsRow);
-        list.add(mostBombHitsRow);
-        list.add(totalBombHitsRow);
         list.add(totalShotsRow);
         list.add(totalHitsRow);
         list.add(hitPercentageRow);
-        list.add(numFlags);
-        list.add(totalPlayedFlags);
-        list.add(totalPalyedScore);
-        list.add(totalPlayedTime);
 
 
     }

@@ -32,7 +32,7 @@ public class PopWindowGameOver extends AppCompatActivity {
         bt.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                pushData();
+           //     pushData();
                 changeScreen(MenuActivity.class);
             }
         });
@@ -78,24 +78,6 @@ public class PopWindowGameOver extends AppCompatActivity {
                 "&flags="+documentMover.get_flags()+"&numPlayedflags="+documentMover.get_numflags()+"&numPlayedtime="+documentMover.get_numtime()+"&numPlayedhighscore="+documentMover.get_numScore();;
         url= url+arrg;
         httpHelper.HttpRequest(url);
-     /*
-        FirebaseFirestore db = FirebaseFirestore.getInstance();
-        String uid = documentMover.getId();
-        Map<String, Object> docData = new HashMap<>();
-        docData.put("bestTime", documentMover.get_bestTime());
-        docData.put("gamesLost", documentMover.get_gamesLost());
-        docData.put("gamesPlayed", documentMover.get_gamesPlayed());
-        docData.put("gamesWon", documentMover.get_gamesWon());
-        docData.put("hitsPercentage", documentMover.get_hitsPercentage());
-        docData.put("mostBombHits", documentMover.get_mostBombHits());
-        docData.put("mostLaserHits", documentMover.get_mostLaserHits());
-        docData.put("totalBombHits", documentMover.get_totalBombHits());
-        docData.put("totalHits", documentMover.get_totalHits());
-        docData.put("totalPoints", documentMover.get_totalPoints());
-        docData.put("totalShots", documentMover.get_totalShots());
-        db.collection("PlayerStats").document(uid).set(docData);
-
-      */
     }
 
 }
