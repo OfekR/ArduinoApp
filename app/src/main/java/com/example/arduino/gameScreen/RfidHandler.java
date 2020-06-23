@@ -3,6 +3,7 @@ package com.example.arduino.gameScreen;
 import android.app.Activity;
 import android.content.Context;
 import android.os.Handler;
+import android.os.SystemClock;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
@@ -218,8 +219,6 @@ public class RfidHandler {
 
     private void disableEnableButtons(boolean isEnable)
     {
-        //TODO OFEK - verify when joystick disabled, it's really disabled
-
         // shouldn't enable shot automaticaly because maybe no shoots left
         boolean isEnableShot = isEnable && _liveGameInfo.isShotBtnEnabled();
 
@@ -271,6 +270,11 @@ public class RfidHandler {
                         return;
                     }
                     Log.d(TAG,LogDefs.DisarmMines);
+
+                    if(mySong !=  null) mySong.Destroy();
+                    mySong = new MediaPlayerWrapper(R.raw.defuse, _context);
+                    mySong.StartOrResume();
+
                     Toast.makeText(_context, "Mine was disarmed!!!", Toast.LENGTH_SHORT).show();
                     mDatabase.child("RfidReading").child(_playerIdStr).child("Mine").child("Disarm").setValue(0);
                     _liveGameInfo.updateFieldRelativeValue(LiveGameInfoField.SCORE, InGameConstants.AddPointDueMineDefusion);
@@ -549,12 +553,21 @@ public class RfidHandler {
 
 
     private void stopCar()  {
+        disableEnableButtons(false);
         try {
             outputStream.write('!');
         } catch (IOException e) {
             e.printStackTrace();
         }
-        disableEnableButtons(false);
+        SystemClock.sleep(50);
+        //Veirfy car is fully stopped
+        try {
+            outputStream.write('!');
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+
     }
 
     private void restoreCar() {

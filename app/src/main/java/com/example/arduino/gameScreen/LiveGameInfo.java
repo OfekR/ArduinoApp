@@ -100,7 +100,7 @@ public class LiveGameInfo {
     private LivePlayerInfo _livePlayerInfo;
     private boolean _isShootBtnEnabled;
     // Statistics
-    //TODO - generally fact enemy explode doesn't mean my mine explode (might be his) but it's ok IO guess
+    //TODO Extra - generally fact enemy explode doesn't mean my mine explode (might be his) but it's ok IO guess
     public Integer totalMineHits;
     public Integer totalMinePlanted;
     public Integer totalMineInjured;
@@ -228,8 +228,6 @@ public class LiveGameInfo {
         startSpecialKeyListener();
         startEnemyExplodeListener();
     }
-    //TODO call this
-
     public void stopListeners(){
         if(ammoListener != null)
             ammoDocRef.removeEventListener(ammoListener);

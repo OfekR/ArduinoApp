@@ -112,9 +112,8 @@ public class GameScreenActivity extends AppCompatActivity {
     private JoystickView joystickCar;
     private JoystickView joystickServo;
     //BT variables
-    //TODO - set the real ones, for now the first is the tank second is the car (for now set both to the same
-    //private final String DEVICE_ADDRESS_P1 = "98:D3:51:FD:D9:45";
-    private final String DEVICE_ADDRESS_P1 = "98:D3:61:F5:E7:3C";
+    private final String DEVICE_ADDRESS_P1 = "98:D3:51:FD:D9:45";
+    //private final String DEVICE_ADDRESS_P1 = "98:D3:61:F5:E7:3C";
     private final String DEVICE_ADDRESS_P2 = "98:D3:61:F5:E7:3C";
     private static final String TAG_BT = LogDefs.tagBT;
     private static final int REQUEST_ENABLE_BT = 3; //just random value , 3 doesn't mean anything
@@ -1204,12 +1203,11 @@ public class GameScreenActivity extends AppCompatActivity {
             {
                 outputStream = socket.getOutputStream(); //gets the output stream of the socket
                 _rfidHandler.setOutputStream(outputStream);
-                //TODO NOTE - if in the end we want input stream
+                //NOTE - if in the end we want input stream
                 //inputStream = socket.getInputStream();
             }
             catch(IOException e)
             {
-                //TODO OFEK handle error here?
                 e.printStackTrace();
             }
 

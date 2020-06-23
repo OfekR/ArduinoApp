@@ -93,7 +93,6 @@ public class StatitacsActivity extends AppCompatActivity {
         documentReference.get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
             @Override
             public void onComplete(@NonNull Task<DocumentSnapshot> task) {
-                //TODO - handle warnings?
                 gamesPlayed = task.getResult().getLong("gamesPlayed");
                 gamesWon = task.getResult().getLong("gamesWon");
                 gamesLost = task.getResult().getLong("gamesLost");
