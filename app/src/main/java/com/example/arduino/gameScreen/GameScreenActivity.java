@@ -536,19 +536,19 @@ public class GameScreenActivity extends AppCompatActivity {
         final Integer numberOfLootbox = 6;
 
 
-        for(Integer i=0; i<numberOfMines; ++i) {
+        for(Integer i=1; i<=numberOfMines; ++i) {
             String curName = "Mines/M" + i.toString() + "/status";
             //handle mine which are armed on start
             Integer value = (i==3 || i==4) ? 1 : 0;
             hashMap.put(curName, value);
         }
 
-        for(Integer i=0; i<numberOfBarriers; ++i) {
+        for(Integer i=1; i<=numberOfBarriers; ++i) {
             String curName = "Barriers/B" + i.toString() + "/status";
             hashMap.put(curName, 0);
         }
 
-        for(Integer i=0; i<numberOfLootbox; ++i) {
+        for(Integer i=1; i<=numberOfLootbox; ++i) {
             String curName = "Lootbox/L" + i.toString() + "/status";
             hashMap.put(curName, 0);
         }
