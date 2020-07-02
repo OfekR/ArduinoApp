@@ -54,7 +54,6 @@ public class MenuActivity extends AppCompatActivity {
     Button startButton;
     Button statBtn;
     Button logOut;
-    Button moveBt;
     DatabaseReference gamedocRef;
     ValueEventListener registration;
     private FirebaseAuth.AuthStateListener mAuthStateListener;
@@ -72,16 +71,8 @@ public class MenuActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_menu);
         //Set all buttons listener
-        moveBt = findViewById(R.id.controller);
         mDatabase = FirebaseDatabase.getInstance().getReference();
         startButton = findViewById(R.id.start_btn);
-        //TODO - remove moveBt (only to debug controller)
-        moveBt.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                changeScreen(ControllerActvivty.class);
-            }
-        });
         startButton.setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick(View v) {

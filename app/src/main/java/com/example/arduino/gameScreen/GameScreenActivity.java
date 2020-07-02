@@ -335,15 +335,19 @@ public class GameScreenActivity extends AppCompatActivity {
         joystickCar.setOnMoveListener(new JoystickView.OnMoveListener() {
             @Override
             public void onMove(int angle, int strength) {
-                try {
-                    char c = findCommandCar(angle,strength);
-                    System.out.println("The-Car-JoyStick angle -------> " + angle+ "and the Char i send is ---> " + c);
-                    outputStream.write(c); //transmits the value of command to the bluetooth
+                if(!_rfidHandler.isCarDisabled)
+                {
+                    try {
+                        char c = findCommandCar(angle,strength);
+                        System.out.println("The-Car-JoyStick angle -------> " + angle+ "and the Char i send is ---> " + c);
+                        outputStream.write(c); //transmits the value of command to the bluetooth
 
-                } catch (IOException e) {
-                    e.printStackTrace();
-                    System.out.println("The-CarFail-JoyStick angle -------> " + angle+ "The- Strength--------->  "+strength);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                        System.out.println("The-CarFail-JoyStick angle -------> " + angle+ "The- Strength--------->  "+strength);
+                    }
                 }
+
             }
         });
 
@@ -351,19 +355,20 @@ public class GameScreenActivity extends AppCompatActivity {
         joystickServo.setOnMoveListener(new JoystickView.OnMoveListener() {
             @Override
             public void onMove(int angle, int strength) {
-                try {
-                    if(strength != 0)
-                    {
-                        char c = findCommandServo(angle,strength);
-                        System.out.println("The-Servo-JoyStick angle -------> " + angle+ "and the Char i send is ---> " + c);
-                        outputStream.write(c); //transmits the value of command to the bluetooth
+                if(!_rfidHandler.isCarDisabled) {
+                    try {
+                        if (strength != 0) {
+                            char c = findCommandServo(angle, strength);
+                            System.out.println("The-Servo-JoyStick angle -------> " + angle + "and the Char i send is ---> " + c);
+                            outputStream.write(c); //transmits the value of command to the bluetooth
+                        }
+                        //else - strength 0, nothing to move
+
+
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                        System.out.println("The-ServoFail-JoyStick angle -------> " + angle + "The- Strength--------->  " + strength);
                     }
-                    //else - strength 0, nothing to move
-
-
-                } catch (IOException e) {
-                    e.printStackTrace();
-                    System.out.println("The-ServoFail-JoyStick angle -------> " + angle+ "The- Strength--------->  "+strength);
                 }
             }
         });

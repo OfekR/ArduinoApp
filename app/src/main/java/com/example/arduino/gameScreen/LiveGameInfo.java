@@ -2,6 +2,7 @@ package com.example.arduino.gameScreen;
 
 import android.content.Context;
 import android.content.Intent;
+import android.os.Handler;
 import android.util.Log;
 import android.widget.Button;
 import android.widget.TextView;
@@ -27,6 +28,7 @@ import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QuerySnapshot;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -259,13 +261,23 @@ public class LiveGameInfo {
                 //keep local copy updated
                 _livePlayerInfo.setAmmo(newAmmo);
 
-                boolean isAmmoZero = newAmmo.equals(0);
-                // enable / disable shoot button according if there is any ammo left
-                _isShootBtnEnabled = !isAmmoZero;
-                _btnShot.setEnabled(_isShootBtnEnabled);
+                final boolean isAmmoZero = newAmmo.equals(0);
+
                 // update UI text
                 String newAmmoText = isAmmoZero ? "No Ammo left" : ("Ammo: - " + (newAmmo.toString()));
                 _txtAmmo.setText(newAmmoText);
+
+
+                Handler handler = new Handler();
+                handler.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        // enable / disable shoot button according if there is any ammo left
+                        _isShootBtnEnabled = !isAmmoZero;
+                        _btnShot.setEnabled(_isShootBtnEnabled);
+
+                    }
+                }, InGameConstants.LaserHitBtnDelay * 1000);
             }
 
             @Override

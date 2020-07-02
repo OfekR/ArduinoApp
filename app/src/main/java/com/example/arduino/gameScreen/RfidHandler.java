@@ -28,6 +28,7 @@ import com.google.firebase.database.ValueEventListener;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.HashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import io.github.controlwear.virtual.joystick.android.JoystickView;
 
@@ -72,6 +73,8 @@ public class RfidHandler {
     public String currentBarrierName;
     public String currentMineName;
 
+    public boolean isCarDisabled;
+
     DatabaseReference mDatabase;
 
     public RfidHandler(Context context, DatabaseReference mDatabaseRef,int playerId, Button btnMine, Button btnKey,Button btnShot,
@@ -93,6 +96,7 @@ public class RfidHandler {
 
         mDatabase = mDatabaseRef;
 
+        isCarDisabled = false;
     }
 
 
@@ -219,12 +223,15 @@ public class RfidHandler {
 
     private void disableEnableButtons(boolean isEnable)
     {
+
+
         // shouldn't enable shot automaticaly because maybe no shoots left
         boolean isEnableShot = isEnable && _liveGameInfo.isShotBtnEnabled();
 
         _btnShot.setEnabled(isEnableShot);
         _joystickCar.setEnabled(isEnable);
         _joystickServo.setEnabled(isEnable);
+
     }
 
     private void startMineListener() {
@@ -554,6 +561,7 @@ public class RfidHandler {
 
     private void stopCar()  {
         disableEnableButtons(false);
+        isCarDisabled = true;
         try {
             outputStream.write('!');
         } catch (IOException e) {
@@ -572,6 +580,8 @@ public class RfidHandler {
 
     private void restoreCar() {
         disableEnableButtons(true);
+        isCarDisabled = false;
+
     }
 
 
