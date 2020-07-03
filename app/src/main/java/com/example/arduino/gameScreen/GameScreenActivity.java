@@ -72,7 +72,6 @@ import io.github.controlwear.virtual.joystick.android.JoystickView;
 
 
 /*
-TODO : we need to reorganize the class.
 TODO : add the auth with the game for change the field in the database
  */
 
@@ -542,19 +541,31 @@ public class GameScreenActivity extends AppCompatActivity {
 
         for(Integer i=1; i<=numberOfMines; ++i) {
             String curName = "Mines/M" + i.toString() + "/status";
+            String curName2 = "Mines/M" + i.toString() + "/board";
+
             //handle mine which are armed on start
             Integer value = (i==3 || i==4) ? 1 : 0;
             hashMap.put(curName, value);
+            hashMap.put(curName2, 1);
+
         }
 
         for(Integer i=1; i<=numberOfBarriers; ++i) {
             String curName = "Barriers/B" + i.toString() + "/status";
+            String curName2 = "Barriers/B" + i.toString() + "/board";
+
             hashMap.put(curName, 0);
+            hashMap.put(curName2, 1);
+
         }
 
         for(Integer i=1; i<=numberOfLootbox; ++i) {
             String curName = "Lootbox/L" + i.toString() + "/status";
+            String curName2 = "Lootbox/L" + i.toString() + "/board";
+
             hashMap.put(curName, 0);
+            hashMap.put(curName2, 1);
+
         }
 
         mDatabase.updateChildren(hashMap);

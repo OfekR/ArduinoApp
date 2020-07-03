@@ -409,6 +409,8 @@ public class RfidHandler {
                             public void run() {
                                 // lootbox will be turned on after waitTimeMs ms
                                 mDatabase.child("Lootbox").child(lootBoxName).child("status").setValue(0);
+                                mDatabase.child("Lootbox").child(lootBoxName).child("board").setValue(1);
+
                             }
                         }, waitTimeMs);
                     }
@@ -524,6 +526,8 @@ public class RfidHandler {
             public void run() {
                 // Do something after waitTimeMs ms
                 mDatabase.child("Mines").child(currentMineNameFrezze).child("status").setValue(1);
+                mDatabase.child("Mines").child(currentMineNameFrezze).child("board").setValue(1);
+
                 if(mySong !=  null) mySong.Destroy();
                 mySong = new MediaPlayerWrapper(R.raw.mineplanted, _context);
                 mySong.StartOrResume();
@@ -546,13 +550,18 @@ public class RfidHandler {
         }
         Toast.makeText(_context, "Barrier is opening", Toast.LENGTH_SHORT).show();
         mDatabase.child("Barriers").child(currentBarrierNameFrezze).child("status").setValue(1);
+        mDatabase.child("Barriers").child(currentBarrierNameFrezze).child("board").setValue(1);
 
         //handle special case of B5 and B6 indicate same barrier
         if(currentBarrierNameFrezze.equals("B5")) {
             mDatabase.child("Barriers").child("B6").child("status").setValue(1);
+            mDatabase.child("Barriers").child("B6").child("board").setValue(1);
+
         }
         if(currentBarrierNameFrezze.equals("B6")) {
             mDatabase.child("Barriers").child("B5").child("status").setValue(1);
+            mDatabase.child("Barriers").child("B5").child("board").setValue(1);
+
         }
 
         return true;

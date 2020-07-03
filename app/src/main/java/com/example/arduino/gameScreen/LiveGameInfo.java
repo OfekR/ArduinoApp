@@ -426,22 +426,17 @@ public class LiveGameInfo {
         enemyInjuredListener = enemyInjuredDocRef.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                String key = dataSnapshot.getKey();
-                if(key.equals("enemyExplode")) {
+                if(dataSnapshot.child("enemyExplode").getValue(Integer.class) == 1) {
                     mDatabase.child(firebaseEnemyInjuredPath).child("enemyExplode").setValue(0);
                     Toast.makeText(_context, "Your enemy exploded", Toast.LENGTH_SHORT).show();
                     updateFieldRelativeValue(LiveGameInfoField.SCORE, InGameConstants.addPointDueExplosion);
                     totalMineHits++;
                 }
-                else if(key.equals("enemyHit")) {
+                else if(dataSnapshot.child("enemyHit").getValue(Integer.class) == 1) {
                     mDatabase.child(firebaseEnemyInjuredPath).child("enemyHit").setValue(0);
-                    Toast.makeText(_context, "Your hit the enemy, Nice shot comrade", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(_context, "You hit the enemy, Nice shot comrade", Toast.LENGTH_SHORT).show();
                     updateFieldRelativeValue(LiveGameInfoField.SCORE, InGameConstants.addPointDueHit);
                     totalShotsHits++;
-                }
-                else {
-                    Log.e(TAG, "EnemyInjured have unknown child");
-                    assert(false);
                 }
             }
 
